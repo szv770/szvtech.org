@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Contact — Secure Intake</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+  --bg: #0b0f14;
+  --panel: #111827;
+  --accent: #22d3ee;
+  --accent2: #a855f7;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --danger: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "JetBrains Mono", monospace;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 520px;
+  background: linear-gradient(180deg, #0b1220, #020617);
+  border: 1px solid #1f2937;
+  border-radius: 16px;
+  box-shadow: 0 0 60px rgba(34,211,238,.15);
+  padding: 32px;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 1.4rem;
+  letter-spacing: .05em;
+}
+
+p {
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+form {
+  margin-top: 24px;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: .75rem;
+  color: var(--muted);
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 12px;
+  background: #020617;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(34,211,238,.25);
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  color: #020617;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+.footer-note {
+  margin-top: 14px;
+  font-size: .7rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+#status {
+  display: none;
+  margin-top: 20px;
+  background: #020617;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: .8rem;
+}
+
+.log {
+  color: var(--accent);
+  animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: .3; }
+}
+
+.success {
+  color: #22c55e;
+  margin-top: 10px;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>SECURE CONTACT INTAKE</h1>
+  <p>
+    Messages are processed through a protected review pipeline.
+    Submissions are manually verified before response.
+  </p>
+
+  <form id="contactForm">
+    <label>Full Name</label>
+    <input required placeholder="John Doe">
+
+    <label>Email Address</label>
+    <input type="email" required placeholder="you@domain.com">
+
+    <label>Reason for Contact</label>
+    <select required>
+      <option value="">Select…</option>
+      <option>General Inquiry</option>
+      <option>Security / Pentesting</option>
+      <option>Collaboration</option>
+      <option>Other</option>
+    </select>
+
+    <label>Message</label>
+    <textarea rows="5" required placeholder="Describe your request…"></textarea>
+
+    <button type="submit">SUBMIT FOR REVIEW</button>
+  </form>
+
+  <div id="status">
+    <div class="log">[+] Encrypting payload…</div>
+    <div class="log">[+] Validating submission…</div>
+    <div class="log">[+] Assigning case ID…</div>
+    <div class="success"></div>
+  </div>
+
+  <div class="footer-note">
+    Unauthorized or malicious submissions are filtered automatically.
+  </div>
+</div>
+
+<script>
+const form = document.getElementById("contactForm");
+const statusBox = document.getElementById("status");
+const successText = document.querySelector(".success");
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  form.style.display = "none";
+  statusBox.style.display = "block";
+
+  setTimeout(() => {
+    const id = "CASE-" + Math.random().toString(36).substr(2, 8).toUpperCase();
+    successText.textContent =
+      "✔ Submission received. Reference ID: " + id +
+      ". A representative will reach out after review.";
+  }, 2800);
+});
+</script>
+
+</body>
+</html>
