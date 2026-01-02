@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ACCESS GRANTED</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --bg: #050608;
+      --panel: #0b0f14;
+      --neon: #00ff9c;
+      --neon-dim: #00ff9c55;
+      --text: #cfd6dd;
+      --muted: #7a8594;
+      --danger: #ff3b3b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #0b1220, var(--bg));
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .scanlines::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.02),
+        rgba(255,255,255,0.02) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      mix-blend-mode: overlay;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 80px auto;
+      padding: 0 20px;
+    }
+
+    .badge {
+      display: inline-block;
+      color: var(--neon);
+      border: 1px solid var(--neon-dim);
+      padding: 6px 12px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      margin: 0 0 10px 0;
+      color: var(--neon);
+      text-shadow: 0 0 15px var(--neon-dim);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 40px;
+      max-width: 650px;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, #0d131c, var(--panel));
+      border: 1px solid #1a2230;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(0,255,156,0.08),
+        transparent
+      );
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--neon-dim);
+    }
+
+    .card:hover::after {
+      opacity: 1;
+    }
+
+    .card h3 {
+      margin: 0 0 10px 0;
+      color: #e6f1ff;
+      font-size: 1.1rem;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .status {
+      margin-top: 50px;
+      padding: 16px;
+      border: 1px dashed #263042;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status strong {
+      color: var(--neon);
+      font-weight: 500;
+    }
+
+    .footer {
+      margin-top: 60px;
+      font-size: 12px;
+      color: #5c6675;
+    }
+
+    a {
+      color: var(--neon);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .blink {
+      animation: blink 1.2s steps(2, start) infinite;
+    }
+
+    @keyframes blink {
+      to {
+        visibility: hidden;
+      }
+    }
+  </style>
+</head>
+<body class="scanlines">
+  <div class="wrap">
+    <span class="badge">ACCESS GRANTED</span>
+
+    <h1>Ethical Ops Console</h1>
+    <div class="subtitle">
+      You’ve crossed the decoy layer.<br />
+      This space exists to explore systems, expose weaknesses,
+      and understand how modern infrastructure breaks — so it can be fixed.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>⚡ Recon & Analysis</h3>
+        <p>
+          Mapping attack surfaces, misconfigurations, and trust boundaries.
+          Enumeration is where the story starts.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>🧠 Exploit Theory</h3>
+        <p>
+          Not “run script, get shell.”  
+          Understanding why vulnerabilities exist and how chains are built.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>🛡 Defensive Thinking</h3>
+        <p>
+          Blue-team awareness baked into red-team curiosity.
+          If you can break it, you should know how to harden it.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>🎮 Lab Environment</h3>
+        <p>
+          Controlled chaos. Testbeds, sandboxes, simulations.
+          No real-world harm — just real-world lessons.
+        </p>
+      </div>
+    </div>
+
+    <div class="status">
+      SYSTEM STATUS: <strong>OPERATIONAL</strong><br />
+      MODE: <strong>ETHICAL / EDUCATIONAL</strong><br />
+      NEXT MODULE: <strong>PENDING</strong> <span class="blink">▍</span>
+    </div>
+
+    <div class="footer">
+      <a href="/">← return to error layer</a><br />
+      Nothing here is accidental.
+    </div>
+  </div>
+</body>
+</html>
