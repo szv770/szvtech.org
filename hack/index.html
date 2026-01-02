@@ -1,240 +1,72 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-[#f0f2f5] text-slate-900 overflow-hidden">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cyber Extraction Console</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AETHER LIGHT // Intelligence Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent-primary: #0ea5e9;
+            --accent-secondary: #6366f1;
+            --bg-base: #f8fafc;
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(14, 165, 233, 0.05) 0, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.05) 0, transparent 40%);
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
+        }
 
-<style>
-:root {
-  --green:#00ff9c;
-  --red:#ff0044;
-  --bg:#03060b;
-}
+        .cyber-card {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-* { box-sizing:border-box; font-family:monospace; }
+        .cyber-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -20px rgba(14, 165, 233, 0.3);
+            border-color: var(--accent-primary);
+        }
 
-body {
-  margin:0;
-  background: radial-gradient(circle at top, #081826, #020409);
-  color:var(--green);
-  overflow:hidden;
-}
+        @keyframes data-flow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
 
-/* WARNING MODAL */
-#warning {
-  position:fixed;
-  inset:0;
-  background:black;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
+        .futuristic-progress {
+            background: linear-gradient(90deg, #0ea5e9, #6366f1, #0ea5e9);
+            background-size: 200% auto;
+            animation: data-flow 2s linear infinite;
+        }
 
-#warning .box {
-  border:2px solid var(--red);
-  padding:25px;
-  max-width:500px;
-  text-align:center;
-  box-shadow:0 0 40px #ff004455;
-}
-
-#warning button {
-  margin-top:20px;
-  padding:12px 20px;
-  background:var(--red);
-  border:none;
-  color:black;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-/* MAIN */
-.wrapper {
-  max-width:1200px;
-  margin:auto;
-  padding:20px;
-}
-
-.header {
-  text-align:center;
-  font-size:clamp(26px,5vw,42px);
-  letter-spacing:4px;
-  animation:flicker 2s infinite;
-}
-
-@keyframes flicker {
-  0%,100%{opacity:1}
-  50%{opacity:.7}
-}
-
-.panel {
-  margin-top:20px;
-  border:1px solid #0f3;
-  background:rgba(0,0,0,.7);
-  padding:20px;
-  box-shadow:0 0 30px #00ff9c33;
-}
-
-.buttons {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:10px;
-  margin-top:15px;
-}
-
-button {
-  padding:15px;
-  background:black;
-  border:1px solid var(--green);
-  color:var(--green);
-  font-size:16px;
-  cursor:pointer;
-}
-
-button:hover {
-  background:var(--green);
-  color:black;
-}
-
-.terminal {
-  margin-top:20px;
-  height:320px;
-  background:black;
-  border:1px solid #0f3;
-  padding:15px;
-  overflow-y:auto;
-}
-
-.line { animation:type .15s linear; }
-@keyframes type { from{opacity:0} to{opacity:1} }
-
-.red { color:var(--red); }
-
-.progress {
-  height:8px;
-  background:#111;
-  margin-top:10px;
-  border:1px solid #0f3;
-}
-.bar {
-  height:100%;
-  width:0%;
-  background:var(--green);
-  transition:width .4s;
-}
-
-.fake-chat {
-  margin-top:10px;
-  color:#9affc6;
-}
-
-.footer {
-  margin-top:10px;
-  font-size:11px;
-  opacity:.5;
-  text-align:center;
-}
-</style>
-</head>
-
-<body>
-
-<!-- WARNING -->
-<div id="warning">
-  <div class="box">
-    <h2>⚠️ DEMO WARNING</h2>
-    <p>This interface is for ethical hacking ONLY.<br>
-    Any actions you may do here makes YOU fully liable.</p>
-    <button onclick="closeWarning()">I Understand!</button>
-  </div>
-</div>
-
-<div class="wrapper">
-
-  <div class="header">CYBER EXTRACTION CONSOLE</div>
-
-  <div class="panel">
-    <div>Target Platform</div>
-
-    <div class="buttons">
-      <button onclick="startHack('WhatsApp')">WhatsApp</button>
-      <button onclick="startHack('Email')">Email</button>
-      <button onclick="startHack('Instagram')">Instagram</button>
-    </div>
-
-    <div class="progress"><div class="bar" id="bar"></div></div>
-
-    <div class="terminal" id="terminal"></div>
-  </div>
-
-  <div class="footer">
-    Free Social Media Hacking Tool.
-  </div>
-
-</div>
-
-<script>
-const terminal = document.getElementById("terminal");
-const bar = document.getElementById("bar");
-
-function closeWarning(){
-  document.getElementById("warning").style.display="none";
-}
-
-function log(text, cls=""){
-  const d=document.createElement("div");
-  d.className="line "+cls;
-  d.textContent="> "+text;
-  terminal.appendChild(d);
-  terminal.scrollTop=terminal.scrollHeight;
-}
-
-function startHack(platform){
-  terminal.innerHTML="";
-  bar.style.width="0%";
-
-  const steps=[
-    "Initializing "+platform+" module...",
-    "Establishing encrypted channel...",
-    "Injecting simulated exploit...",
-    "Bypassing virtual authentication...",
-    "Decrypting message database...",
-    "Extracting conversation threads..."
-  ];
-
-  let i=0;
-  const interval=setInterval(()=>{
-    log(steps[i]);
-    bar.style.width=((i+1)/steps.length*100)+"%";
-    i++;
-    if(i>=steps.length){
-      clearInterval(interval);
-      fakeMessages();
-    }
-  },700);
-}
-
-function fakeMessages(){
-  log("HACK COMPLETE!", "red");
-  log("Displaying extracted messages:");
-
-  const msgs=[
-    "[12:01] Alex: yo did you delete that chat?",
-    "[12:02] Sam: bro stop typing here",
-    "[12:03] Alex: relax nobody can see this",
-    "[12:05] Sam: …"
-  ];
-
-  msgs.forEach(m=>{
-    const c=document.createElement("div");
-    c.className="fake-chat";
-    c.textContent=m;
-    terminal.appendChild(c);
-  });
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
 }
 </script>
-
+</head>
+<body class="min-h-[100dvh]">
+    <div id="root"></div>
 </body>
 </html>
