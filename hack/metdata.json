@@ -1,0 +1,5 @@
+{
+  "name": "SPECTRE-OS",
+  "description": "A sleek, cyberpunk-themed ethical hacking intelligence dashboard featuring simulated port scanning, AI-driven vulnerability analysis, and real-time threat intelligence using Gemini.",
+  "requestFramePermissions": []
+}
