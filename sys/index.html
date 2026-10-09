@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>SZV-OPS // internal control panel</title>
+<meta name="description" content="Internal use only.">
+<meta name="theme-color" content="#05050a">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2305050a'/%3E%3Cpath d='M20 24h24M20 32h24M20 40h14' stroke='%2322d3ee' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sys.css">
+<!--
+  ============================================================================
+  SZV-OPS internal control panel  (staging)
+  NOTE(ops): this whole box is a DECOY / honeypot. Nothing here is real.
+  Every "credential", "row" and "file" below is dummy data. No backend,
+  no tracking, no network calls. If you are reading this: you are exactly
+  the kind of curious we like. Keep reading — see where it goes. :)
+  ============================================================================
+-->
+</head>
+<body class="is-locked">
+
+<div class="grain" aria-hidden="true"></div>
+<div class="scan" aria-hidden="true"></div>
+<div class="glow" aria-hidden="true"></div>
+
+<!-- ======================================================================= -->
+<!-- LOGIN GATE                                                              -->
+<!-- ======================================================================= -->
+<section class="gate" id="gate" aria-label="Restricted login">
+  <div class="gate__card">
+    <div class="gate__top mono">
+      <span class="dotrow" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="gate__host">root@szv-ops-01</span>
+      <span class="gate__sec"><span class="live"></span> SECURE</span>
+    </div>
+    <div class="gate__body">
+      <div class="gate__badge mono" aria-hidden="true">// RESTRICTED</div>
+      <h1 class="gate__title">Internal Control Panel</h1>
+      <p class="gate__sub mono">authorized personnel only &middot; all sessions are logged</p>
+
+      <form class="gate__form" id="loginForm" autocomplete="off" novalidate>
+        <label class="field">
+          <span class="field__k mono">operator</span>
+          <input class="field__i mono" id="user" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="e.g. admin" aria-label="operator">
+        </label>
+        <label class="field">
+          <span class="field__k mono">passphrase</span>
+          <input class="field__i mono" id="pass" type="password" autocomplete="new-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" aria-label="passphrase">
+        </label>
+        <button class="btn btn--go" id="loginBtn" type="submit"><span class="btn__ps" aria-hidden="true">&gt;_</span> AUTHENTICATE</button>
+        <button class="btn btn--sql" id="sqlBtn" type="button" title="paste known bypass">try bypass string</button>
+      </form>
+
+      <div class="gate__out mono" id="gateOut" aria-live="polite"></div>
+      <div class="gate__foot mono">
+        <span>build <b>staging-0.9.3-rc2</b></span>
+        <span class="gate__hint">hint: the box has been misconfigured since the last deploy</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================= -->
+<!-- CONSOLE (post-login maze)                                               -->
+<!-- ======================================================================= -->
+<main class="console" id="console" hidden aria-label="Control panel">
+  <header class="top">
+    <div class="top__brand mono">
+      <span class="top__mark" aria-hidden="true"></span>
+      <span>SZV-OPS</span><span class="top__env">staging</span>
+    </div>
+    <div class="top__mid mono" id="crumbs" aria-live="polite">// you shouldn&rsquo;t be here</div>
+    <div class="top__right mono">
+      <span class="access" id="accessPill">ACCESS LVL <b id="accLvl">1</b>/7</span>
+      <button class="chip" id="logoutBtn" type="button">lock</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="side" aria-label="Sections">
+      <button class="nav" data-view="overview" aria-current="true"><i>&#9632;</i> overview</button>
+      <button class="nav" data-view="users"><i>&#9783;</i> user database</button>
+      <button class="nav" data-view="files"><i>&#9707;</i> file browser</button>
+      <button class="nav" data-view="logs"><i>&#9776;</i> live logs</button>
+      <button class="nav" data-view="console"><i>&gt;_</i> root console</button>
+      <button class="nav nav--locked" data-view="vault"><i>&#128274;</i> master vault</button>
+      <div class="side__flags mono">
+        <span class="side__flags-k">flags found</span>
+        <span class="side__flags-v"><b id="flagCount">0</b> / 3</span>
+      </div>
+    </nav>
+
+    <section class="main" id="main" tabindex="-1">
+      <!-- views injected by sys.js -->
+    </section>
+  </div>
+</main>
+
+<!-- modal -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__back" id="modalBack"></div>
+  <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal__bar mono"><span id="modalTitle">output</span><button class="modal__x" id="modalX" aria-label="close">&times;</button></div>
+    <div class="modal__body mono" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="sys.js"></script>
+</body>
+</html>
