@@ -1,193 +1,500 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Contact — Secure Intake</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Contact — SZVTECH (into the void)</title>
+<meta name="description" content="A contact form that goes absolutely nowhere, beautifully. A loving gag.">
+<meta name="theme-color" content="#05050a">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3CradialGradient id='r'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='1' stop-color='%2322d3ee' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Cellipse cx='32' cy='32' rx='22' ry='9' fill='none' stroke='url(%23g)' stroke-width='3' transform='rotate(-30 32 32)'/%3E%3Ccircle cx='32' cy='32' r='13' fill='none' stroke='url(%23g)' stroke-width='4'/%3E%3Ccircle cx='32' cy='32' r='7' fill='url(%23r)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root {
-  --bg: #0b0f14;
-  --panel: #111827;
-  --accent: #22d3ee;
-  --accent2: #a855f7;
-  --text: #e5e7eb;
-  --muted: #9ca3af;
-  --danger: #ef4444;
+  --bg: #05050a;
+  --bg-2: #0a0a14;
+  --fg: #f3f1ff;
+  --muted: rgba(226, 224, 255, .56);
+  --dim: rgba(226, 224, 255, .34);
+  --line: rgba(255, 255, 255, .09);
+  --a1: #8b5cf6;
+  --a2: #22d3ee;
+  --a3: #e879f9;
+  --lime: #a3e635;
+  --glass: rgba(255, 255, 255, .04);
+  --glass-b: rgba(255, 255, 255, .11);
+  --f-display: 'Syne', 'Inter', system-ui, sans-serif;
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --gut: clamp(16px, 4vw, 56px);
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --grad: linear-gradient(100deg, var(--a1), var(--a3) 45%, var(--a2));
+  color-scheme: dark;
 }
 
-* {
-  box-sizing: border-box;
-  font-family: "JetBrains Mono", monospace;
-}
-
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); overflow-x: clip; -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0;
-  background: radial-gradient(circle at top, #0f172a, #020617);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.55;
+  min-height: 100dvh;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  position: relative;
+}
+::selection { background: var(--a1); color: #fff; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+kbd { font-family: var(--f-mono); }
+.mono { font-family: var(--f-mono); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.is-grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---- background layers (match homepage) ---- */
+.bg-fallback {
+  position: fixed; inset: -10%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(42vmax 42vmax at 28% 30%, color-mix(in srgb, var(--a1) 32%, transparent), transparent 70%),
+    radial-gradient(36vmax 36vmax at 74% 68%, color-mix(in srgb, var(--a2) 22%, transparent), transparent 70%),
+    radial-gradient(30vmax 30vmax at 66% 14%, color-mix(in srgb, var(--a3) 18%, transparent), transparent 70%);
+  opacity: .9;
+  animation: drift 20s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  0% { transform: translate3d(0,0,0) scale(1); }
+  100% { transform: translate3d(-3%, 2%, 0) scale(1.1) rotate(-5deg); }
+}
+.vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(130% 95% at 50% 40%, transparent 48%, rgba(2, 2, 6, .78)); }
+.grain {
+  position: fixed; inset: -120px; z-index: 90; pointer-events: none; opacity: .06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 1.1s steps(6) infinite;
+  will-change: transform;
+}
+@keyframes grain {
+  0% { transform: translate3d(0,0,0); } 17% { transform: translate3d(-40px, 30px, 0); } 33% { transform: translate3d(50px, -60px, 0); }
+  50% { transform: translate3d(-70px, -20px, 0); } 67% { transform: translate3d(30px, 70px, 0); } 83% { transform: translate3d(-20px, -80px, 0); } 100% { transform: translate3d(0,0,0); }
 }
 
-.container {
-  width: 100%;
-  max-width: 520px;
-  background: linear-gradient(180deg, #0b1220, #020617);
-  border: 1px solid #1f2937;
-  border-radius: 16px;
-  box-shadow: 0 0 60px rgba(34,211,238,.15);
-  padding: 32px;
+/* ---- layout ---- */
+main { position: relative; z-index: 3; min-height: 100dvh; display: flex; flex-direction: column; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 22px var(--gut);
+}
+.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 800; letter-spacing: .02em; font-size: 15px; }
+.brand__mark { width: 18px; height: 18px; border-radius: 50%; background: conic-gradient(from 0deg, var(--a1), var(--a3), var(--a2), var(--a1)); box-shadow: 0 0 18px color-mix(in srgb, var(--a1) 70%, transparent); animation: spin 6s linear infinite; position: relative; flex: none; }
+.brand__mark::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--bg); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.back {
+  display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); padding: 7px 14px 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.02);
+  transition: color .3s, border-color .3s, box-shadow .4s, background-color .3s;
+}
+.back:hover, .back:focus-visible { color: var(--fg); border-color: var(--glass-b); box-shadow: 0 0 24px -6px var(--a2); outline: none; }
+.back .ar { color: var(--a2); }
+
+.wrap {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: clamp(18px, 4vw, 48px) var(--gut) clamp(36px, 7vw, 80px);
 }
 
-h1 {
-  margin-top: 0;
-  font-size: 1.4rem;
-  letter-spacing: .05em;
+.panel {
+  width: 100%; max-width: 620px; position: relative;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(20,18,38,.72), rgba(8,8,16,.72));
+  border: 1px solid var(--glass-b);
+  backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: 0 40px 120px -30px rgba(0,0,0,.9), 0 0 90px -30px color-mix(in srgb, var(--a1) 60%, transparent);
+  padding: clamp(24px, 5vw, 44px);
+  overflow: hidden;
+}
+.panel::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(130deg, color-mix(in srgb, var(--a1) 60%, transparent), transparent 40%, color-mix(in srgb, var(--a2) 55%, transparent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; opacity: .55;
 }
 
-p {
-  color: var(--muted);
-  font-size: .9rem;
-}
+.eyebrow { display: inline-flex; align-items: center; gap: .6em; color: var(--muted); font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--grad); }
 
-form {
-  margin-top: 24px;
+.title {
+  font-family: var(--f-display); font-weight: 800; letter-spacing: -.035em; line-height: .98;
+  font-size: clamp(2.1rem, 6vw, 3.3rem); margin: 16px 0 10px;
 }
+.lede { color: var(--muted); max-width: 46ch; font-size: clamp(.95rem, 1.3vw, 1.05rem); }
+.lede b { color: var(--fg); font-weight: 600; }
 
-label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: .75rem;
-  color: var(--muted);
+/* ---- form ---- */
+.form { margin-top: 28px; display: grid; gap: 18px; }
+.field { display: grid; gap: 7px; }
+.field label { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.field .hint { font-size: 11px; color: var(--dim); letter-spacing: .02em; }
+.ctrl {
+  width: 100%; padding: 13px 15px; border-radius: 13px;
+  background: rgba(4,4,10,.6); border: 1px solid var(--line); color: var(--fg);
+  font-family: var(--f-body); font-size: 15px; line-height: 1.5;
+  transition: border-color .25s, box-shadow .25s, background-color .25s;
 }
-
-input, textarea, select {
-  width: 100%;
-  padding: 12px;
-  background: #020617;
-  border: 1px solid #1f2937;
-  border-radius: 10px;
-  color: var(--text);
-  margin-bottom: 18px;
+.ctrl::placeholder { color: var(--dim); }
+.ctrl:focus { outline: none; border-color: color-mix(in srgb, var(--a2) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--a2) 18%, transparent); background: rgba(4,4,10,.8); }
+textarea.ctrl { resize: vertical; min-height: 118px; }
+select.ctrl {
+  appearance: none; -webkit-appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%2322d3ee' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 15px center; padding-right: 42px;
 }
+select.ctrl option { background: #0a0a14; color: var(--fg); }
 
-input:focus, textarea:focus, select:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 12px rgba(34,211,238,.25);
+.submit {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; margin-top: 4px; padding: 16px 26px; border-radius: 999px;
+  font-family: var(--f-body); font-weight: 600; font-size: 15px; color: #07060f;
+  background: var(--grad); border: 1px solid rgba(255,255,255,.2);
+  box-shadow: 0 14px 44px -14px color-mix(in srgb, var(--a1) 85%, transparent), 0 0 60px -20px var(--a2);
+  transition: box-shadow .4s, transform .2s var(--ease), filter .3s;
 }
+.submit:hover { box-shadow: 0 18px 60px -12px color-mix(in srgb, var(--a1) 95%, transparent), 0 0 80px -12px var(--a2); }
+.submit:active { transform: translateY(1px) scale(.995); }
+.submit:disabled { filter: saturate(.7) brightness(.9); cursor: default; }
+.submit .ps { font-family: var(--f-mono); font-size: 13px; opacity: .8; }
 
-button {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  border: none;
-  border-radius: 12px;
-  font-weight: bold;
-  color: #020617;
-  cursor: pointer;
+.finenote {
+  margin-top: 16px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .03em; line-height: 1.6;
+  color: var(--dim); text-align: center;
 }
+.finenote .k { color: var(--a2); }
 
-button:hover {
-  filter: brightness(1.1);
+/* ---- transmit console (gag sequence) ---- */
+.console {
+  display: none; margin-top: 28px; border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--glass-b); background: rgba(4,4,10,.66);
+  box-shadow: inset 0 0 40px -20px var(--a1);
 }
-
-.footer-note {
-  margin-top: 14px;
-  font-size: .7rem;
-  color: var(--muted);
-  text-align: center;
+.console.show { display: block; }
+.console__bar {
+  display: flex; align-items: center; gap: 10px; padding: 11px 15px; border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,.03);
 }
+.console__dots { display: inline-flex; gap: 6px; }
+.console__dots i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.18); }
+.console__dots i:nth-child(1){ background:#ff5f57; } .console__dots i:nth-child(2){ background:#febc2e; } .console__dots i:nth-child(3){ background:#28c840; }
+.console__name { font-family: var(--f-mono); font-size: 11px; color: var(--muted); letter-spacing: .04em; }
+.console__body { padding: 16px 16px 18px; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.75; min-height: 150px; }
+.logline { display: flex; gap: 10px; opacity: 0; transform: translateY(4px); }
+.logline.in { opacity: 1; transform: none; transition: opacity .3s var(--ease), transform .3s var(--ease); }
+.logline .px { color: var(--a2); flex: none; }
+.logline .tx { color: rgba(236,234,255,.88); }
+.logline.pending .tx::after { content: ''; display: inline-block; width: 7px; height: 13px; margin-left: 4px; vertical-align: -2px; background: var(--a2); box-shadow: 0 0 8px var(--a2); animation: blink 1s steps(1) infinite; }
+.logline.done .px { color: var(--lime); }
+@keyframes blink { 50% { opacity: 0; } }
 
-#status {
-  display: none;
-  margin-top: 20px;
-  background: #020617;
-  border: 1px solid #1f2937;
-  border-radius: 12px;
-  padding: 16px;
-  font-size: .8rem;
+.verdict { display: none; margin-top: 18px; }
+.verdict.show { display: block; animation: pop .5s var(--ease) both; }
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+.verdict__big {
+  font-family: var(--f-display); font-weight: 800; letter-spacing: -.02em; line-height: 1.04;
+  font-size: clamp(1.35rem, 3.6vw, 1.9rem); margin-bottom: 10px;
 }
-
-.log {
-  color: var(--accent);
-  animation: blink 1.2s infinite;
+.verdict__big .em { font-size: 1.15em; }
+.verdict p { color: var(--muted); font-size: .95rem; }
+.verdict p + p { margin-top: 10px; }
+.ticket {
+  margin: 16px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+  padding: 13px 16px; border-radius: 13px; border: 1px dashed color-mix(in srgb, var(--a2) 45%, transparent);
+  background: rgba(34,211,238,.05); font-family: var(--f-mono); font-size: 12px;
 }
+.ticket .lbl { color: var(--muted); letter-spacing: .08em; text-transform: uppercase; font-size: 10.5px; }
+.ticket .num { color: var(--a2); font-weight: 500; letter-spacing: .06em; }
+.meter { margin: 14px 0 4px; }
+.meter__row { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.meter__track { height: 7px; border-radius: 999px; background: rgba(255,255,255,.06); overflow: hidden; }
+.meter__fill { height: 100%; width: 0%; border-radius: 999px; background: var(--grad); box-shadow: 0 0 14px var(--a2); transition: width 1.1s var(--ease); }
 
-@keyframes blink {
-  50% { opacity: .3; }
+.verdict__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 9px; padding: 13px 22px; border-radius: 999px;
+  border: 1px solid var(--glass-b); background: rgba(255,255,255,.05); color: var(--fg);
+  font-weight: 500; font-size: 14px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: background-color .3s, border-color .3s, box-shadow .4s;
 }
+.btn-ghost:hover, .btn-ghost:focus-visible { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); box-shadow: 0 0 36px -8px color-mix(in srgb, var(--a1) 70%, transparent); outline: none; }
+.btn-ghost .ps { font-family: var(--f-mono); font-size: 13px; color: var(--a2); }
 
-.success {
-  color: #22c55e;
-  margin-top: 10px;
-  font-weight: bold;
+.tally {
+  margin-top: 26px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em; color: var(--dim); text-align: center;
+}
+.tally .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--a3); box-shadow: 0 0 10px var(--a3); flex: none; }
+.tally b { color: var(--a3); font-weight: 500; }
+
+.foot {
+  padding: 22px var(--gut) 30px; display: flex; flex-wrap: wrap; gap: 10px 22px; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--line); color: var(--dim); font-family: var(--f-mono); font-size: 11px;
+}
+@media (max-width: 640px) { .foot { justify-content: center; text-align: center; } }
+
+/* visually hidden but available to AT */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .grain, .bg-fallback, .brand__mark, .tally .dot { animation: none !important; }
+  .logline, .verdict, .logline.pending .tx::after { transition: none !important; animation: none !important; }
+  .meter__fill { transition: none !important; }
 }
 </style>
 </head>
-
 <body>
 
-<div class="container">
-  <h1>SECURE CONTACT INTAKE</h1>
-  <p>
-    Messages are processed through a protected review pipeline.
-    Submissions are manually verified before response.
-  </p>
+<div class="bg-fallback" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
 
-  <form id="contactForm">
-    <label>Full Name</label>
-    <input required placeholder="John Doe">
-
-    <label>Email Address</label>
-    <input type="email" required placeholder="you@domain.com">
-
-    <label>Reason for Contact</label>
-    <select required>
-      <option value="">Select…</option>
-      <option>General Inquiry</option>
-      <option>Security / Pentesting</option>
-      <option>Collaboration</option>
-      <option>Other</option>
-    </select>
-
-    <label>Message</label>
-    <textarea rows="5" required placeholder="Describe your request…"></textarea>
-
-    <button type="submit">SUBMIT FOR REVIEW</button>
-  </form>
-
-  <div id="status">
-    <div class="log">[+] Encrypting payload…</div>
-    <div class="log">[+] Validating submission…</div>
-    <div class="log">[+] Assigning case ID…</div>
-    <div class="success"></div>
+<main>
+  <div class="topbar">
+    <a class="brand" href="/" aria-label="SZVTECH home"><span class="brand__mark" aria-hidden="true"></span><span>SZVTECH</span></a>
+    <a class="back" href="/"><span class="ar" aria-hidden="true">&larr;</span><span>back to the noise</span></a>
   </div>
 
-  <div class="footer-note">
-    Unauthorized or malicious submissions are filtered automatically.
+  <div class="wrap">
+    <section class="panel" aria-labelledby="contact-title">
+      <p class="eyebrow">N&deg; &infin; &mdash; Transmission</p>
+      <h1 class="title" id="contact-title">Shout <span class="is-grad">into the void</span>.</h1>
+      <p class="lede">
+        This is a contact form that goes <b>absolutely nowhere</b> &mdash; on purpose, and with great production value.
+        Fill it out, hit transmit, and watch us pretend very hard. Nothing you type ever leaves this browser.
+      </p>
+
+      <form class="form" id="form" novalidate>
+        <div class="field">
+          <label for="callsign">Your callsign</label>
+          <input class="ctrl" id="callsign" name="callsign" type="text" placeholder="e.g. Captain Obvious" autocomplete="off" required>
+        </div>
+
+        <div class="field">
+          <label for="return">Return frequency <span class="hint">(we will not use it, promise)</span></label>
+          <input class="ctrl" id="return" name="return" type="text" placeholder="email, carrier pigeon, telepathy…" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="reason">Reason for contact</label>
+          <select class="ctrl" id="reason" name="reason" required>
+            <option value="" disabled selected>Choose your adventure…</option>
+            <option>I come in peace</option>
+            <option>I found a bug (and I will brag about it)</option>
+            <option>Business / mild world domination</option>
+            <option>Just here for the particles</option>
+            <option>I'm an AI and I'm legally required to disclose that</option>
+            <option>Wrong number, but I like the vibe</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="message">Your message</label>
+          <textarea class="ctrl" id="message" name="message" rows="5" placeholder="Pour your heart out. The void is an excellent listener." required></textarea>
+        </div>
+
+        <button class="submit" id="submit" type="submit">
+          <span class="ps" aria-hidden="true">&gt;_</span>
+          <span>Transmit into the void</span>
+          <span aria-hidden="true">&rarr;</span>
+        </button>
+      </form>
+
+      <p class="finenote">
+        <span class="k">[i]</span> Live demo &middot; zero backend &middot; nothing is sent, stored, or read.
+        This is a gag page. It will not reach a human. Delightfully useless by design.
+      </p>
+
+      <!-- fake routing console -->
+      <div class="console" id="console" aria-hidden="true">
+        <div class="console__bar">
+          <span class="console__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="console__name">void-transmit.exe &mdash; routing</span>
+        </div>
+        <div class="console__body" id="log"></div>
+      </div>
+
+      <!-- gag verdict -->
+      <div class="verdict" id="verdict" role="status" aria-live="polite">
+        <p class="eyebrow" style="margin-bottom:14px">Transmission complete</p>
+        <h2 class="verdict__big"><span class="em">&#10003;</span> <span class="is-grad">Launched into the void.</span></h2>
+        <p>Honestly? This form goes nowhere. But that was a <b style="color:var(--fg);font-weight:600">10 out of 10</b> effort and we respect it enormously.</p>
+
+        <div class="meter" aria-hidden="true">
+          <div class="meter__row"><span>Delivery confidence</span><span id="confPct">0%</span></div>
+          <div class="meter__track"><div class="meter__fill" id="meterFill"></div></div>
+        </div>
+
+        <div class="ticket">
+          <span class="lbl">Void ticket</span>
+          <span class="num" id="ticketNum">VOID-0000-XOXO</span>
+        </div>
+
+        <p>Want to <i>actually</i> reach a human? That part lives elsewhere &mdash; the void is not it. Go poke around the site; the good stuff hides in plain sight.</p>
+
+        <div class="verdict__actions">
+          <button class="btn-ghost" id="again" type="button"><span class="ps" aria-hidden="true">&#8635;</span><span>Send another into the abyss</span></button>
+          <a class="btn-ghost" href="/"><span class="ps" aria-hidden="true">&larr;</span><span>Back to the noise</span></a>
+        </div>
+      </div>
+
+      <p class="tally" id="tally">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Messages successfully delivered to nobody: <b id="tallyNum">0</b></span>
+      </p>
+    </section>
   </div>
-</div>
+
+  <footer class="foot">
+    <span>&copy; 2026 SZVTECH</span>
+    <span>transmission range: 0&nbsp;km &middot; recipients: none</span>
+  </footer>
+</main>
 
 <script>
-const form = document.getElementById("contactForm");
-const statusBox = document.getElementById("status");
-const successText = document.querySelector(".success");
+(function () {
+  'use strict';
+  var form = document.getElementById('form');
+  var submit = document.getElementById('submit');
+  var consoleEl = document.getElementById('console');
+  var log = document.getElementById('log');
+  var verdict = document.getElementById('verdict');
+  var againBtn = document.getElementById('again');
+  var ticketNum = document.getElementById('ticketNum');
+  var meterFill = document.getElementById('meterFill');
+  var confPct = document.getElementById('confPct');
+  var tallyNum = document.getElementById('tallyNum');
 
-form.addEventListener("submit", e => {
-  e.preventDefault();
-  form.style.display = "none";
-  statusBox.style.display = "block";
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var KEY = 'szv-void-tally';
 
-  setTimeout(() => {
-    const id = "CASE-" + Math.random().toString(36).substr(2, 8).toUpperCase();
-    successText.textContent =
-      "✔ Submission received. Reference ID: " + id +
-      ". A representative will reach out after review.";
-  }, 2800);
-});
+  // ---- local counter (trivial, no message content) ----
+  function readTally() {
+    try { var v = parseInt(localStorage.getItem(KEY) || '0', 10); return isNaN(v) ? 0 : v; }
+    catch (e) { return 0; }
+  }
+  function writeTally(n) {
+    try { localStorage.setItem(KEY, String(n)); } catch (e) {}
+  }
+  tallyNum.textContent = readTally();
+
+  // ---- playful routing steps ----
+  var STEPS = [
+    'establishing a connection to literally nowhere…',
+    'bouncing signal off 3 satellites (they were busy)…',
+    'encrypting your feelings with military-grade sincerity…',
+    'handing the note to a carrier pigeon named Gerald…',
+    'Gerald has eaten the note. deploying backup pigeon…',
+    'consulting the void. the void says "k"…'
+  ];
+
+  function makeTicket() {
+    var words = ['XOXO', 'OOPS', 'VIBE', 'POOF', 'NULL', 'YEET', 'ECHO', 'VOID', 'MEOW'];
+    var n = Math.floor(1000 + Math.random() * 9000);
+    var w = words[Math.floor(Math.random() * words.length)];
+    return 'VOID-' + n + '-' + w;
+  }
+
+  function addLine(text, cls) {
+    var row = document.createElement('div');
+    row.className = 'logline ' + (cls || '');
+    var px = document.createElement('span'); px.className = 'px'; px.textContent = '>';
+    var tx = document.createElement('span'); tx.className = 'tx'; tx.textContent = text;
+    row.appendChild(px); row.appendChild(tx);
+    log.appendChild(row);
+    // force reflow then reveal
+    requestAnimationFrame(function () { row.classList.add('in'); });
+    return row;
+  }
+
+  function reveal() {
+    verdict.classList.add('show');
+    ticketNum.textContent = makeTicket();
+    // tally
+    var n = readTally() + 1;
+    writeTally(n);
+    tallyNum.textContent = n;
+    // meter wiggles up then lands on 0%
+    if (reduceMotion) {
+      meterFill.style.width = '0%'; confPct.textContent = '0%';
+    } else {
+      meterFill.style.transition = 'width .7s ' + 'cubic-bezier(.16,1,.3,1)';
+      meterFill.style.width = '88%'; confPct.textContent = '88%';
+      setTimeout(function () {
+        meterFill.style.transition = 'width 1.1s cubic-bezier(.16,1,.3,1)';
+        meterFill.style.width = '0%'; confPct.textContent = '0%';
+      }, 900);
+    }
+    verdict.focus && verdict.setAttribute('tabindex', '-1');
+    verdict.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  }
+
+  function runSequence() {
+    log.innerHTML = '';
+    consoleEl.classList.add('show');
+    submit.disabled = true;
+
+    if (reduceMotion) {
+      // show all steps instantly, then verdict
+      for (var i = 0; i < STEPS.length; i++) {
+        var r = addLine(STEPS[i], 'done'); r.querySelector('.px').textContent = '✓';
+      }
+      reveal();
+      submit.disabled = false;
+      return;
+    }
+
+    var i = 0;
+    var current = null;
+    function next() {
+      if (current) { current.classList.remove('pending'); current.classList.add('done'); current.querySelector('.px').textContent = '✓'; }
+      if (i >= STEPS.length) {
+        setTimeout(reveal, 450);
+        submit.disabled = false;
+        return;
+      }
+      current = addLine(STEPS[i], 'pending');
+      i++;
+      setTimeout(next, 620 + Math.random() * 360);
+    }
+    next();
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    // lightweight required check so the joke only fires on a filled-ish form
+    var cs = document.getElementById('callsign');
+    var rs = document.getElementById('reason');
+    var msg = document.getElementById('message');
+    if (!cs.value.trim()) { cs.focus(); return; }
+    if (!rs.value) { rs.focus(); return; }
+    if (!msg.value.trim()) { msg.focus(); return; }
+
+    form.style.display = 'none';
+    verdict.classList.remove('show');
+    runSequence();
+  });
+
+  againBtn.addEventListener('click', function () {
+    verdict.classList.remove('show');
+    consoleEl.classList.remove('show');
+    log.innerHTML = '';
+    form.reset();
+    form.style.display = '';
+    document.getElementById('callsign').focus();
+    form.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  });
+})();
 </script>
 
 </body>
