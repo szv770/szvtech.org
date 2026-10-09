@@ -763,9 +763,15 @@ function initTilt() {
    and fed to `move`. Moving before the hold elapses is a scroll and is left to
    the browser untouched. With `axisX`, a clearly horizontal first move starts
    the drag immediately (vertical still scrolls). Two fingers -> `pinch`.
-   Mouse: press + move drags at once, press + release in place is a tap. */
+   Mouse: press + move drags at once, press + release in place is a tap.
+   Card surfaces (`card`) also: forgive more finger jitter (`slop`), never open
+   the long-press context / selection UI, and treat an Android `touchcancel`
+   that arrives during a hold (long-press detection) as a normal release.
+   `free`: an element (the cube's art) where a move in ANY direction starts
+   the drag at once — it is touch-action:none, so the browser never scrolls it. */
 function bindGesture(el, h, opt = {}) {
-  const HOLD = opt.hold === false ? 0 : (opt.hold ?? 200), SLOP = 9;
+  const HOLD = opt.hold === false ? 0 : (opt.hold ?? 200), SLOP = opt.slop ?? 9;
+  let inFree = false;
   let st = 0; // 0 idle, 1 pending, 2 dragging, 3 scrolling (browser owns it), 4 pinching
   let sx = 0, sy = 0, lx = 0, ly = 0, t0 = 0, tid = null, timer = 0, d0 = 1, moved = false, byTimer = false;
   const arm = (x, y, timed) => { st = 2; moved = false; byTimer = !!timed; clearTimeout(timer); root.classList.add('is-gesturing'); h.start && h.start(x, y); };
@@ -787,6 +793,7 @@ function bindGesture(el, h, opt = {}) {
     if (e.touches.length > 1 || st) return;
     const t = e.changedTouches[0];
     tid = t.identifier; sx = lx = t.clientX; sy = ly = t.clientY; t0 = e.timeStamp; st = 1;
+    inFree = !!(opt.free && opt.free.contains(e.target));
     h.down && h.down(sx, sy);
     if (HOLD) timer = setTimeout(() => { if (st === 1) arm(lx, ly, true); }, HOLD);
   }, { passive: true });
@@ -805,12 +812,15 @@ function bindGesture(el, h, opt = {}) {
     // happened earlier: trust the event's own timestamp and give it back to
     // the browser as a scroll.
     if (st === 2 && byTimer && !moved && e.timeStamp - t0 < HOLD - 20 && Math.hypot(x - sx, y - sy) > SLOP) {
-      root.classList.remove('is-gesturing'); h.end && h.end(true); st = 3; h.scroll && h.scroll(); return;
+      // ...unless this move would have started the drag anyway
+      const dx = x - sx, dy = y - sy;
+      if (e.cancelable && (inFree || (opt.axisX && Math.abs(dx) > Math.abs(dy) * 1.3))) byTimer = false;
+      else { root.classList.remove('is-gesturing'); h.end && h.end(true); st = 3; h.scroll && h.scroll(); return; }
     }
     if (st === 1) {
       const dx = x - sx, dy = y - sy;
       if (Math.hypot(dx, dy) > SLOP) {
-        if (opt.axisX && Math.abs(dx) > Math.abs(dy) * 1.3 && e.cancelable) arm(sx, sy);
+        if (((opt.axisX && Math.abs(dx) > Math.abs(dy) * 1.3) || inFree) && e.cancelable) arm(sx, sy);
         else { st = 3; clearTimeout(timer); h.scroll && h.scroll(); return; }
       }
     }
@@ -831,7 +841,20 @@ function bindGesture(el, h, opt = {}) {
     if (st === 1 && quick) { clearTimeout(timer); st = 0; h.tap && h.tap(sx, sy); h.up && h.up(); tid = null; return; }
     finish(false); h.up && h.up();
   });
-  el.addEventListener('touchcancel', () => { finish(true); h.up && h.up(); });
+  el.addEventListener('touchcancel', (e) => {
+    // Android can cancel a still finger once its long-press detector fires.
+    // On a card that is just "the hold ended": finish it, don't abort it.
+    if (opt.card && (st === 1 || st === 2) && e.timeStamp - t0 < 8000) {
+      if (st === 1) { clearTimeout(timer); st = 0; tid = null; if (!HOLD || e.timeStamp - t0 < 450) h.tap && h.tap(sx, sy); h.up && h.up(); return; }
+      finish(false); h.up && h.up(); return;
+    }
+    finish(true); h.up && h.up();
+  });
+  if (opt.card) {
+    // a long press must never open the selection / context UI on a card
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+    el.addEventListener('selectstart', (e) => e.preventDefault());
+  }
 
   // mouse (and pen): immediate drag, click = tap
   el.addEventListener('pointerdown', (e) => {
@@ -958,6 +981,27 @@ function palette(now) {
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const touched = (art) => { art.classList.add('was-touched'); art.dataset.hits = (+art.dataset.hits || 0) + 1; };
 const localXY = (el, x, y) => { const r = el.getBoundingClientRect(); return [x - r.left, y - r.top]; };
+/* On touch the WHOLE card is the touch surface (finger anywhere on the glass
+   plays that card's art); on desktop the mouse plays the art box as before.
+   Handlers still get client coordinates; cards map them into the art's space.
+   Every tap / hold also drops a small glow pulse right under the finger. */
+function cardGesture(art, h, opt = {}) {
+  const inner = art.closest('.card__in') || art;
+  const surf = COARSE ? inner : art;
+  const ping = (x, y, hold) => {
+    const [px, py] = localXY(inner, x, y);
+    const p = mk('i', 'card__ping' + (hold ? ' is-hold' : '') + (RM ? ' is-calm' : ''));
+    p.style.left = px.toFixed(1) + 'px'; p.style.top = py.toFixed(1) + 'px';
+    p.addEventListener('animationend', () => p.remove(), { once: true });
+    setTimeout(() => p.remove(), 1600); // in case animations are off entirely
+    inner.append(p);
+  };
+  bindGesture(surf, {
+    ...h,
+    tap(x, y) { ping(x, y, false); h.tap && h.tap(x, y); },
+    start(x, y) { ping(x, y, true); h.start && h.start(x, y); },
+  }, { ...opt, slop: COARSE ? 12 : 9, card: COARSE });
+}
 function fitCanvas(cv, art, onSize) {
   const ctx = cv.getContext('2d');
   const dpr = Math.min(devicePixelRatio || 1, COARSE ? 1.5 : 2);
@@ -985,15 +1029,15 @@ function orbitCard(art) {
   let lastTrail = -1;
   const settle = (d) => gsap.to(st, { boost: 1, trail: idleTrail, duration: d, ease: 'power3.out', overwrite: 'auto' });
   const pop = () => gsap.fromTo(st, { sun: RM ? 1.35 : 1.9 }, { sun: 1, duration: 1.3, ease: RM ? 'power2.out' : 'elastic.out(1, .35)', overwrite: 'auto' });
-  bindGesture(art, {
+  cardGesture(art, {
     tap() {
       touched(art);
       gsap.timeline()
-        .to(st, { boost: RM ? 4 : 10, trail: 1, duration: .22, ease: 'power2.out', overwrite: 'auto' })
+        .to(st, { boost: RM ? 7 : 10, trail: 1, duration: .22, ease: 'power2.out', overwrite: 'auto' })
         .add(() => settle(2.6), '+=.35');
       pop();
     },
-    start() { touched(art); gsap.to(st, { boost: RM ? 5 : 14, trail: 1, duration: 1, ease: 'power2.in', overwrite: 'auto' }); },
+    start() { touched(art); gsap.to(st, { boost: RM ? 8 : 14, trail: 1, duration: 1, ease: 'power2.in', overwrite: 'auto' }); },
     end() { settle(2.8); pop(); },
   }, { hold: 220 });
   return {
@@ -1038,11 +1082,13 @@ function gridCard(art) {
     ripple(x, y, RM ? 2.6 : 3.4);
     rings.push({ x, y, age: 0 }); if (rings.length > 4) rings.shift();
   };
-  const point = (x, y) => { const [lx, ly] = localXY(art, x, y); ptr.x = lx; ptr.y = ly; ptr.on = true; trail.push({ x: lx, y: ly, t: clock }); if (trail.length > 40) trail.shift(); };
-  bindGesture(art, {
-    down(x, y) { const [lx, ly] = localXY(art, x, y); ptr.x = lx; ptr.y = ly; ptr.on = true; },
+  // finger anywhere on the card -> nearest point inside the dot field
+  const lxy = (x, y) => { const [lx, ly] = localXY(art, x, y); return [clamp(lx, 0, sz.w || art.clientWidth), clamp(ly, 0, sz.h || art.clientHeight)]; };
+  const point = (x, y) => { const [lx, ly] = lxy(x, y); ptr.x = lx; ptr.y = ly; ptr.on = true; trail.push({ x: lx, y: ly, t: clock }); if (trail.length > 40) trail.shift(); };
+  cardGesture(art, {
+    down(x, y) { const [lx, ly] = lxy(x, y); ptr.x = lx; ptr.y = ly; ptr.on = true; },
     scroll() { ptr.on = false; },
-    tap(x, y) { const [lx, ly] = localXY(art, x, y); slam(lx, ly); touched(art); },
+    tap(x, y) { const [lx, ly] = lxy(x, y); slam(lx, ly); touched(art); },
     start(x, y) { point(x, y); touched(art); },
     move(x, y) { point(x, y); },
     up() { if (!FINE) ptr.on = false; },
@@ -1127,24 +1173,34 @@ function gridCard(art) {
 function cubeCard(art) {
   const cube = $('.cube', art);
   const BASE = RM ? 12 : 36; // deg/s
-  let rx = -24, ry = 20, vx = 0, vy = BASE, dragging = false, lt = 0;
-  bindGesture(art, {
-    start() { dragging = true; vx = vy = 0; lt = performance.now(); art.classList.add('is-dragging'); touched(art); },
+  let rx = -24, ry = 20, vx = 0, vy = BASE, dragging = false, lt = 0, dragged = 0;
+  const SENS = COARSE ? .8 : .6; // deg per px — a finger should feel it turn
+  const explode = () => {
+    touched(art);
+    vy += RM ? 120 : 420;
+    cube.classList.add('is-hot');
+    gsap.timeline({ onComplete: () => cube.classList.remove('is-hot') })
+      .to(cube, { '--ex': RM ? .6 : 1, duration: .42, ease: 'back.out(2)', overwrite: 'auto' })
+      .to(cube, { '--ex': 0, duration: 1.4, ease: RM ? 'power2.out' : 'elastic.out(1, .4)' }, '+=.45');
+  };
+  /* Touch: a drag that starts ON the cube's art turns it at once, in both
+     axes (that box is touch-action:none). From the card's text, a sideways
+     swipe or a hold-then-drag turns it; a vertical swipe there scrolls. */
+  cardGesture(art, {
+    start() { dragging = true; dragged = 0; vx = vy = 0; lt = performance.now(); art.classList.add('is-dragging'); touched(art); },
     move(x, y, dx, dy) {
       const now = performance.now(), d = Math.max(8, now - lt) / 1000; lt = now;
-      ry += dx * .6; rx = clamp(rx - dy * .6, -85, 85);
-      vy = clamp(dx * .6 / d, -900, 900); vx = clamp(-dy * .6 / d, -600, 600);
+      dragged += Math.abs(dx) + Math.abs(dy);
+      ry += dx * SENS; rx = clamp(rx - dy * SENS, -85, 85);
+      vy = clamp(dx * SENS / d, -900, 900); vx = clamp(-dy * SENS / d, -600, 600);
     },
-    end() { dragging = false; art.classList.remove('is-dragging'); if (performance.now() - lt > 90) { vx = 0; vy = BASE; } },
-    tap() {
-      touched(art);
-      vy += RM ? 90 : 420;
-      cube.classList.add('is-hot');
-      gsap.timeline({ onComplete: () => cube.classList.remove('is-hot') })
-        .to(cube, { '--ex': RM ? .55 : 1, duration: .42, ease: 'back.out(2)', overwrite: 'auto' })
-        .to(cube, { '--ex': 0, duration: 1.4, ease: RM ? 'power2.out' : 'elastic.out(1, .4)' }, '+=.45');
+    end(cancelled) {
+      dragging = false; art.classList.remove('is-dragging');
+      if (!cancelled && dragged < 6) { vx = 0; vy = BASE; explode(); return; } // a hold without a drag = explode too
+      if (performance.now() - lt > 90) { vx = 0; vy = BASE; }
     },
-  }, { axisX: true });
+    tap: explode,
+  }, { axisX: true, free: COARSE ? art : null });
   return {
     tick(t, dt) {
       if (!dragging) {
@@ -1166,7 +1222,7 @@ function barsCard(art) {
   const measure = () => { centers = bars.map((b) => { const r = b.getBoundingClientRect(); return r.left + r.width / 2; }); };
   const idxAt = (x) => { measure(); let bi = 0, bd = 1e9; centers.forEach((c, i) => { const d = Math.abs(c - x); if (d < bd) { bd = d; bi = i; } }); return bi; };
   const beat = (o, amp) => { beats.push({ o, age: 0, amp }); if (beats.length > 8) beats.shift(); };
-  bindGesture(art, {
+  cardGesture(art, {
     tap(x) { beat(idxAt(x), 1); touched(art); },
     start(x) { finger = idxAt(x); beat(finger, .8); touched(art); },
     move(x) { const i = idxAt(x); if (i !== finger) { finger = i; beat(i, .7); } },
@@ -1238,7 +1294,8 @@ function blobCard(art) {
     if (phase === 'idle') go('order');
     else if (phase === 'chaos') scatter(false);
   };
-  bindGesture(art, { tap: run }, { hold: false });
+  // tap = run; a long press runs it as soon as the hold registers (200ms)
+  cardGesture(art, { tap: run, start: run }, { hold: 200 });
   const D = { order: .6, chaos: RM ? 1.6 : 1.3, better: RM ? 2.6 : 2.4, melt: 1.1 };
   const eio = (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
   return {
