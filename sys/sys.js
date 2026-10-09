@@ -17,7 +17,19 @@
   const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
   const mk = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const sleep = (ms) => new Promise((r) => setTimeout(r, RM ? Math.min(ms, 40) : ms));
+  // Same deliberate pace on every device and under reduced motion: these delays
+  // are storytelling (log lines, progress bars), not vestibular motion.
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const COARSE = matchMedia('(pointer: coarse)').matches;
+  // short haptic pulse on Android; no-op on iOS/desktop; never under reduced motion
+  const buzz = (pattern) => { if (RM) return; try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* ignore */ } };
+  // keep the newest line on screen (phones: output can sit below the fold)
+  const keepVisible = (el) => {
+    try {
+      const r = el.getBoundingClientRect(), vh = innerHeight || document.documentElement.clientHeight;
+      if (r.bottom > vh - 12 || r.top < 0) el.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'nearest' });
+    } catch (e) { /* ignore */ }
+  };
   const rint = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
 
   /* ---- state (never leaves this tab, never stored) ---- */
@@ -83,7 +95,7 @@
   const gate = $('#gate'), gout = $('#gateOut');
   let authing = false;
 
-  function gline(html, cls = '') { const d = mk('div', 'ln ' + cls, html); gout.append(d); return d; }
+  function gline(html, cls = '') { const d = mk('div', 'ln ' + cls, html); gout.append(d); keepVisible(d); return d; }
 
   $('#sqlBtn').addEventListener('click', () => {
     $('#user').value = "admin'--";
@@ -121,7 +133,7 @@
       const prog = mk('div', 'bar', '<i></i>'); bar.append(prog);
       const words = ['hunter2', 'letmein', 'P@ssw0rd', 'correct-horse', 'swordfish', 'root'];
       for (let i = 1; i <= 24; i++) {
-        await sleep(RM ? 8 : 70);
+        await sleep(70);
         prog.firstChild.style.width = (i / 24 * 100) + '%';
         if (i % 4 === 0) gline(`try <span class="dim">${words[(i / 4 | 0) % words.length]}</span> … ${i < 24 ? 'nope' : '<span class="ok">hit</span>'}`);
       }
@@ -130,7 +142,7 @@
     }
     await sleep(520);
     gline('<span class="c2">&rsaquo;</span> dropping you at the console…');
-    await sleep(RM ? 120 : 760);
+    await sleep(760);
     enterConsole();
   }
 
@@ -323,7 +335,7 @@
     const area = $('#decArea');
     const bar = mk('div', 'bar', '<i></i>'); area.append(bar);
     for (let i = 1; i <= 20; i++) {
-      await sleep(RM ? 8 : 90);
+      await sleep(90);
       bar.firstChild.style.width = (i * 5) + '%';
     }
     const extra = mk('div', '', `\n<span class="err">decryption failed at 100% (classic).</span>\n<span class="dim">turns out there was nothing inside. just this message, and a shrug.</span>\n<span class="warn">¯\\_(ツ)_/¯</span>`);
@@ -379,7 +391,7 @@
       if (tick === 9) leak(addLog); // leak after a bit of watching
     };
     clearInterval(logTimer);
-    logTimer = setInterval(run, RM ? 1400 : 900);
+    logTimer = setInterval(run, 900);
     v.querySelector('#pauseLog').addEventListener('click', (e) => {
       state.logPaused = !state.logPaused; e.target.textContent = state.logPaused ? 'resume' : 'pause';
     });
@@ -447,7 +459,7 @@
     await sleep(350); pr(`B <span class="ok">${esc(FRAG.B)}</span>`);
     await sleep(350); pr(`C <span class="ok">${esc(FRAG.C)}</span>`);
     await sleep(500); pr('<span class="grad">key assembled. opening the master vault…</span>');
-    await sleep(RM ? 150 : 900); openVault();
+    await sleep(900); openVault();
   }
 
   /* -------- VAULT -------- */
@@ -479,10 +491,12 @@
       <div class="vaultlock__bar bar"><i></i></div>
       <p class="vsub" id="unsealMsg" style="margin:8px auto 0">reticulating splines…</p>
     </div></div></section>`;
+    try { main.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' }); } catch (e) { /* ignore */ }
     const bar = $('#unseal .bar>i'), msg = $('#unsealMsg');
     const steps = ['decrypting layer 7/7…', 'bypassing final HMAC…', 'verifying master key…', 'opening…', 'wait…'];
-    for (let i = 1; i <= 20; i++) { await sleep(RM ? 10 : 110); bar.style.width = (i * 5) + '%'; if (i % 4 === 0) msg.textContent = steps[(i / 4 | 0) - 1]; }
-    await sleep(RM ? 150 : 700);
+    for (let i = 1; i <= 20; i++) { await sleep(110); bar.style.width = (i * 5) + '%'; if (i % 4 === 0) msg.textContent = steps[(i / 4 | 0) - 1]; }
+    buzz([60, 80, 60, 80, 160]);
+    await sleep(700);
     showEnding();
   }
 
@@ -521,5 +535,6 @@
   }
 
   /* boot: focus operator field */
-  const uf = $('#user'); if (uf) setTimeout(() => uf.focus(), 400);
+  // (not on touch: a programmatic focus would pop the keyboard / jump the page)
+  const uf = $('#user'); if (uf && !COARSE) setTimeout(() => uf.focus(), 400);
 })();

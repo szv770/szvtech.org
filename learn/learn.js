@@ -13,6 +13,8 @@ const reduced = () => RMQ.matches;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const TOUCH = matchMedia('(hover: none), (pointer: coarse)').matches;
 const MOBILE = matchMedia('(max-width: 900px)');
+// short haptic pulse on Android; no-op on iOS/desktop; never under reduced motion
+const buzz = (pattern) => { if (reduced()) return; try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* ignore */ } };
 const pad2 = (n) => String(n).padStart(2, '0');
 const num = (n) => Number(n).toLocaleString('en-US');
 
@@ -250,7 +252,7 @@ const tmpDiv = doc.createElement('div');
 const strip = (html) => { tmpDiv.innerHTML = html; return tmpDiv.textContent; };
 function addLine(html, cls) {
   const d = doc.createElement('div');
-  d.className = 'tl' + (cls ? ' ' + cls : '') + (reduced() ? '' : ' in');
+  d.className = 'tl' + (cls ? ' ' + cls : '') + ' in'; // reduced motion: CSS turns this into a plain fade
   d.innerHTML = html;
   out.appendChild(d);
   while (out.childElementCount > 800) out.firstElementChild.remove();
@@ -434,7 +436,7 @@ def(['tree'], {
     for (const l of out1) {
       if (abort) return;
       ph(l);
-      if (!cap && !reduced()) await sleep(24);
+      if (!cap) await sleep(24);
     }
     const inPotential = under(w.segs, [...HOME, 'potential']) || under(cwd, [...HOME, 'potential']);
     if (grow || inPotential) { await growTree(); S.flags.grew = true; }
@@ -1496,9 +1498,9 @@ async function submit(line) {
 async function typeAndRun(cmd) {
   if (busy || booting) return;
   input.value = '';
-  if (!reduced()) for (let i = 1; i <= cmd.length; i++) { input.value = cmd.slice(0, i); input.setSelectionRange(i, i); renderInput(); await sleep(cmd.length > 24 ? 9 : 22); }
+  for (let i = 1; i <= cmd.length; i++) { input.value = cmd.slice(0, i); input.setSelectionRange(i, i); renderInput(); await sleep(cmd.length > 24 ? 9 : 22); }
   input.value = cmd; renderInput();
-  await sleep(reduced() ? 0 : 90);
+  await sleep(90);
   await submit(cmd);
   if (!TOUCH) input.focus({ preventScroll: true });
 }
@@ -1597,13 +1599,13 @@ async function growTree() {
   const pre = doc.createElement('pre');
   pre.className = 't-art'; pre.setAttribute('role', 'img'); pre.setAttribute('aria-label', 'ASCII art: a tree grows from a tiny seed');
   out.appendChild(pre);
-  if (!reduced()) {
+  { // ASCII frames are text, not vestibular motion: plays under reduced motion too
     const N = 44;
     for (let i = 0; i <= N; i++) { if (abort) break; pre.innerHTML = treeFrame(i / N, false); scrollDown(); await sleep(i < 6 ? 140 : 52); }
     await sleep(160);
   }
   pre.innerHTML = treeFrame(1, true); scrollDown();
-  if (!reduced()) await sleep(260);
+  await sleep(260);
   ph('<span class="grad">Everything big started as something small.</span>', 'wisdom');
 }
 
@@ -1733,6 +1735,7 @@ function showNextBadge() {
   $('#unIcon').textContent = b.icon; $('#unName').textContent = b.name; $('#unDesc').textContent = b.desc;
   u.classList.remove('is-out', 'is-on'); void u.offsetWidth; u.classList.add('is-on');
   chime('badge');
+  buzz([35, 55, 70]);
   setTimeout(() => { const r = $('.unlock__ring').getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, 70); }, 260);
   const hold = badgeQueue.length ? 1700 : 2500;
   setTimeout(() => { u.classList.remove('is-on'); u.classList.add('is-out'); }, hold);
@@ -1925,6 +1928,7 @@ async function boot() {
   const el = $('#bootLines'), bootEl = $('#boot');
   $('#bootDay p').textContent = LINE_OF_DAY;
   if (!booting) return;
+  if (TOUCH) { const sk = $('.boot__skip'); if (sk) sk.textContent = 'tap to skip'; }
   let skip = false;
   const onSkip = (e) => { if (e.type === 'keydown' && (e.ctrlKey || e.metaKey || e.key === 'Tab')) return; skip = true; };
   addEventListener('keydown', onSkip, true); addEventListener('pointerdown', onSkip, true);
@@ -1940,7 +1944,7 @@ async function boot() {
     'starting training terminal\u2026',
   ];
   let html = '';
-  for (const l of L) { if (skip) break; html += l + '\n'; el.innerHTML = html; await sleep(reduced() ? 20 : 72 + Math.random() * 30); }
+  for (const l of L) { if (skip) break; html += l + '\n'; el.innerHTML = html; await sleep(72 + Math.random() * 30); } // same pace under reduced motion
   if (!skip) {
     $('#bootDay').classList.add('is-on');
     const t0 = performance.now();
@@ -1976,7 +1980,7 @@ async function welcome() {
     ls.push([`Type a command and press Enter. Your first mission is ${MOBILE.matches ? 'right above the terminal' : 'on the right'}. Stuck? Type ${k('hint')}.`]);
   }
   ls.push(['']);
-  for (const [h] of ls) { addLine(h); if (!reduced()) await sleep(45); }
+  for (const [h] of ls) { addLine(h); await sleep(45); }
 }
 
 async function start() {
