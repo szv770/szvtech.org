@@ -301,3 +301,6 @@ td.mono{font-family:var(--f-mono);color:var(--muted)}
   .scan{display:none}
   .live{animation:none}
 }
+
+/* iOS: inputs under 16px trigger page zoom on focus */
+@media (max-width:860px),(pointer:coarse){.field__i.mono{font-size:16px}}

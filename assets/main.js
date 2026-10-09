@@ -6,6 +6,10 @@
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
 const MOBILE = matchMedia('(max-width: 767px)').matches;
+/* Touch devices: no hover + coarse pointer. Drives native scrolling, lighter
+   particle budget and the vertical card layout. */
+const COARSE = matchMedia('(hover: none) and (pointer: coarse)').matches;
+const LOWPOWER = (navigator.deviceMemory || 4) <= 4 || (navigator.hardwareConcurrency || 8) <= 4;
 const root = document.documentElement;
 const $ = (s, c = document) => c.querySelector(s);
 const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
@@ -267,7 +271,10 @@ async function initGL() {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: 'high-performance', premultipliedAlpha: true });
   } catch (e) { return noGL(e.message); }
 
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  // Cap the pixel ratio hard on phones — the retina backing store is the single
+  // biggest cost on mobile GPUs. 1.5 on dense screens, 1.0 on low-power devices.
+  const DPR_CAP = COARSE ? (LOWPOWER ? 1.25 : 1.5) : 2;
+  const DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
   renderer.setPixelRatio(DPR);
   renderer.setSize(innerWidth, innerHeight, false);
   renderer.setClearColor(0x000000, 0);
@@ -276,7 +283,9 @@ async function initGL() {
   const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, .1, 200);
   camera.position.set(0, 0, Z0);
 
-  const N = MOBILE ? 9000 : 20000;
+  // Fewer particles on touch devices (and fewer still on weak ones) keeps the
+  // scrub-heavy morph/pin sections at frame rate.
+  const N = COARSE ? (LOWPOWER ? 4800 : 7000) : (MOBILE ? 9000 : 20000);
   const sh = buildShapes(N);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(sh.sphere, 3));
@@ -452,7 +461,10 @@ function initScramble() {
 /* Scroll choreography                                                         */
 /* -------------------------------------------------------------------------- */
 function initLenis() {
-  if (RM || !window.Lenis) return;
+  // On touch, Lenis fights the browser's own momentum + address-bar hide/show,
+  // which feels laggy and rubber-bandy. Use native scrolling there instead;
+  // ScrollTrigger falls back to the real scroll position automatically.
+  if (RM || COARSE || !window.Lenis) return;
   lenis = new window.Lenis({ lerp: .09, smoothWheel: true, wheelMultiplier: 1, touchMultiplier: 1.4 });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((t) => lenis.raf(t * 1000));
@@ -472,7 +484,12 @@ function initScroll() {
   // progress bar
   const bar = $('.progress span');
   const nav = $('.nav');
-  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: (s) => { bar.style.transform = `scaleX(${s.progress})`; nav.classList.toggle('is-scrolled', s.scroll() > 40); } });
+  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: (s) => {
+    bar.style.transform = `scaleX(${s.progress})`;
+    nav.classList.toggle('is-scrolled', s.scroll() > 40);
+    // past the hero: mobile CSS gives the header a blurred backdrop (no-op on desktop)
+    nav.classList.toggle('is-solid', s.scroll() > innerHeight * .7);
+  } });
 
   // hero exit parallax
   gsap.timeline({ scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } })
@@ -540,8 +557,10 @@ function initScroll() {
 
   // ---------- kinetic type ----------
   if (!RM) {
-    gsap.fromTo('.k1 > span', { xPercent: -45 }, { xPercent: 12, ease: 'none', scrollTrigger: { trigger: '.k1', start: 'top bottom', end: 'bottom top', scrub: true } });
-    gsap.fromTo('.k2 > span', { xPercent: 40 }, { xPercent: -10, ease: 'none', scrollTrigger: { trigger: '.k2', start: 'top bottom', end: 'bottom top', scrub: true } });
+    // Gentler horizontal drift on narrow screens so full words stay readable.
+    const kx = MOBILE ? .28 : 1;
+    gsap.fromTo('.k1 > span', { xPercent: -45 * kx }, { xPercent: 12 * kx, ease: 'none', scrollTrigger: { trigger: '.k1', start: 'top bottom', end: 'bottom top', scrub: true } });
+    gsap.fromTo('.k2 > span', { xPercent: 40 * kx }, { xPercent: -10 * kx, ease: 'none', scrollTrigger: { trigger: '.k2', start: 'top bottom', end: 'bottom top', scrub: true } });
     const k3 = splitText($('.k3__txt'), 'chars');
     const mid = (k3.length - 1) / 2;
     gsap.fromTo(k3, {
@@ -555,25 +574,36 @@ function initScroll() {
   }
 
   // ---------- pinned horizontal ----------
-  const track = $('.horiz__track');
-  const dist = () => Math.max(0, track.scrollWidth - innerWidth);
-  const hBar = $('.horiz__progress span');
-  const hTween = gsap.to(track, {
-    x: () => -dist(), ease: 'none',
-    scrollTrigger: {
-      trigger: '.horiz', start: 'top top', end: () => '+=' + dist(), pin: true, scrub: 1, invalidateOnRefresh: true, anticipatePin: 1,
-      onUpdate: (s) => { hBar.style.transform = `scaleX(${s.progress})`; },
-    },
-  });
-  if (!RM) {
-    $$('.card').forEach((card) => {
-      gsap.fromTo(card.querySelector('.card__art'), { xPercent: 10 }, {
-        xPercent: -10, ease: 'none',
-        scrollTrigger: { trigger: card, containerAnimation: hTween, start: 'left right', end: 'right left', scrub: true },
+  // On touch devices the horizontal pin fights the finger; the CSS lays the
+  // cards out as a vertical glass stack instead, and we give each a soft reveal.
+  if (!COARSE) {
+    const track = $('.horiz__track');
+    const dist = () => Math.max(0, track.scrollWidth - innerWidth);
+    const hBar = $('.horiz__progress span');
+    const hTween = gsap.to(track, {
+      x: () => -dist(), ease: 'none',
+      scrollTrigger: {
+        trigger: '.horiz', start: 'top top', end: () => '+=' + dist(), pin: true, scrub: 1, invalidateOnRefresh: true, anticipatePin: 1,
+        onUpdate: (s) => { hBar.style.transform = `scaleX(${s.progress})`; },
+      },
+    });
+    if (!RM) {
+      $$('.card').forEach((card) => {
+        gsap.fromTo(card.querySelector('.card__art'), { xPercent: 10 }, {
+          xPercent: -10, ease: 'none',
+          scrollTrigger: { trigger: card, containerAnimation: hTween, start: 'left right', end: 'right left', scrub: true },
+        });
+        gsap.fromTo(card, { rotateY: MOBILE ? 0 : -16, opacity: .25 }, {
+          rotateY: 0, opacity: 1, ease: 'power2.out', transformPerspective: 1200, transformOrigin: '0% 50%',
+          scrollTrigger: { trigger: card, containerAnimation: hTween, start: 'left 105%', end: 'left 55%', scrub: true },
+        });
       });
-      gsap.fromTo(card, { rotateY: MOBILE ? 0 : -16, opacity: .25 }, {
-        rotateY: 0, opacity: 1, ease: 'power2.out', transformPerspective: 1200, transformOrigin: '0% 50%',
-        scrollTrigger: { trigger: card, containerAnimation: hTween, start: 'left 105%', end: 'left 55%', scrub: true },
+    }
+  } else if (!RM) {
+    $$('.card').forEach((card) => {
+      gsap.from(card, {
+        y: 44, opacity: 0, duration: 1, ease: 'expo.out',
+        scrollTrigger: { trigger: card, start: 'top 88%', once: true },
       });
     });
   }
@@ -1233,7 +1263,7 @@ function initLearn() {
       scrollTrigger: { trigger: '.learn__stage', start: 'top bottom', end: 'center 58%', scrub: 1 },
     });
     gsap.fromTo('.learn__bg span', { xPercent: 12 }, { xPercent: -18, ease: 'none', scrollTrigger: { trigger: sec, start: 'top bottom', end: 'bottom top', scrub: true } });
-    ScrollTrigger.create({ trigger: '.lterm', start: 'top 72%', once: true, onEnter: () => LearnDemo.play() });
+    ScrollTrigger.create({ trigger: '.lterm', start: COARSE ? 'top 88%' : 'top 72%', once: true, onEnter: () => LearnDemo.play() });
   }
   // spotlight + subtle tilt on the window
   const lt = $('.lterm');
@@ -1261,6 +1291,70 @@ function unlockLearn() {
     setTimeout(() => warp(1.2), 350);
   }
   setTimeout(() => { window.location.href = LEARN_URL; }, RM ? 700 : 1500);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mobile nav: burger -> full-screen overlay menu                              */
+/* -------------------------------------------------------------------------- */
+function initNav() {
+  const burger = $('.nav__burger'), menu = $('#menu');
+  if (!burger || !menu) return;
+  let openM = false;
+  const setOpen = (v) => {
+    openM = v;
+    root.classList.toggle('menu-open', v);
+    burger.setAttribute('aria-expanded', v ? 'true' : 'false');
+    burger.setAttribute('aria-label', v ? 'Close menu' : 'Open menu');
+    menu.setAttribute('aria-hidden', v ? 'false' : 'true');
+    if (lenis) { v ? lenis.stop() : (document.body.classList.contains('is-loading') || lenis.start()); }
+  };
+  burger.addEventListener('click', () => setOpen(!openM));
+  // Section links: close the overlay, then the shared [data-goto] handler scrolls.
+  $$('[data-menu]').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  // Tap on empty overlay space (not a link) closes it too.
+  menu.addEventListener('click', (e) => { if (!e.target.closest('a')) setOpen(false); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && openM) setOpen(false); });
+}
+
+/* Touch affordance for the hidden terminal (phones can't press backtick). */
+function initTermFab() {
+  const fab = $('.term-fab');
+  if (!fab || !COARSE) return; // desktop keeps the ` / Ctrl+K shortcut
+  fab.hidden = false;
+  fab.addEventListener('click', () => Term.toggle());
+  const tap = $('.foot__tap');
+  if (tap) tap.addEventListener('click', () => Term.show());
+
+  // Visible on the hero and whenever the user scrolls back up (the "looking
+  // for something" gesture). Tucked away while reading downwards so it never
+  // sits on content, and near the footer, which has its own "tap >_" button.
+  const foot = $('.foot');
+  const nearFoot = () => !!foot && foot.getBoundingClientRect().top < innerHeight - 24;
+  let lastY = scrollY, queued = false;
+  const update = () => {
+    queued = false;
+    const y = scrollY, dy = y - lastY;
+    lastY = y;
+    if (nearFoot()) fab.classList.add('is-tucked');
+    else if (y < innerHeight * .5) fab.classList.remove('is-tucked');
+    else if (dy > 3) fab.classList.add('is-tucked');
+    else if (dy < -6) fab.classList.remove('is-tucked');
+  };
+  addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true });
+
+  // Keep the terminal inside the *visible* viewport when the keyboard opens.
+  const vv = window.visualViewport;
+  if (vv) {
+    const tb = $('.term__body');
+    const fit = () => {
+      root.style.setProperty('--vvh', vv.height + 'px');
+      root.style.setProperty('--vvt', vv.offsetTop + 'px');
+      if (Term.open && tb) requestAnimationFrame(() => { tb.scrollTop = tb.scrollHeight; });
+    };
+    vv.addEventListener('resize', fit);
+    vv.addEventListener('scroll', fit);
+    fit();
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1339,6 +1433,8 @@ async function boot() {
     root.classList.add('no-gsap');
     document.body.classList.remove('is-loading');
     initKeysFallback();
+    initNav();
+    initTermFab();
     LearnDemo.final();
     return;
   }
@@ -1354,6 +1450,8 @@ async function boot() {
   initTilt();
   initBands();
   initKeys();
+  initNav();
+  initTermFab();
   initWordmark();
   $$('[data-goto]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); goto(a.dataset.goto); }));
 

@@ -53,7 +53,24 @@
     <a href="#learn" data-goto="#learn" class="nav__learn"><span class="mono">05</span><span data-scramble>Learn</span><i class="nav__new" aria-hidden="true"></i></a>
   </nav>
   <div class="nav__time mono"><span class="live-dot"></span><span id="clock">--:--:--</span></div>
+  <button class="nav__burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
 </header>
+
+<!-- Mobile menu overlay -->
+<div class="menu" id="menu" aria-hidden="true">
+  <div class="menu__inner">
+    <nav class="menu__nav" aria-label="Sections">
+      <a href="#morph" data-goto="#morph" data-menu><span class="mono">01</span><span>Morph</span></a>
+      <a href="#type" data-goto="#type" data-menu><span class="mono">02</span><span>Kinetic</span></a>
+      <a href="#obsessions" data-goto="#obsessions" data-menu><span class="mono">03</span><span>Obsessions</span></a>
+      <a href="#numbers" data-goto="#numbers" data-menu><span class="mono">04</span><span>Numbers</span></a>
+      <a href="/learn/" class="menu__learn" data-menu><span class="mono">05</span><span>Learn</span><i class="nav__new" aria-hidden="true"></i></a>
+    </nav>
+    <div class="menu__foot mono">
+      <span class="live-dot"></span><span>Private playground &mdash; N&deg; 001</span>
+    </div>
+  </div>
+</div>
 
 <main id="top">
 
@@ -130,8 +147,8 @@
       <div class="horiz__intro">
         <span class="label mono">(03) Obsessions</span>
         <h2 class="h2 split-words">Five things we can&rsquo;t stop thinking about.</h2>
-        <p class="muted">Keep scrolling &mdash; the page turns sideways. Hover the glass.</p>
-        <div class="horiz__arrow mono">&rarr;</div>
+        <p class="muted"><span class="only-touch">Swipe through five pieces of glass &mdash; tap one to light it up.</span><span class="only-fine">Keep scrolling &mdash; the page turns sideways. Hover the glass.</span></p>
+        <div class="horiz__arrow mono"><span class="only-fine">&rarr;</span><span class="only-touch">&darr;</span></div>
       </div>
 
       <article class="card" data-tilt data-cursor="Tilt">
@@ -262,12 +279,15 @@
   <footer class="foot">
     <span class="mono">&copy; 2026 SZVTECH</span>
     <span class="foot__mid">
-      <span class="foot__hint mono">press <kbd>`</kbd> to talk to the machine</span>
+      <span class="foot__hint mono"><span class="only-fine">press <kbd>`</kbd></span><span class="only-touch">tap <button class="foot__tap" type="button" aria-label="Open the machine"><kbd>&gt;_</kbd></button></span> to talk to the machine</span>
       <a class="foot__learn mono" href="/learn/" aria-label="Open the training terminal"><span class="foot__ps" aria-hidden="true">C:\&gt;</span><span data-scramble>cd learn</span><i class="foot__caret" aria-hidden="true"></i></a>
     </span>
     <span class="mono foot__clock">Local <span id="clock2">--:--</span></span>
   </footer>
 </main>
+
+<!-- Touch affordance to open the hidden terminal -->
+<button class="term-fab mono" type="button" aria-label="Open the machine" hidden><span aria-hidden="true">&gt;_</span></button>
 
 <!-- Hidden terminal -->
 <div class="term-backdrop" aria-hidden="true"></div>
