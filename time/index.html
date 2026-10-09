@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>NYC Time · SZVTECH</title>
+<meta name="description" content="What time is it in New York, right now, as big as your screen allows.">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NYC Time">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='url(%23g)' stroke-width='4.5'/%3E%3Cpath d='M32 19v13l9 6' fill='none' stroke='%23f3f1ff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #05050a;
+  --fg: #f3f1ff;
+  --muted: rgba(226, 224, 255, .5);
+  --dim: rgba(226, 224, 255, .3);
+  --a1: #8b5cf6;
+  --a2: #e879f9;
+  --a3: #22d3ee;
+  --grad: linear-gradient(100deg, var(--a1), var(--a2) 50%, var(--a3));
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --mx: 14px;               /* tiny side margin */
+  --my: 12px;               /* tiny top/bottom margin */
+  --cell-w: .6em;           /* JetBrains Mono advance width */
+  --cell-h: .82em;          /* cropped to the digit height */
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--bg);
+}
+body {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-h, 100dvh);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  padding:
+    max(var(--my), env(safe-area-inset-top))
+    max(var(--mx), env(safe-area-inset-right))
+    max(var(--my), env(safe-area-inset-bottom))
+    max(var(--mx), env(safe-area-inset-left));
+  color: var(--fg);
+  font-family: var(--mono);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  background:
+    radial-gradient(70% 55% at 12% 0%, rgba(139, 92, 246, .16), transparent 70%),
+    radial-gradient(60% 50% at 100% 100%, rgba(34, 211, 238, .11), transparent 70%),
+    radial-gradient(50% 40% at 85% 10%, rgba(232, 121, 249, .07), transparent 70%),
+    var(--bg);
+}
+/* film grain */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  pointer-events: none;
+  z-index: 5;
+  opacity: .07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 1s steps(6) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -4%); }
+  60% { transform: translate(-4%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ---------- labels ---------- */
+.bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 10.5px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  position: relative;
+  z-index: 6;
+}
+.bar > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.city { display: inline-flex; align-items: center; gap: .7em; color: var(--fg); }
+.city i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--a3);
+  box-shadow: 0 0 10px var(--a3);
+  flex: none;
+}
+.home {
+  color: var(--dim);
+  text-decoration: none;
+  transition: color .2s;
+  padding: 6px 8px 6px 0;
+  margin: -6px 0;
+}
+.home:hover, .home:focus-visible { color: var(--fg); outline: none; }
+#mer { color: var(--fg); }
+#mer b {
+  font-weight: 500;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- stage + clock ---------- */
+#stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  min-width: 0;
+}
+#clock {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  font-family: var(--mono);
+  font-weight: 800;
+  font-size: 100px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 0;
+  line-height: var(--cell-h);
+  cursor: pointer;
+  outline: none;
+  opacity: 0;
+  transition: opacity .5s ease;
+}
+#clock.ready { opacity: 1; }
+
+#clock.row   { grid-template-areas: "h c1 m c2 s" "w w w w w"; row-gap: .07em; }
+#clock.split { grid-template-areas: "h c1 m" "s s s" "w w w"; row-gap: .07em; }
+#clock.stack { grid-template-areas: "h" "m" "s" "w"; row-gap: .05em; }
+#clock.split .c2, #clock.stack .col { display: none; }
+
+.grp { display: flex; position: relative; }
+.h { grid-area: h; }
+.m { grid-area: m; }
+.s { grid-area: s; }
+.c1 { grid-area: c1; }
+.c2 { grid-area: c2; }
+
+.d {
+  position: relative;
+  display: block;
+  width: var(--cell-w);
+  height: var(--cell-h);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(transparent, #000 5%, #000 95%, transparent);
+}
+.d > span {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  will-change: transform, opacity;
+  color: var(--fg);
+}
+.d.off > span { color: rgba(243, 241, 255, .06); }
+
+/* seconds: one gradient across the pair */
+.s .d > span {
+  background: linear-gradient(160deg, var(--a1) 5%, var(--a2) 48%, var(--a3) 95%);
+  background-size: 1.2em var(--cell-h);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.s .d + .d > span { background-position: -.6em 0; }
+
+/* heartbeat glow behind the seconds */
+.s::before {
+  content: "";
+  position: absolute;
+  inset: -12% -18%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(232, 121, 249, .28), rgba(139, 92, 246, .12) 55%, transparent);
+  opacity: var(--glow, .5);
+  pointer-events: none;
+}
+.pulse {
+  position: absolute;
+  inset: -12% -18%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(34, 211, 238, .22), rgba(232, 121, 249, .1) 60%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.col {
+  position: relative;
+  width: .34em;
+  height: var(--cell-h);
+}
+.col i {
+  position: absolute;
+  left: 50%;
+  width: .11em;
+  height: .11em;
+  margin-left: -.055em;
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--a1), var(--a2));
+  will-change: opacity;
+}
+.col i:first-child { top: .22em; }
+.col i:last-child { top: .5em; background: linear-gradient(140deg, var(--a2), var(--a3)); }
+
+/* minute progress: thin gradient line sweeping each minute */
+.sweep {
+  grid-area: w;
+  justify-self: stretch;
+  position: relative;
+  height: 2px;
+  margin-top: .02em;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, .07);
+  clip-path: inset(-10px 0 -10px 0);
+}
+.sweep .fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  background: var(--grad);
+  transform: translateX(-100%);
+  will-change: transform;
+}
+.sweep .fill::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px 2px var(--a3), 0 0 22px 6px rgba(34, 211, 238, .45);
+}
+.ticks {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 1px, transparent 1px calc(100% / 12));
+  opacity: .5;
+  mix-blend-mode: overlay;
+}
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none; }
+}
+</style>
+</head>
+<body>
+  <header class="bar">
+    <span class="city"><i aria-hidden="true"></i>New York</span>
+    <span id="date">&nbsp;</span>
+  </header>
+
+  <main id="stage">
+    <div id="clock" class="stack" role="button" tabindex="0" aria-label="Current time in New York. Tap to switch 12/24 hour.">
+      <div class="grp h"><span class="d"></span><span class="d"></span></div>
+      <div class="col c1" aria-hidden="true"><i></i><i></i></div>
+      <div class="grp m"><span class="d"></span><span class="d"></span></div>
+      <div class="col c2" aria-hidden="true"><i></i><i></i></div>
+      <div class="grp s"><span class="pulse" aria-hidden="true"></span><span class="d"></span><span class="d"></span></div>
+      <div class="sweep" aria-hidden="true"><div class="ticks"></div><div class="fill"></div></div>
+    </div>
+    <span class="sr" id="sr" aria-live="off"></span>
+  </main>
+
+  <footer class="bar">
+    <a class="home" href="/">&larr; SZVTECH</a>
+    <span id="mer">&nbsp;</span>
+  </footer>
+
+<script>
+(() => {
+  'use strict';
+  const TZ = 'America/New_York';
+  const KEY = 'szv-time-24h';
+  const $ = (s) => document.querySelector(s);
+  const clock = $('#clock'), stage = $('#stage');
+  const dateEl = $('#date'), merEl = $('#mer'), srEl = $('#sr');
+  const fill = $('.sweep .fill'), pulse = $('.pulse');
+  const dots = [...document.querySelectorAll('.col i')];
+  const cells = [...document.querySelectorAll('.h .d, .m .d, .s .d')]; // H1 H2 M1 M2 S1 S2
+  const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
+  let reduce = mqReduce.matches;
+  mqReduce.addEventListener && mqReduce.addEventListener('change', (e) => { reduce = e.matches; startSweep(); });
+
+  let h24 = false;
+  try { h24 = localStorage.getItem(KEY) === '1'; } catch (e) {}
+
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: TZ, hourCycle: 'h23',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    weekday: 'short', month: 'short', day: 'numeric', timeZoneName: 'short'
+  });
+
+  function nyParts(date) {
+    const p = {};
+    for (const { type, value } of fmt.formatToParts(date)) p[type] = value;
+    let H = parseInt(p.hour, 10) % 24;
+    return {
+      H, M: parseInt(p.minute, 10), S: parseInt(p.second, 10),
+      weekday: p.weekday, month: p.month, day: p.day,
+      zone: p.timeZoneName || ''
+    };
+  }
+
+  /* ---------- digit cells ---------- */
+  const EASE_ROLL = 'cubic-bezier(.22, 1.25, .36, 1)';
+  function setCell(cell, ch, animate, delay) {
+    if (cell.dataset.v === ch && cell.firstChild) return;
+    cell.dataset.v = ch;
+    // drop any leftovers from interrupted animations
+    while (cell.childNodes.length > 1) cell.firstChild.remove();
+    const old = cell.firstChild;
+    const nu = document.createElement('span');
+    nu.textContent = ch;
+    cell.appendChild(nu);
+    if (!animate || !nu.animate) { if (old) old.remove(); return; }
+    const isSec = cell.closest('.s');
+    const dur = isSec ? 560 : 820;
+    const opts = { duration: dur, easing: EASE_ROLL, delay: delay || 0, fill: 'backwards' };
+    if (reduce) {
+      nu.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, easing: 'ease-out', delay: delay || 0, fill: 'backwards' });
+      if (old) old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, easing: 'ease-in', delay: delay || 0, fill: 'forwards' }).onfinish = () => old.remove();
+      return;
+    }
+    nu.animate([
+      { transform: 'translateY(105%)', opacity: .15 },
+      { transform: 'translateY(0)', opacity: 1 }
+    ], opts);
+    if (old) {
+      old.animate([
+        { transform: 'translateY(0)', opacity: 1 },
+        { transform: 'translateY(-105%)', opacity: .1 }
+      ], { ...opts, fill: 'forwards' }).onfinish = () => old.remove();
+    }
+  }
+
+  let last = null;
+  function render(now, mode) {
+    const t = nyParts(now);
+    const hDisp = h24 ? t.H : (t.H % 12 || 12);
+    const hs = String(hDisp).padStart(2, '0');
+    const ms = String(t.M).padStart(2, '0');
+    const ss = String(t.S).padStart(2, '0');
+    const chars = hs + ms + ss;
+    const animate = mode !== 'instant';
+    cells.forEach((c, i) => setCell(c, chars[i], animate, mode === 'intro' ? 90 * i : 0));
+    cells[0].classList.toggle('off', !h24 && hs[0] === '0');
+
+    dateEl.textContent = `${t.weekday} · ${t.month} ${t.day} · ${t.zone}`;
+    merEl.innerHTML = h24 ? '24H' : `<b>${t.H < 12 ? 'AM' : 'PM'}</b>`;
+    if (!last || last.M !== t.M || last.H !== t.H) {
+      srEl.textContent = `${hDisp}:${ms}${h24 ? '' : (t.H < 12 ? ' AM' : ' PM')} in New York`;
+    }
+
+    // per-second life: colon blink + glow heartbeat
+    if (animate && !reduce && pulse.animate) {
+      for (const d of dots) d.animate([{ opacity: 1 }, { opacity: .28 }], { duration: 1000, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' });
+      pulse.animate([
+        { transform: 'scale(.82)', opacity: .95 },
+        { transform: 'scale(1.18)', opacity: 0 }
+      ], { duration: 900, easing: 'cubic-bezier(.16,1,.3,1)' });
+    }
+    if (!last || t.S === 0 || mode) startSweep(now);
+    last = t;
+  }
+
+  /* ---------- minute sweep ---------- */
+  let sweepAnim = null;
+  function startSweep(now) {
+    now = now || new Date();
+    const elapsed = nyParts(now).S * 1000 + now.getMilliseconds();
+    const from = elapsed / 60000;
+    if (sweepAnim) { sweepAnim.cancel(); sweepAnim = null; }
+    if (reduce || !fill.animate) {
+      fill.style.transform = `translateX(${(-(1 - from) * 100).toFixed(3)}%)`;
+      return;
+    }
+    fill.style.transform = '';
+    sweepAnim = fill.animate([
+      { transform: `translateX(${(-(1 - from) * 100).toFixed(3)}%)` },
+      { transform: 'translateX(0%)' }
+    ], { duration: Math.max(1, 60000 - elapsed), easing: 'linear', fill: 'forwards' });
+  }
+
+  /* ---------- ticking on exact second boundaries ---------- */
+  let timer = 0;
+  function schedule() {
+    clearTimeout(timer);
+    const ms = 1000 - (Date.now() % 1000);
+    timer = setTimeout(() => { render(new Date()); schedule(); }, ms + 4);
+  }
+
+  /* ---------- fit: as large as the space allows ---------- */
+  function setAppHeight() {
+    const vv = window.visualViewport;
+    const h = vv ? vv.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
+  }
+  const LAYOUTS = ['row', 'split', 'stack'];
+  const BIAS = { row: 1.12, split: 1, stack: 1 }; // prefer one clean row when it's close
+  let fitRAF = 0;
+  function fit() {
+    cancelAnimationFrame(fitRAF);
+    fitRAF = requestAnimationFrame(() => {
+      setAppHeight();
+      const W = stage.clientWidth, H = stage.clientHeight;
+      if (!W || !H) return;
+      let best = null;
+      for (const L of LAYOUTS) {
+        clock.className = L + (clock.dataset.ready ? ' ready' : '');
+        let size = 100;
+        // two passes: the 2px line + rounding don't scale linearly
+        for (let k = 0; k < 2; k++) {
+          clock.style.fontSize = size + 'px';
+          const r = clock.getBoundingClientRect();
+          size = size * Math.min(W / r.width, H / r.height);
+        }
+        size = Math.floor(size * 0.995);
+        const score = size * BIAS[L];
+        if (!best || score > best.score) best = { L, size, score };
+      }
+      clock.className = best.L + (clock.dataset.ready ? ' ready' : '');
+      clock.style.fontSize = best.size + 'px';
+    });
+  }
+
+  /* ---------- 12h / 24h toggle ---------- */
+  function toggle() {
+    h24 = !h24;
+    try { localStorage.setItem(KEY, h24 ? '1' : '0'); } catch (e) {}
+    render(new Date(), 'toggle');
+  }
+  clock.addEventListener('click', toggle);
+  clock.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+
+  /* ---------- wake lock ---------- */
+  let wakeWanted = false, wakeLock = null;
+  async function requestWake() {
+    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    try {
+      if (wakeLock && !wakeLock.released) return;
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) { /* ignore: battery saver, unsupported, denied */ }
+  }
+  document.addEventListener('pointerdown', () => { wakeWanted = true; requestWake(); }, { passive: true });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      render(new Date(), 'instant');
+      schedule();
+      if (wakeWanted) requestWake();
+    } else {
+      clearTimeout(timer);
+    }
+  });
+
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  addEventListener('resize', fit);
+  addEventListener('orientationchange', fit);
+  if (window.visualViewport) visualViewport.addEventListener('resize', fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+
+  /* ---------- go ---------- */
+  fit();
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    clock.dataset.ready = '1';
+    clock.classList.add('ready');
+    render(new Date(), 'intro');
+    schedule();
+  }));
+})();
+</script>
+</body>
+</html>
