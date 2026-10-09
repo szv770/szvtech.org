@@ -1,6 +1,6 @@
 // /time — full-screen clock for any location, with zmanim, live sky, sun arc,
 // Hebrew date, favorites and a bedside mode. The big digits stay the point.
-import { CITIES, cityById, DEFAULT_CITY_ID, REGIONS, zipToTz, US_ZONES } from '/time/cities.js';
+import { CITIES, cityById, DEFAULT_CITY_ID, REGIONS, zipToTz, US_ZONES } from '/time/cities.js?v=8a8909ac4d';
 
 /* ======================================================================
    small helpers
@@ -25,7 +25,7 @@ const KEY = {
 
 // zmanim engine: optional, loaded lazily — the clock never depends on it.
 let Z = null;
-const zReady = import('/time/zmanim.js').then((m) => { Z = m; return m; }).catch(() => null);
+const zReady = import('/time/zmanim.js?v=93be04f7f2').then((m) => { Z = m; return m; }).catch(() => null);
 
 // per-tz formatter cache
 const fmtCache = new Map();
@@ -161,6 +161,188 @@ function writeURL(loc) {
 }
 
 /* ======================================================================
+   exact time: NTP-style sync against /api/now (like time.is)
+   ----------------------------------------------------------------------
+   Device clocks are often a few seconds off. now() = Date.now() + offset is
+   the one source of "now" on this page. The offset is measured from a few
+   round trips to /api/now (Vercel's NTP-synced clock): for each sample the
+   server time is compared with the local midpoint of the request, and the
+   lowest-latency samples win (their error is at most half the round trip).
+   Round trips are timed with performance.now() (monotonic, sub-ms); the
+   midpoint is expressed on the Date.now() scale that now() builds on.
+   ====================================================================== */
+const SYNC = { samples: 6, maxRtt: 1500, every: 5 * MIN, slewMax: 200, timeout: 3000 };
+const pnow = () => performance.now();
+const sync = {
+  ok: false,      // a measurement succeeded (and still applies)
+  busy: false,
+  from: 0, to: 0, t0: 0, dur: 0, // offset, slewed linearly from `from` to `to` over [t0, t0+dur] (performance time)
+  err: null,      // ± uncertainty, ms
+  at: -1e9,       // performance time of the last successful sync
+  fails: 0,
+  retryT: 0,
+  shown: '',
+};
+function offsetNow(p = pnow()) {
+  if (!sync.dur || p >= sync.t0 + sync.dur) return sync.to;
+  return sync.from + (sync.to - sync.from) * Math.max(0, p - sync.t0) / sync.dur;
+}
+function now() { return Date.now() + offsetNow(); }
+function nowDate() { return new Date(now()); }
+
+async function sampleNow() {
+  const ctl = 'AbortController' in window ? new AbortController() : null;
+  const kill = setTimeout(() => ctl && ctl.abort(), SYNC.timeout);
+  try {
+    const d0 = Date.now(), p0 = pnow();
+    const r = await fetch('/api/now?r=' + Math.random().toString(36).slice(2), { cache: 'no-store', signal: ctl && ctl.signal });
+    const p1 = pnow(); // headers in: the server read its clock just before sending them
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (!j || !Number.isFinite(j.t)) return null;
+    const rtt = p1 - p0;
+    if (rtt > SYNC.maxRtt) return null;
+    // server ms is truncated: its true reading lies in [t, t+1)
+    return { rtt, offset: j.t + 0.5 - (d0 + rtt / 2) };
+  } catch (e) { return null; } finally { clearTimeout(kill); }
+}
+
+let onFirstSample = null;
+const firstSample = new Promise((r) => { onFirstSample = r; });
+async function syncNow(why) {
+  if (sync.busy) return sync.ok;
+  sync.busy = true;
+  clearTimeout(sync.retryT);
+  const got = [];
+  for (let i = 0; i < SYNC.samples; i++) {
+    const s = await sampleNow();
+    if (!s) { if (!got.length && i >= 1) break; continue; } // offline / no endpoint: give up quickly
+    got.push(s);
+    // the very first good sample already beats the device clock: use it before the intro
+    if (!sync.ok && got.length === 1 && !clock.dataset.ready) applyOffset(s.offset, s.rtt / 2 + 1, true);
+    onFirstSample();
+  }
+  onFirstSample();
+  sync.busy = false;
+  if (!got.length) {
+    sync.fails++;
+    if (sync.stale) { applyOffset(0, null, true); sync.ok = false; } // device clock jumped and we can't re-measure: trust it
+    if (!sync.ok) setSyncStatus();
+    sync.retryT = setTimeout(() => syncNow('retry'), Math.min(SYNC.every, 15000 * 2 ** Math.min(4, sync.fails - 1)));
+    return false;
+  }
+  sync.fails = 0;
+  sync.stale = false;
+  got.sort((a, b) => a.rtt - b.rtt);
+  const best = got.slice(0, Math.min(3, got.length)).map((s) => s.offset).sort((a, b) => a - b);
+  const offset = best.length === 2 ? (best[0] + best[1]) / 2 : best[Math.floor(best.length / 2)];
+  applyOffset(offset, got[0].rtt / 2 + 1);
+  sync.at = pnow();
+  sync.n = got.length;
+  sync.why = why;
+  return true;
+}
+function applyOffset(offset, err, quiet) {
+  const p = pnow(), cur = offsetNow(p), delta = offset - cur;
+  if (sync.ok && Math.abs(delta) < SYNC.slewMax) {
+    // small correction: glide over 1–2 s so no second is skipped or repeated
+    sync.from = cur; sync.to = offset; sync.t0 = p; sync.dur = clamp(Math.abs(delta) * 10, 1000, 2000);
+  } else {
+    sync.from = sync.to = offset; sync.dur = 0;
+  }
+  sync.err = err;
+  sync.ok = err != null;
+  setSyncStatus();
+  if (!quiet || clock.dataset.ready) {
+    if (Math.abs(delta) >= SYNC.slewMax && clock.dataset.ready && fmt) { target = null; render(nowDate(), 'sync'); }
+    if (clock.dataset.ready) schedule();
+  }
+}
+
+// Wake from sleep, or the user changing the system clock: Date jumps relative
+// to the monotonic performance clock. Either way, measure again.
+let jumpRef = { d: Date.now(), p: pnow() };
+function checkJump() {
+  const d = Date.now(), p = pnow();
+  const drift = (d - jumpRef.d) - (p - jumpRef.p);
+  jumpRef = { d, p };
+  if (Math.abs(drift) > 1000) {
+    sync.stale = true;
+    if (document.visibilityState === 'visible') syncNow('jump');
+    return true;
+  }
+  return false;
+}
+setInterval(() => {
+  checkJump();
+  if (document.visibilityState === 'visible' && !sync.busy && sync.ok && pnow() - sync.at > SYNC.every) syncNow('periodic');
+}, 2000);
+addEventListener('online', () => syncNow('online'));
+
+/* the quiet status line in the footer */
+const syncEl = $('#sync');
+const fmtSec = (ms) => {
+  const a = Math.abs(ms) / 1000;
+  if (a < 10) return a.toFixed(1) + 's';
+  if (a < 60) return Math.round(a) + 's';
+  if (a < 3600) return `${Math.floor(a / 60)}m ${String(Math.round(a % 60)).padStart(2, '0')}s`;
+  return `${Math.floor(a / 3600)}h ${String(Math.round((a % 3600) / 60)).padStart(2, '0')}m`;
+};
+function syncCopy() {
+  if (sync.busy && (!sync.ok || sync.tap)) return ['syncing…'];
+  if (!sync.ok) return sync.fails ? ['device time (offline)', 'device time'] : ['syncing…'];
+  const o = sync.to;
+  const acc = '±' + Math.max(0.01, sync.err / 1000).toFixed(2) + 's';
+  if (Math.abs(o) < 100) return [`synced ${acc} · your clock is exact`, `synced ${acc} · clock exact`, 'clock exact'];
+  const rel = `${fmtSec(o)} ${o > 0 ? 'behind' : 'ahead'}`;
+  return [`synced ${acc} · your clock is ${rel}`, `synced ${acc} · ${rel}`, `clock ${rel}`];
+}
+function setSyncStatus() {
+  const tiers = syncCopy();
+  syncEl.classList.toggle('off', !sync.ok && !sync.busy);
+  syncEl.title = tiers[0] + (sync.ok ? ' — tap to sync again' : '');
+  syncEl.setAttribute('aria-label', `Time sync: ${tiers[0]}. Sync again.`);
+  placeSync(tiers);
+}
+// Never costs the digits a pixel: it only goes where the footer has room on
+// its existing line (the empty middle, or beside the home link), in the
+// longest wording that fits — or not at all.
+function placeSync(tiers = syncCopy()) {
+  const zm = document.body.dataset.zm;
+  const homeW = foot.querySelector('.home').scrollWidth, gap = 12, pad = 12;
+  let where, avail;
+  if (zm === 'none' || zm === 'stacked') {
+    where = 'mid';
+    avail = foot.clientWidth - 2 * gap - 2 * Math.max(homeW, merEl.scrollWidth) - 4;
+  } else {
+    where = 'side';
+    const col = parseFloat(getComputedStyle(foot).gridTemplateColumns) || 0;
+    avail = col - homeW - 16;
+    syncEl.style.marginLeft = (homeW + 16 - pad / 2) + 'px';
+  }
+  syncEl.dataset.where = where;
+  for (const t of tiers) {
+    if (syncEl.textContent !== t) syncEl.textContent = t;
+    if (syncEl.scrollWidth - pad <= avail) { sync.shown = t; return; }
+  }
+  syncEl.dataset.where = '';
+  sync.shown = '';
+}
+syncEl.addEventListener('click', async () => {
+  if (sync.busy) return;
+  sync.tap = true;
+  const p = syncNow('tap');
+  setSyncStatus();
+  const ok = await p;
+  sync.tap = false;
+  setSyncStatus();
+  if (ok) {
+    const o = Math.round(sync.to), e = Math.max(1, Math.round(sync.err));
+    toast(Math.abs(o) < 100 ? `Your clock is exact · off by ${Math.abs(o)} ms (±${e} ms)` : `Your clock is ${(Math.abs(o) / 1000).toFixed(3)} s ${o > 0 ? 'behind' : 'ahead'} · ±${e} ms`);
+  } else toast('Couldn’t reach the time server — showing device time');
+});
+
+/* ======================================================================
    clock core (unchanged behaviour, dynamic time zone)
    ====================================================================== */
 let fmt = null;
@@ -232,7 +414,7 @@ function render(now, mode) {
 
 let sweepAnim = null;
 function startSweep(now) {
-  now = now || new Date();
+  now = now || nowDate();
   if (!fmt) return;
   const elapsed = nowParts(now).S * 1000 + now.getMilliseconds();
   const from = elapsed / 60000;
@@ -243,10 +425,18 @@ function startSweep(now) {
 }
 
 let timer = 0;
+// Tick on the true second: the next whole second of now(), not of the device clock.
 function schedule() {
   clearTimeout(timer);
-  const ms = 1000 - (Date.now() % 1000);
-  timer = setTimeout(() => { render(new Date()); schedule(); }, ms + 4);
+  const ms = 1000 - (now() % 1000);
+  timer = setTimeout(tick, ms + 2);
+}
+function tick() {
+  if (checkJump()) { /* re-measuring; keep ticking meanwhile */ }
+  const t = now();
+  if (t % 1000 > 900) { schedule(); return; } // woke a little early (offset glided): wait for the boundary
+  render(new Date(t));
+  schedule();
 }
 
 /* ======================================================================
@@ -317,7 +507,8 @@ function fit() {
       clock.style.fontSize = pick.size + 'px';
     }
     layoutHeader();
-    drawArcs(new Date());
+    drawArcs(nowDate());
+    placeSync();
   });
 }
 // Hebrew date: on the same line as the date when it fits, otherwise it gently alternates.
@@ -424,7 +615,7 @@ function fromCalc(loc, todayYMD) {
 let schedSeq = 0;
 async function loadSchedule() {
   const loc = state.loc, token = ++schedSeq;
-  const today = ymdIn(new Date(), loc.tz), todayStr = ymdStr(today);
+  const today = ymdIn(nowDate(), loc.tz), todayStr = ymdStr(today);
   let s = null;
   const q = apiQuery(loc);
   if (q) {
@@ -459,7 +650,7 @@ async function loadSchedule() {
   target = null;
   zline.classList.remove('wait');
   if (zSheet.classList.contains('open')) renderZSheet();
-  onMinute(new Date());
+  onMinute(nowDate());
   fit();
 }
 
@@ -492,7 +683,7 @@ function computeTarget(now) {
   }
   return best;
 }
-const zAvailable = () => !!(state.sched && computeTarget(new Date()));
+const zAvailable = () => !!(state.sched && computeTarget(nowDate()));
 function longestLabel() {
   const labs = allItems().filter((i) => i.key !== 'other').map((i) => i.label);
   return labs.reduce((a, b) => (b.length > a.length ? b : a), 'Shkiah');
@@ -546,7 +737,7 @@ function updateHebrew(now) {
 /* ======================================================================
    sun: arc + live sky
    ====================================================================== */
-function sunDay(now = new Date()) {
+function sunDay(now = nowDate()) {
   // { rise, set } for the local day, from the schedule or the engine
   const day = todayDay(now);
   let rise = day && day.items.find((i) => i.key === 'sunrise');
@@ -682,8 +873,8 @@ function setLocation(loc, opts = {}) {
   if (opts.persist !== false) saveLoc();
   if (opts.url) writeURL(loc);
   if (skySet) { sky.classList.add('quick'); setTimeout(() => sky.classList.remove('quick'), 3500); }
-  if (fmt && clock.dataset.ready) render(new Date(), 'instant');
-  updateHebrew(new Date());
+  if (fmt && clock.dataset.ready) render(nowDate(), 'instant');
+  updateHebrew(nowDate());
   loadSchedule();
   fit();
 }
@@ -763,8 +954,9 @@ function toast(msg) {
 function toggle24() {
   state.h24 = !state.h24;
   lsSet(KEY.h24, state.h24 ? '1' : '0');
-  render(new Date(), 'toggle');
-  drawArcs(new Date());
+  render(nowDate(), 'toggle');
+  drawArcs(nowDate());
+  placeSync();
   if (zSheet.classList.contains('open')) renderZSheet();
 }
 function toggleNight() {
@@ -776,7 +968,7 @@ function toggleNight() {
   if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) {}
   toast(state.night ? 'Bedside mode — long-press to exit' : 'Bedside mode off');
   startSweep();
-  render(new Date(), 'instant');
+  render(nowDate(), 'instant');
 }
 
 let gesture = null, consumed = false;
@@ -912,7 +1104,7 @@ function rowHTML(loc, now) {
 }
 let rowIndex = new Map();
 function renderList() {
-  const now = new Date();
+  const now = nowDate();
   const q = norm(qEl.value).trim();
   rowIndex = new Map();
   let out = '', n = 0;
@@ -1032,7 +1224,7 @@ zipForm.addEventListener('submit', async (e) => {
   const loc = zipLoc(zip, zipTzSel.value || null);
   zipStatus.classList.remove('err');
   zipStatus.textContent = 'Looking up…';
-  const today = ymdStr(ymdIn(new Date(), loc.tz));
+  const today = ymdStr(ymdIn(nowDate(), loc.tz));
   let name = null;
   try {
     const r = await fetchJSON(`/api/zmanim?zip=${zip}&date=${today}&days=2`);
@@ -1051,7 +1243,7 @@ let zDayIdx = 0;
 function renderZSheet() {
   const s = state.sched;
   if (!s) { closeSheet(); return; }
-  const now = new Date(), tz = state.loc.tz;
+  const now = nowDate(), tz = state.loc.tz;
   const day = s.days[zDayIdx] || s.days[0];
   zWhere.textContent = s.source === 'chabad' && s.location ? s.location : state.loc.name + (state.loc.kind === 'city' ? ', ' + state.loc.country : '');
   $$('#zDays button').forEach((b) => b.setAttribute('aria-selected', String(+b.dataset.day === zDayIdx)));
@@ -1117,7 +1309,7 @@ endChips.addEventListener('click', (e) => {
 async function reloadZ() { await loadSchedule(); renderZSheet(); }
 zline.addEventListener('click', () => {
   if (!state.sched) return;
-  const now = new Date();
+  const now = nowDate();
   const i = state.sched.days.indexOf(todayDay(now));
   zDayIdx = Math.max(0, i) + autoDay(now);
   if (zDayIdx >= state.sched.days.length) zDayIdx = state.sched.days.length - 1;
@@ -1140,9 +1332,11 @@ async function requestWake() {
 document.addEventListener('pointerdown', () => { wakeWanted = true; requestWake(); }, { passive: true });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    render(new Date(), 'instant');
+    checkJump();
+    render(nowDate(), 'instant');
     schedule();
     if (wakeWanted) requestWake();
+    if (pnow() - sync.at > 10000) syncNow('visible');
   } else clearTimeout(timer);
 });
 document.addEventListener('contextmenu', (e) => { if (!(e.target.closest && e.target.closest('input, a'))) e.preventDefault(); });
@@ -1159,10 +1353,13 @@ const initial = locFromURL() || revive(lsJSON(KEY.loc, null)) || fromCity(cityBy
 document.body.dataset.zm = 'none';
 zline.classList.add('wait');
 setLocation(initial, { persist: !!locFromURL() || !!lsGet(KEY.loc) });
-requestAnimationFrame(() => requestAnimationFrame(() => {
+setSyncStatus();
+syncNow('load');
+// start once the first server sample is in (or after 700 ms on a slow / offline network)
+Promise.race([firstSample, new Promise((r) => setTimeout(r, 700))]).then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
   clock.dataset.ready = '1';
   clock.classList.add('ready');
-  render(new Date(), 'intro');
+  render(nowDate(), 'intro');
   schedule();
-}));
-zReady.then(() => { if (!state.sched) loadSchedule(); updateSky(new Date()); drawArcs(new Date()); });
+})));
+zReady.then(() => { if (!state.sched) loadSchedule(); updateSky(nowDate()); drawArcs(nowDate()); });
