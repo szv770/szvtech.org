@@ -448,3 +448,37 @@ html.night .zlist .tv em { color: var(--fg); }
 }
 
 .bar > #zline, .bar > #arcwrap { overflow: visible; }
+
+/* ---------- exact-time sync status (time.is style) ----------
+   Lives on the footer's existing line only — never adds a row, so the digits
+   keep every pixel. JS (placeSync) picks the slot and the wording that fits. */
+#sync {
+  display: none;
+  font: 500 10px/14px var(--mono);
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--dim);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  /* 44px tap target without growing the 14px label row */
+  padding: 15px 6px;
+  margin: -15px -6px;
+  border-radius: 10px;
+  outline: none;
+  transition: color .25s;
+  -webkit-tap-highlight-color: transparent;
+}
+#sync:hover, #sync:focus-visible { color: var(--muted); }
+#sync:focus-visible { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--a2); }
+#sync.off { opacity: .75; }
+body[data-zm="none"] #foot { grid-template-areas: "home sync mer"; }
+body[data-zm="stacked"] #foot { grid-template-areas: "z z z" "home sync mer"; }
+body[data-zm="none"] #sync[data-where="mid"],
+body[data-zm="stacked"] #sync[data-where="mid"] { display: block; grid-area: sync; justify-self: center; }
+body[data-zm="inline"] #sync[data-where="side"],
+body[data-zm="rich"] #sync[data-where="side"] { display: block; grid-area: home; justify-self: start; }
+/* stacked: the zmanim line sits right above — don't reach into it (and win the overlap of its tap padding) */
+#sync { position: relative; z-index: 1; }
+#sync[data-where="mid"] { margin-left: -6px !important; padding-top: 4px; margin-top: -4px; }
