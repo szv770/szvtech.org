@@ -586,3 +586,227 @@ body.glitching::after {
   .ll.in, .lterm.flash .lterm__body { animation: none; }
   .art-bars i { transform: scaleY(.3); }
 }
+
+/* ==========================================================================
+   Mobile burger + overlay menu (shown when the desktop nav pill is hidden)
+   ========================================================================== */
+.nav__burger { display: none; }
+@media (max-width: 860px) {
+  .nav__burger {
+    display: inline-flex; flex-direction: column; justify-content: center; gap: 5px;
+    width: 46px; height: 46px; margin: -8px -10px -8px 0; padding: 0 11px; border-radius: 12px;
+    pointer-events: auto; -webkit-tap-highlight-color: transparent;
+  }
+  .nav__burger span { display: block; height: 1.5px; width: 24px; border-radius: 2px; background: var(--fg); transition: transform .4s var(--ease), opacity .3s, width .4s var(--ease); transform-origin: center; }
+  .nav__burger span:nth-child(2) { width: 17px; align-self: flex-end; }
+  .menu-open .nav__burger span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .menu-open .nav__burger span:nth-child(2) { opacity: 0; width: 24px; }
+  .menu-open .nav__burger span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+}
+
+.menu {
+  position: fixed; inset: 0; z-index: 110; display: flex; flex-direction: column; justify-content: center;
+  padding: max(96px, env(safe-area-inset-top)) var(--gut) max(40px, env(safe-area-inset-bottom));
+  background: linear-gradient(170deg, rgba(10,9,20,.86), rgba(5,5,10,.94));
+  backdrop-filter: blur(24px) saturate(150%); -webkit-backdrop-filter: blur(24px) saturate(150%);
+  opacity: 0; visibility: hidden; transform: translateY(-2%);
+  transition: opacity .5s var(--ease), transform .55s var(--ease), visibility 0s linear .55s;
+}
+.menu::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+  background: radial-gradient(60vmax 60vmax at 80% 10%, color-mix(in srgb, var(--a1) 24%, transparent), transparent 70%),
+              radial-gradient(50vmax 50vmax at 10% 90%, color-mix(in srgb, var(--a2) 18%, transparent), transparent 70%);
+}
+.menu-open .menu { opacity: 1; visibility: visible; transform: none; transition: opacity .5s var(--ease), transform .55s var(--ease), visibility 0s; }
+/* keep the header (logo + burger X) above the overlay so close is always visible */
+.menu-open .nav { z-index: 120; }
+.menu__inner { display: flex; flex-direction: column; gap: clamp(28px, 7vh, 60px); }
+.menu__nav { display: grid; gap: clamp(6px, 1.4vh, 14px); }
+.menu__nav a {
+  display: flex; align-items: baseline; gap: 14px; padding: 6px 2px; position: relative;
+  font-family: var(--f-display); font-weight: 800; letter-spacing: -.04em; line-height: 1;
+  font-size: clamp(1.75rem, 8.8vw, 3.6rem); color: var(--fg); white-space: nowrap;
+  opacity: 0; transform: translateY(18px);
+}
+.menu-open .menu__nav a { animation: menuIn .6s var(--ease) forwards; }
+.menu-open .menu__nav a:nth-child(1) { animation-delay: .08s; }
+.menu-open .menu__nav a:nth-child(2) { animation-delay: .14s; }
+.menu-open .menu__nav a:nth-child(3) { animation-delay: .20s; }
+.menu-open .menu__nav a:nth-child(4) { animation-delay: .26s; }
+.menu-open .menu__nav a:nth-child(5) { animation-delay: .32s; }
+@keyframes menuIn { to { opacity: 1; transform: none; } }
+.menu__nav a .mono { font-size: 12px; color: var(--a2); opacity: .8; flex: none; align-self: center; }
+.menu__nav a:active { color: transparent; background: var(--grad); -webkit-background-clip: text; background-clip: text; }
+.menu__learn { position: relative; }
+.menu__learn .nav__new { position: static; margin-left: 4px; align-self: center; }
+.menu__foot { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); }
+
+/* ==========================================================================
+   Touch affordance: floating button that opens the hidden terminal
+   ========================================================================== */
+.term-fab {
+  position: fixed; z-index: 85; right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom)); width: 46px; height: 46px; border-radius: 14px;
+  display: grid; place-items: center; font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--a2);
+  background: rgba(14, 13, 26, .6); border: 1px solid var(--glass-b);
+  backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,.8), 0 0 30px -14px var(--a2), inset 0 1px 0 rgba(255,255,255,.1);
+  -webkit-tap-highlight-color: transparent; transition: transform .5s var(--ease), opacity .4s, box-shadow .4s;
+  opacity: .92;
+}
+.term-fab[hidden] { display: none; } /* desktop keeps the ` / Ctrl+K shortcut */
+.term-fab::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; box-shadow: 0 0 0 1px color-mix(in srgb, var(--a2) 30%, transparent); opacity: 0; transition: opacity .4s; }
+.term-fab:active { transform: scale(.9); }
+.term-open .term-fab, .menu-open .term-fab { opacity: 0; pointer-events: none; transform: scale(.6); }
+/* tucked away while scrolling down and near the footer; back on scroll-up / when idle */
+.term-fab.is-tucked { opacity: 0; pointer-events: none; transform: translateY(18px) scale(.82); }
+
+/* visibility helpers for touch vs fine-pointer copy */
+.only-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .only-touch { display: inline; }
+  .only-fine { display: none; }
+}
+
+/* lock background scroll while an overlay owns the screen (no Lenis on touch) */
+.menu-open, .menu-open body { overflow: hidden; }
+@media (pointer: coarse) { .term-open body { overflow: hidden; } }
+
+/* ==========================================================================
+   Phone tuning: typography, gutters, safe areas, section rhythm
+   ========================================================================== */
+@media (max-width: 560px) {
+  :root { --gut: max(16px, env(safe-area-inset-left), env(safe-area-inset-right)); }
+
+  /* hero wordmark: leave breathing room at the edges */
+  .hero__word { font-size: clamp(2.2rem, 10vw, 4rem); }
+  .hero__tag { font-size: clamp(1rem, 4.4vw, 1.4rem); }
+  .hero__meta--tr .hide-sm { display: none; }
+
+  /* kinetic lines: sized so even the longest line ("a language") stays on
+     screen through its parallax drift, reading as intentional not clipped */
+  .kline { font-size: clamp(1.5rem, 8.6vw, 4.4rem); line-height: 1.02; }
+  .k1 { padding-left: var(--gut); }
+  .k2 { padding-right: var(--gut); }
+  .kinetic { padding: 14vh 0 10vh; }
+  .kinetic__label { top: 6vh; }
+  .kinetic__note { margin-top: 6vh; max-width: 30ch; }
+
+  /* morph stage titles */
+  .stage__title { font-size: clamp(1.9rem, 8.4vw, 3.4rem); }
+  .morph__num { font-size: clamp(4rem, 22vw, 9rem); top: clamp(80px, 12vh, 120px); }
+
+  /* bands sit tighter */
+  .band__track span { font-size: clamp(1.6rem, 8vw, 2.6rem); }
+
+  /* learn title + teaser already have rules; give the heading section air */
+  .learn { padding-top: 12vh; }
+  .outro__big { font-size: clamp(2.6rem, 15vw, 6rem); white-space: normal; }
+  .outro__sub { max-width: 26ch; }
+
+  /* magnetic buttons: comfortable tap targets, full-ish width primary */
+  .btn__in { padding: 16px 24px; }
+  .learn__actions .btn--solid { width: 100%; }
+  .learn__actions .btn--solid .btn__in { width: 100%; justify-content: center; }
+}
+
+/* small phones */
+@media (max-width: 380px) {
+  .nav__time { display: none; }
+  .hero__word { font-size: clamp(2rem, 11vw, 3.4rem); }
+}
+
+/* ==========================================================================
+   Pinned horizontal -> graceful vertical glass stack on touch devices
+   (JS skips the pin/scrub on coarse pointers; CSS lays the cards out here)
+   ========================================================================== */
+@media (hover: none) and (pointer: coarse) {
+  .horiz { height: auto; overflow: visible; padding: 4vh 0 2vh; }
+  .horiz__track { flex-direction: column; align-items: stretch; width: auto; height: auto; gap: 20px; padding: 0 var(--gut); transform: none !important; will-change: auto; }
+  .horiz__intro { width: auto; padding-right: 0; gap: 18px; margin-bottom: 6px; }
+  .horiz__intro p { max-width: 32ch; }
+  .horiz__arrow { font-size: 30px; }
+  .card { width: 100%; height: auto; min-height: 56vh; transform: none; }
+  .card__in { backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%); }
+  .card__txt { max-width: none; }
+  .horiz__end, .horiz__progress { display: none; }
+
+  /* lighten the heaviest blurs so scrolling stays smooth */
+  .band--b { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .lterm__win, .term { backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); }
+}
+
+/* landscape phones: keep the hero usable when short */
+@media (max-height: 560px) and (orientation: landscape) and (pointer: coarse) {
+  .hero { min-height: 100svh; }
+  .hero__word { font-size: clamp(2rem, 11vh, 5rem); }
+  .menu__nav a { font-size: clamp(1.6rem, 8vh, 3rem); }
+  .menu { justify-content: flex-start; padding-top: max(80px, env(safe-area-inset-top)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu__nav a { animation: none !important; opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   Mobile round 2: nav backdrop, section rhythm, stats, teaser, terminal
+   ========================================================================== */
+@media (max-width: 860px) {
+  /* slim header; once past the hero it gets a blurred bar that fades out at
+     its lower edge, so content never collides with the logo / clock / burger */
+  .nav { padding: max(12px, env(safe-area-inset-top)) var(--gut) 12px; }
+  .nav::after {
+    content: ''; position: absolute; inset: 0 0 -22px; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .5s var(--ease);
+    background: linear-gradient(180deg, rgba(6,6,12,.86), rgba(6,6,12,.74) calc(100% - 22px), rgba(6,6,12,0));
+    backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent);
+  }
+  .nav.is-solid::after { opacity: 1; }
+  .nav.is-solid::before, .menu-open .nav::after, .menu-open .nav::before { opacity: 0; }
+  .hero__meta { top: 70px; }
+
+  /* menu / anchor jumps land below the header, not under it */
+  #type, #obsessions, #numbers, #learn, #outro { scroll-margin-top: 58px; }
+
+  /* iOS zooms the page when an input under 16px gets focus (input is invisible) */
+  .term__input { font-size: 16px; }
+}
+
+@media (max-width: 560px) {
+  /* tighter section rhythm: no blank screens between sections */
+  .bands { padding: 7vh 0 6vh; }
+  .stats { padding: 9vh var(--gut) 6vh; }
+  .stats__head { margin-bottom: 30px; gap: 16px; }
+  .learn { padding-top: 8vh; padding-bottom: 7vh; gap: 34px; }
+  .outro { min-height: 0; padding: 11vh var(--gut) 9vh; gap: 24px; }
+
+  /* stats: four separate glass tiles (no shared grey grid backing that
+     flashes through while a tile fades in) with compact heights */
+  .stats__grid { background: none; border: 0; border-radius: 0; overflow: visible; gap: 10px; }
+  .stat { min-height: 0; padding: 18px 16px 16px; gap: 22px; border-radius: 18px; border: 1px solid var(--line); background: rgba(10, 10, 20, .8); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+  .stat__num { font-size: clamp(2.5rem, 12vw, 3.4rem); }
+  .stat__label { font-size: 14px; line-height: 1.4; }
+
+  /* learn teaser: compact window, no ghost glyph behind the copy */
+  .learn__bg { display: none; }
+  .lterm__body { height: 200px; padding: 12px 14px; }
+
+  /* footer: the touch hint is itself a button */
+  .foot { padding-bottom: max(30px, env(safe-area-inset-bottom)); }
+}
+
+.foot__tap { padding: 10px 4px; margin: -10px 0; -webkit-tap-highlight-color: transparent; }
+.foot__tap kbd { color: var(--a2); min-width: 30px; }
+.foot__tap:active kbd { border-color: var(--a2); box-shadow: 0 0 16px -4px var(--a2); }
+
+/* terminal on touch: size to the *visible* viewport so the prompt stays above
+   the on-screen keyboard (--vvh / --vvt come from visualViewport in JS) */
+@media (pointer: coarse) {
+  .term {
+    top: calc(var(--vvt, 0px) + max(10px, env(safe-area-inset-top)));
+    height: min(560px, calc(var(--vvh, 100dvh) - 20px - env(safe-area-inset-top)));
+  }
+  .term__body { font-size: 12.5px; padding: 14px 14px 18px; }
+  .term__prompt, .term__field { font-size: 12.5px; }
+  .term__close { padding: 8px 12px; }
+}

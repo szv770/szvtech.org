@@ -251,6 +251,8 @@ select.ctrl option { background: #0a0a14; color: var(--fg); }
   .logline, .verdict, .logline.pending .tx::after { transition: none !important; animation: none !important; }
   .meter__fill { transition: none !important; }
 }
+/* iOS: inputs under 16px trigger page zoom on focus */
+@media (max-width: 860px), (pointer: coarse) { .ctrl { font-size: 16px; } }
 </style>
 </head>
 <body>
