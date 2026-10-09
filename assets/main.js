@@ -29,6 +29,7 @@ const S = {
   morph: 0, bright: 1, explode: 1, warp: 0, fov: 45,
   camX: 0, camY: 0, camZ: Z0, lookY: 0, rotX: 0,
   mx: 0, my: 0, mouseOn: 0, mouseVel: 0, pulse: 0,
+  grab: 0, bx: 0, by: 0, bAge: 9, bAmp: 0, pinch: 1, tiltX: 0, tiltY: 0, spinBoost: 0,
 };
 
 let lenis = null;
@@ -125,8 +126,9 @@ float snoise(vec3 v){
 }`;
 
 const VERT = /* glsl */`
-uniform float uTime, uMorph, uSize, uPR, uExplode, uWarp, uMouseForce, uNoise, uBright, uAspect, uPulse;
+uniform float uTime, uMorph, uSize, uPR, uExplode, uWarp, uMouseForce, uNoise, uBright, uAspect, uPulse, uGrab;
 uniform vec2 uMouse;
+uniform vec4 uBurst; // xy: ndc origin, z: age (s), w: amplitude (springs through 0)
 uniform vec3 uC1, uC2, uC3;
 attribute vec3 aKnot;
 attribute vec3 aWave;
@@ -182,17 +184,35 @@ void main(){
 
   vec4 mv = viewMatrix*world;
 
-  // cursor: screen-space repel + swirl
+  // cursor / finger: screen-space repel + swirl (uGrab turns repel into attract)
   vec4 clip = projectionMatrix*mv;
   vec2 ndc = clip.xy/clip.w;
   vec2 dd = (ndc - uMouse)*vec2(uAspect,1.0);
   float dist = length(dd);
-  float f = smoothstep(0.32, 0.0, dist)*uMouseForce;
+  float f = smoothstep(0.32 + uGrab*0.16, 0.0, dist)*uMouseForce;
   vec2 dir = dd/(dist+0.0001);
-  mv.xy += (dir*0.8 + vec2(-dir.y, dir.x)*0.9)*f*(-mv.z)*0.13;
+  vec2 perp = vec2(-dir.y, dir.x);
+  mv.xy += (dir*0.8 + perp*0.9)*(1.0-uGrab)*f*(-mv.z)*0.13;
+  // grab: a vortex around the finger. Rotate + contract each particle's offset
+  // from the finger (proportional, so nothing is flung past it or out of a hole)
+  if (uGrab > 0.001) {
+    float gf = uGrab*f;
+    vec2 nd = rot(gf*1.5)*dd*(1.0 - min(0.82, gf*0.6));
+    mv.xy += (nd - dd)*(-mv.z)*0.414;
+  }
+
+  // tap shockwave: blast outward from the tap, spring back; a glowing ring travels out
+  float ring = 0.0;
+  if (uBurst.z < 3.0) {
+    vec2 bd = (ndc - uBurst.xy)*vec2(uAspect,1.0);
+    float bl = length(bd);
+    vec2 bdir = bd/(bl+0.0001);
+    mv.xy += bdir*uBurst.w*exp(-bl*2.3)*(0.55 + aRnd.z*0.9)*(-mv.z)*0.24;
+    ring = exp(-pow((bl - uBurst.z*1.6)*7.0, 2.0))*exp(-uBurst.z*2.0);
+  }
 
   gl_Position = projectionMatrix*mv;
-  float size = uSize*(0.35 + aRnd.w*1.15)*(1.0 + f*1.6)*(1.0 + uWarp*1.4);
+  float size = uSize*(0.35 + aRnd.w*1.15)*(1.0 + f*1.6 + ring*1.4)*(1.0 + uWarp*1.4);
   gl_PointSize = size*uPR/max(0.5, -mv.z);
 
   // color
@@ -201,9 +221,9 @@ void main(){
   col = mix(col, uC3, smoothstep(0.86, 1.0, aRnd.w)*0.9);
   float core = smoothstep(1.4, 0.0, length(aGalaxy.xz))*w3;
   col = mix(col, vec3(1.0,0.94,0.98), core*0.75);
-  col += f*0.7*uC2 + uWarp*vec3(0.35);
+  col += f*0.7*uC2 + uWarp*vec3(0.35) + ring*(uC2*0.8 + vec3(0.25));
   vColor = col;
-  vAlpha = (0.55 + 0.45*sin(uTime*2.2 + aRnd.x*50.0))*uBright*(0.7+0.3*aRnd.w);
+  vAlpha = (0.55 + 0.45*sin(uTime*2.2 + aRnd.x*50.0))*uBright*(0.7+0.3*aRnd.w) + ring*0.6;
 }`;
 
 const FRAG = /* glsl */`
@@ -297,7 +317,8 @@ async function initGL() {
   const cols = (THEMES[currentThemeName()] || THEMES.violet).map((c) => new THREE.Color(c));
   const uniforms = {
     uTime: { value: 0 }, uMorph: { value: 0 }, uSize: { value: MOBILE ? 44 : 34 }, uPR: { value: DPR * (innerHeight / 900) },
-    uExplode: { value: 1 }, uWarp: { value: 0 }, uMouseForce: { value: 0 }, uNoise: { value: RM ? .08 : .22 },
+    uExplode: { value: 1 }, uWarp: { value: 0 }, uMouseForce: { value: 0 }, uNoise: { value: RM ? .14 : .22 }, uGrab: { value: 0 },
+    uBurst: { value: new THREE.Vector4(0, 0, 9, 0) },
     uBright: { value: 1 }, uAspect: { value: innerWidth / innerHeight }, uPulse: { value: 0 },
     uMouse: { value: new THREE.Vector2(5, 5) },
     uC1: { value: cols[0] }, uC2: { value: cols[1] }, uC3: { value: cols[2] },
@@ -334,21 +355,26 @@ async function initGL() {
     uniforms.uWarp.value = S.warp;
     uniforms.uBright.value = S.bright;
     uniforms.uPulse.value = S.pulse;
+    uniforms.uGrab.value = S.grab;
+    S.bAge = Math.min(9, S.bAge + dt);
+    uniforms.uBurst.value.set(S.bx, S.by, S.bAge, S.bAmp);
 
     smx.x += (S.mx - smx.x) * Math.min(1, k * 1.6);
     smx.y += (S.my - smx.y) * Math.min(1, k * 1.6);
     if (Math.abs(smx.x) > 4) { smx.x = S.mx; smx.y = S.my; }
     uniforms.uMouse.value.set(smx.x, smx.y);
     S.mouseVel *= Math.pow(.25, dt);
-    const fTarget = S.mouseOn * (RM ? .5 : 1) * (.28 + Math.min(1, S.mouseVel) * .85);
+    const fTarget = S.mouseOn * (RM ? .5 : 1) * (.28 + Math.min(1, S.mouseVel) * .85 + S.grab * .55);
     force += (fTarget - force) * Math.min(1, k * (fTarget > force ? 1.2 : .35));
     uniforms.uMouseForce.value = force;
 
-    spin += dt * (RM ? .015 : .07) * (1 + S.warp * 6);
+    spin += dt * ((RM ? .03 : .07) * (1 + S.warp * 6) + S.spinBoost);
     group.rotation.y = spin;
-    const px = FINE ? S.mx : 0, py = FINE ? S.my : 0;
+    const px = FINE ? S.mx : S.tiltX, py = FINE ? S.my : S.tiltY;
     group.rotation.x += (S.rotX + py * .12 - group.rotation.x) * k;
     group.rotation.z += (-px * .06 - group.rotation.z) * k;
+    const sc = group.scale.x + (S.pinch - group.scale.x) * Math.min(1, k * 1.4);
+    group.scale.setScalar(sc);
 
     camera.position.set(S.camX + px * .25, S.camY + py * .18, S.camZ);
     camera.lookAt(0, S.lookY, 0);
@@ -492,10 +518,11 @@ function initScroll() {
   } });
 
   // hero exit parallax
-  gsap.timeline({ scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } })
-    .to('.hero__center', { yPercent: -40, scale: .92, opacity: 0, ease: 'none' }, 0)
-    .to('.hero__word .sw', { letterSpacing: '.06em', ease: 'none' }, 0)
-    .to('.hero__meta, .hero__bottom', { opacity: 0, ease: 'none', duration: .5 }, 0);
+  // (reduced motion: a soft fade with a small lift instead of the big parallax)
+  const heroOut = gsap.timeline({ scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } });
+  if (RM) heroOut.to('.hero__center', { yPercent: -10, opacity: 0, ease: 'none' }, 0);
+  else heroOut.to('.hero__center', { yPercent: -40, scale: .92, opacity: 0, ease: 'none' }, 0).to('.hero__word .sw', { letterSpacing: '.06em', ease: 'none' }, 0);
+  heroOut.to('.hero__meta, .hero__bottom', { opacity: 0, ease: 'none', duration: .5 }, 0);
 
   // ---------- morph stage (sticky) ----------
   const stages = $$('.stage');
@@ -512,19 +539,44 @@ function initScroll() {
     { camX: 0, camY: 3.6, camZ: Z0 * .78, lookY: -.4, rotX: 0 },
     { camX: 0, camY: 4.6, camZ: Z0 * .72, lookY: 0, rotX: .28 },
   ];
+  // Touch: the section is ~25% shorter (CSS), the scrub catches up faster and
+  // each morph starts almost as soon as you scroll into its stage, with an
+  // ease that moves visibly from the first pixel. Desktop pacing unchanged.
+  const stepDots = $$('.morph__dots i'), stepN = $('.morph__count b'), stepCue = $('.morph__cue');
+  const CUES = ['keep scrolling', 'keep going', 'one more', 'that\u2019s all four'];
+  let stepIdx = -1;
   const mtl = gsap.timeline({
     defaults: { ease: 'none' },
     scrollTrigger: {
-      trigger: '#morph', start: 'top top', end: 'bottom bottom', scrub: 1,
+      trigger: '#morph', start: 'top top', end: 'bottom bottom', scrub: COARSE ? .45 : 1,
       onUpdate: (s) => {
-        const idx = Math.min(3, Math.round(s.progress * 3.6 - .2));
-        rail.forEach((r, i) => r.classList.toggle('is-on', i === Math.max(0, idx)));
+        const idx = Math.max(0, Math.min(3, Math.round(s.progress * 3.6 - .2)));
+        if (idx === stepIdx) return;
+        stepIdx = idx;
+        rail.forEach((r, i) => r.classList.toggle('is-on', i === idx));
+        stepDots.forEach((d, i) => { d.classList.toggle('is-on', i === idx); d.classList.toggle('is-past', i < idx); });
+        if (stepN) stepN.textContent = idx + 1;
+        if (stepCue) stepCue.firstChild.textContent = CUES[idx] + ' ';
+        if (stepCue) stepCue.lastElementChild.style.display = idx === 3 ? 'none' : '';
       },
     },
   });
-  mtl.fromTo(S, { morph: 0, ...cams[0] }, { morph: 0, ...cams[0], duration: .3 }, 0);
+  const hold0 = COARSE ? .12 : .3;
+  mtl.fromTo(S, { morph: 0, ...cams[0] }, { morph: 0, ...cams[0], duration: hold0 }, 0);
   for (let i = 0; i < 3; i++) {
-    mtl.to(S, { morph: i + 1, ...cams[i + 1], duration: .7, ease: 'power2.inOut' }, i + .3);
+    mtl.to(S, { morph: i + 1, ...cams[i + 1], duration: COARSE ? .86 : .7, ease: COARSE ? 'sine.inOut' : 'power2.inOut' }, i + hold0);
+  }
+  // Touch: the cloud keeps turning while you hold still, and spins up with
+  // your scroll speed inside the morph, so it never reads as frozen.
+  if (COARSE) {
+    let inMorph = false;
+    const mst = mtl.scrollTrigger;
+    ScrollTrigger.create({ trigger: '#morph', start: 'top bottom', end: 'bottom top', onToggle: (s) => { inMorph = s.isActive; } });
+    gsap.ticker.add((t, dms) => {
+      const v = inMorph ? Math.abs(mst.getVelocity()) : 0;
+      const target = (inMorph ? (RM ? .03 : .1) : 0) + Math.min(RM ? .1 : .55, v / (RM ? 9000 : 2600));
+      S.spinBoost += (target - S.spinBoost) * Math.min(1, dms / 1000 * 3);
+    });
   }
   mtl.to(S, { morph: 3, duration: .6 }, 3);
   mtl.fromTo('.morph__rail-bar i', { scaleY: 0 }, { scaleY: 1, duration: 3.6 }, 0);
@@ -571,6 +623,9 @@ function initScroll() {
     });
     gsap.fromTo('.k4 > span', { scale: .45, opacity: .2 }, { scale: 1.12, opacity: 1, ease: 'none', scrollTrigger: { trigger: '.k4', start: 'top bottom', end: 'bottom 30%', scrub: true } });
     gsap.fromTo('.kinetic__label', { y: 40, opacity: 0 }, { y: 0, opacity: 1, scrollTrigger: { trigger: '.kinetic', start: 'top 80%', end: 'top 40%', scrub: true } });
+  } else {
+    // calm version: no sideways drift, each line just settles in
+    $$('.kline').forEach((l) => gsap.from(l, { y: 24, opacity: 0, duration: 1.4, ease: 'power2.out', scrollTrigger: { trigger: l, start: 'top 92%', once: true } }));
   }
 
   // ---------- pinned horizontal ----------
@@ -599,10 +654,10 @@ function initScroll() {
         });
       });
     }
-  } else if (!RM) {
+  } else {
     $$('.card').forEach((card) => {
       gsap.from(card, {
-        y: 44, opacity: 0, duration: 1, ease: 'expo.out',
+        y: RM ? 12 : 44, opacity: 0, duration: RM ? 1.2 : 1, ease: 'expo.out',
         scrollTrigger: { trigger: card, start: 'top 88%', once: true },
       });
     });
@@ -650,7 +705,7 @@ function countUp(el) {
   }
   const to = +v, from = +(el.dataset.from || 0);
   const o = { n: from };
-  gsap.to(o, { n: to, duration: RM ? .3 : 2, ease: 'power3.out', onUpdate: () => { el.textContent = Math.round(o.n); } });
+  gsap.to(o, { n: to, duration: RM ? 1.4 : 2, ease: 'power3.out', onUpdate: () => { el.textContent = Math.round(o.n); } });
 }
 
 /* Marquee bands: speed + direction follow scroll velocity */
@@ -671,9 +726,10 @@ function initBands() {
     const v = lenis ? lenis.velocity : dy;
     vel += (v - vel) * .15;
     if (Math.abs(vel) > .3) dir = vel > 0 ? 1 : -1;
-    if (!inView || RM) return;
+    if (!inView) return;
     const f = dms / 16.667;
-    const speed = (1.1 + Math.min(Math.abs(vel) * .9, 38)) * f;
+    // reduced motion: a slow steady drift, not coupled to scroll speed
+    const speed = (RM ? .35 : 1.1 + Math.min(Math.abs(vel) * .9, 38)) * f;
     for (const b of bands) {
       b.x += speed * b.base * dir;
       if (b.w) { if (b.x <= -b.w) b.x += b.w; if (b.x > 0) b.x -= b.w; }
@@ -691,11 +747,574 @@ function initTilt() {
       const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
       card.style.setProperty('--mx', (px * 100).toFixed(1) + '%');
       card.style.setProperty('--my', (py * 100).toFixed(1) + '%');
-      if (FINE && !RM) gsap.to(inner, { rotateY: (px - .5) * 16, rotateX: -(py - .5) * 16, transformPerspective: 900, duration: .6, ease: 'power3.out', overwrite: 'auto' });
+      if (FINE) gsap.to(inner, { rotateY: (px - .5) * (RM ? 7 : 16), rotateX: -(py - .5) * (RM ? 7 : 16), transformPerspective: 900, duration: .6, ease: 'power3.out', overwrite: 'auto' });
     });
     card.addEventListener('pointerleave', () => {
-      if (FINE && !RM) gsap.to(inner, { rotateY: 0, rotateX: 0, duration: 1.2, ease: 'elastic.out(1, .5)', overwrite: 'auto' });
+      if (FINE) gsap.to(inner, { rotateY: 0, rotateX: 0, duration: 1.2, ease: RM ? 'power2.out' : 'elastic.out(1, .5)', overwrite: 'auto' });
     });
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Gestures: tell a tap / a hold-drag apart from a page scroll                 */
+/* -------------------------------------------------------------------------- */
+/* Touch: a quick tap fires `tap`. Holding still for `hold` ms arms a drag —
+   from then on touchmove is preventDefault-ed (no scroll, no pull-to-refresh)
+   and fed to `move`. Moving before the hold elapses is a scroll and is left to
+   the browser untouched. With `axisX`, a clearly horizontal first move starts
+   the drag immediately (vertical still scrolls). Two fingers -> `pinch`.
+   Mouse: press + move drags at once, press + release in place is a tap. */
+function bindGesture(el, h, opt = {}) {
+  const HOLD = opt.hold === false ? 0 : (opt.hold ?? 200), SLOP = 9;
+  let st = 0; // 0 idle, 1 pending, 2 dragging, 3 scrolling (browser owns it), 4 pinching
+  let sx = 0, sy = 0, lx = 0, ly = 0, t0 = 0, tid = null, timer = 0, d0 = 1, moved = false, byTimer = false;
+  const arm = (x, y, timed) => { st = 2; moved = false; byTimer = !!timed; clearTimeout(timer); root.classList.add('is-gesturing'); h.start && h.start(x, y); };
+  const finish = (cancelled) => {
+    clearTimeout(timer);
+    if (st === 2 || st === 4) { root.classList.remove('is-gesturing'); h.end && h.end(cancelled); }
+    if (st === 4 && h.pinchEnd) h.pinchEnd();
+    st = 0; tid = null;
+  };
+  const tdist = (tl) => Math.hypot(tl[0].clientX - tl[1].clientX, tl[0].clientY - tl[1].clientY) || 1;
+  const find = (tl) => { for (const t of tl) if (t.identifier === tid) return t; return null; };
+
+  el.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2 && h.pinch) {
+      if (st === 2) { h.end && h.end(true); }
+      clearTimeout(timer); st = 4; d0 = tdist(e.touches); root.classList.add('is-gesturing');
+      return;
+    }
+    if (e.touches.length > 1 || st) return;
+    const t = e.changedTouches[0];
+    tid = t.identifier; sx = lx = t.clientX; sy = ly = t.clientY; t0 = e.timeStamp; st = 1;
+    h.down && h.down(sx, sy);
+    if (HOLD) timer = setTimeout(() => { if (st === 1) arm(lx, ly, true); }, HOLD);
+  }, { passive: true });
+
+  el.addEventListener('touchmove', (e) => {
+    if (st === 4) {
+      if (e.cancelable) e.preventDefault();
+      if (e.touches.length >= 2) h.pinch(tdist(e.touches) / d0);
+      return;
+    }
+    if (st !== 1 && st !== 2) return;
+    const t = find(e.changedTouches);
+    if (!t) return;
+    const x = t.clientX, y = t.clientY;
+    // A busy main thread can run the hold timer after a move that actually
+    // happened earlier: trust the event's own timestamp and give it back to
+    // the browser as a scroll.
+    if (st === 2 && byTimer && !moved && e.timeStamp - t0 < HOLD - 20 && Math.hypot(x - sx, y - sy) > SLOP) {
+      root.classList.remove('is-gesturing'); h.end && h.end(true); st = 3; h.scroll && h.scroll(); return;
+    }
+    if (st === 1) {
+      const dx = x - sx, dy = y - sy;
+      if (Math.hypot(dx, dy) > SLOP) {
+        if (opt.axisX && Math.abs(dx) > Math.abs(dy) * 1.3 && e.cancelable) arm(sx, sy);
+        else { st = 3; clearTimeout(timer); h.scroll && h.scroll(); return; }
+      }
+    }
+    if (st === 2) {
+      if (e.cancelable) e.preventDefault();
+      moved = true;
+      h.move && h.move(x, y, x - lx, y - ly);
+    }
+    lx = x; ly = y;
+  }, { passive: false });
+
+  el.addEventListener('touchend', (e) => {
+    if (st === 4) { if (e.touches.length < 2) finish(false); return; }
+    if (!find(e.changedTouches)) return;
+    const quick = e.timeStamp - t0 < (HOLD ? 450 : 1500); // tap-only surfaces forgive a slow tap
+    // same timestamp check for taps: released before the hold could elapse
+    if (st === 2 && byTimer && !moved && e.timeStamp - t0 < HOLD) { root.classList.remove('is-gesturing'); h.end && h.end(true); st = 1; }
+    if (st === 1 && quick) { clearTimeout(timer); st = 0; h.tap && h.tap(sx, sy); h.up && h.up(); tid = null; return; }
+    finish(false); h.up && h.up();
+  });
+  el.addEventListener('touchcancel', () => { finish(true); h.up && h.up(); });
+
+  // mouse (and pen): immediate drag, click = tap
+  el.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch' || e.button !== 0) return;
+    sx = lx = e.clientX; sy = ly = e.clientY; st = 1;
+    h.down && h.down(sx, sy);
+    clearTimeout(timer);
+    if (HOLD) timer = setTimeout(() => { if (st === 1) { st = 2; h.start && h.start(lx, ly); } }, HOLD);
+    const mv = (ev) => {
+      const x = ev.clientX, y = ev.clientY;
+      if (st === 1 && Math.hypot(x - sx, y - sy) > 4) { st = 2; h.start && h.start(sx, sy); }
+      if (st === 2) h.move && h.move(x, y, x - lx, y - ly);
+      lx = x; ly = y;
+    };
+    const upH = () => {
+      removeEventListener('pointermove', mv); removeEventListener('pointerup', upH); removeEventListener('pointercancel', upH);
+      clearTimeout(timer);
+      if (st === 1) { st = 0; h.tap && h.tap(sx, sy); }
+      else if (st === 2) { st = 0; h.end && h.end(false); }
+      st = 0; h.up && h.up();
+    };
+    addEventListener('pointermove', mv); addEventListener('pointerup', upH); addEventListener('pointercancel', upH);
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Playing with the particle cloud: tap = shockwave, hold + drag = attract     */
+/* -------------------------------------------------------------------------- */
+function initTouchPlay() {
+  if (!gsap) return;
+  const fx = mk('div', 'touchfx'); fx.setAttribute('aria-hidden', 'true');
+  const holdEl = mk('div', 'touchfx__hold');
+  fx.append(holdEl); document.body.append(fx);
+  const hint = $('.hero__hint');
+  let hinted = false;
+  try { hinted = localStorage.getItem('szv-hero-hint') === '1'; } catch (e) { /* ignore */ }
+  if (hinted && hint) hint.remove();
+  const played = () => {
+    if (hinted) return;
+    hinted = true;
+    try { localStorage.setItem('szv-hero-hint', '1'); } catch (e) { /* ignore */ }
+    if (hint) { hint.classList.add('is-gone'); setTimeout(() => hint.remove(), 900); }
+  };
+  const toNdc = (x, y) => [(x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1];
+  let bursts = 0, offT = 0;
+
+  function burst(x, y) {
+    const [nx, ny] = toNdc(x, y);
+    S.bx = nx; S.by = ny; S.bAge = 0;
+    const amp = RM ? .55 : 1;
+    gsap.timeline({ overwrite: true })
+      .to(S, { bAmp: amp, duration: .13, ease: 'power2.out' })
+      .to(S, { bAmp: 0, duration: RM ? 1.1 : 1.9, ease: RM ? 'power2.out' : 'elastic.out(1, .32)' });
+    const p = mk('i', 'touchfx__ping' + (RM ? ' is-calm' : ''));
+    p.style.left = x + 'px'; p.style.top = y + 'px';
+    p.addEventListener('animationend', () => p.remove(), { once: true });
+    fx.append(p);
+    bursts++;
+    $('.hero').dataset.bursts = bursts;
+    played();
+  }
+  const follow = (x, y) => {
+    const [nx, ny] = toNdc(x, y);
+    S.mx = nx; S.my = ny;
+    holdEl.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+  };
+  const handlers = {
+    tap: burst,
+    start(x, y) {
+      clearTimeout(offT);
+      follow(x, y);
+      S.mouseOn = 1; S.mouseVel = .6;
+      gsap.to(S, { grab: 1, duration: .45, ease: 'power2.out', overwrite: 'auto' });
+      holdEl.classList.add('is-on');
+      root.classList.add('is-grabbing');
+      played();
+    },
+    move(x, y, dx, dy) {
+      follow(x, y);
+      S.mouseOn = 1;
+      S.mouseVel = Math.min(1.2, S.mouseVel + Math.hypot(dx, dy) / 260);
+    },
+    end() {
+      gsap.to(S, { grab: 0, duration: .9, ease: 'power2.out', overwrite: 'auto' });
+      holdEl.classList.remove('is-on');
+      root.classList.remove('is-grabbing');
+      if (!FINE) offT = setTimeout(() => { S.mouseOn = 0; }, 400);
+    },
+    pinch(r) { S.pinch = Math.max(.55, Math.min(1.9, r)); played(); },
+    pinchEnd() { gsap.to(S, { pinch: 1, duration: 1.4, ease: RM ? 'power2.out' : 'elastic.out(1, .4)', overwrite: true }); },
+  };
+  bindGesture($('.hero'), handlers, { hold: 200 });
+  bindGesture($('.morph__sticky'), handlers, { hold: 200 });
+
+  // Gentle device-tilt parallax — Android only (iOS needs a permission
+  // prompt, which we never show). Off under reduced motion: it's parallax.
+  if (COARSE && !RM && window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+    let bb = null, bg = 0;
+    addEventListener('deviceorientation', (e) => {
+      if (e.beta == null || e.gamma == null) return;
+      if (bb === null) { bb = e.beta; bg = e.gamma; }
+      // slowly re-centre on however the phone is being held
+      bb += (e.beta - bb) * .02; bg += (e.gamma - bg) * .02;
+      S.tiltX = Math.max(-1, Math.min(1, (e.gamma - bg) / 25));
+      S.tiltY = Math.max(-1, Math.min(1, -(e.beta - bb) / 25));
+    }, { passive: true });
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* The five glass cards: each one idles on its own and answers a touch         */
+/* -------------------------------------------------------------------------- */
+const PAL = { a1: '#8b5cf6', a2: '#22d3ee', a3: '#e879f9', at: 0 };
+function palette(now) {
+  if (now - PAL.at > 1500) {
+    const cs = getComputedStyle(root);
+    PAL.a1 = cs.getPropertyValue('--a1').trim() || PAL.a1;
+    PAL.a2 = cs.getPropertyValue('--a2').trim() || PAL.a2;
+    PAL.a3 = cs.getPropertyValue('--a3').trim() || PAL.a3;
+    PAL.at = now;
+  }
+  return PAL;
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const touched = (art) => { art.classList.add('was-touched'); art.dataset.hits = (+art.dataset.hits || 0) + 1; };
+const localXY = (el, x, y) => { const r = el.getBoundingClientRect(); return [x - r.left, y - r.top]; };
+function fitCanvas(cv, art, onSize) {
+  const ctx = cv.getContext('2d');
+  const dpr = Math.min(devicePixelRatio || 1, COARSE ? 1.5 : 2);
+  const sz = { w: 0, h: 0, ctx };
+  const fit = () => {
+    const w = art.clientWidth, h = art.clientHeight;
+    if (!w || !h || (w === sz.w && h === sz.h)) return;
+    sz.w = w; sz.h = h;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    onSize && onSize(w, h);
+  };
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(art); else addEventListener('resize', fit);
+  fit();
+  return sz;
+}
+
+/* 01 Motion — orbits that never stop; tap = spin burst, hold = charge */
+function orbitCard(art) {
+  const rings = $$(':scope > i', art), sun = $(':scope > b', art);
+  const base = [40, -60, 90].map((v) => v * (RM ? .35 : 1)); // deg/s
+  const ang = [0, 140, 260];
+  const st = { boost: 1, trail: RM ? .35 : .3, sun: 1 };
+  const idleTrail = st.trail;
+  let lastTrail = -1;
+  const settle = (d) => gsap.to(st, { boost: 1, trail: idleTrail, duration: d, ease: 'power3.out', overwrite: 'auto' });
+  const pop = () => gsap.fromTo(st, { sun: RM ? 1.35 : 1.9 }, { sun: 1, duration: 1.3, ease: RM ? 'power2.out' : 'elastic.out(1, .35)', overwrite: 'auto' });
+  bindGesture(art, {
+    tap() {
+      touched(art);
+      gsap.timeline()
+        .to(st, { boost: RM ? 4 : 10, trail: 1, duration: .22, ease: 'power2.out', overwrite: 'auto' })
+        .add(() => settle(2.6), '+=.35');
+      pop();
+    },
+    start() { touched(art); gsap.to(st, { boost: RM ? 5 : 14, trail: 1, duration: 1, ease: 'power2.in', overwrite: 'auto' }); },
+    end() { settle(2.8); pop(); },
+  }, { hold: 220 });
+  return {
+    tick(t, dt) {
+      for (let i = 0; i < 3; i++) {
+        ang[i] = (ang[i] + base[i] * st.boost * dt) % 360;
+        rings[i].style.transform = `rotate(${ang[i].toFixed(2)}deg)`;
+      }
+      if (Math.abs(st.trail - lastTrail) > .005) { art.style.setProperty('--trail', st.trail.toFixed(3)); lastTrail = st.trail; }
+      sun.style.transform = `scale(${(st.sun * (1 + .08 * Math.sin(t * 2.1))).toFixed(3)})`;
+    },
+  };
+}
+
+/* 02 Interaction — a dot field that gets pushed, rippled and drawn on */
+function gridCard(art) {
+  const cv = mk('canvas');
+  art.prepend(cv);
+  let dots = new Float32Array(0), hx = new Float32Array(0), n = 0;
+  const sz = fitCanvas(cv, art, (w, h) => {
+    let sp = 18;
+    while ((w / sp) * (h / sp) > 460) sp += 2;
+    const cols = Math.max(1, Math.floor(w / sp)), rows = Math.max(1, Math.floor(h / sp));
+    const ox = (w - (cols - 1) * sp) / 2, oy = (h - (rows - 1) * sp) / 2;
+    n = cols * rows; dots = new Float32Array(n * 4); hx = new Float32Array(n * 2);
+    for (let r = 0, k = 0; r < rows; r++) for (let c = 0; c < cols; c++, k++) { hx[k * 2] = ox + c * sp; hx[k * 2 + 1] = oy + r * sp; }
+  });
+  const ctx = sz.ctx;
+  const ripples = [], trail = [];
+  const ptr = { x: 0, y: 0, on: false };
+  let nextIdle = .6, clock = 0;
+  const RS = RM ? 190 : 260, BW = 26, LIFE = 1.8;
+  const rings = [];
+  const ripple = (x, y, amp) => { ripples.push({ x, y, age: 0, amp }); if (ripples.length > 5) ripples.shift(); };
+  // a tap is a slam: an instant outward kick near the finger + a strong ripple
+  // that physically shoves every dot as it passes, and a visible ring
+  const slam = (x, y) => {
+    for (let i = 0; i < n; i++) {
+      const dx = hx[i * 2] + dots[i * 4] - x, dy = hx[i * 2 + 1] + dots[i * 4 + 1] - y, d = Math.sqrt(dx * dx + dy * dy) + .01;
+      if (d < 130) { const k = (1 - d / 130) * (RM ? 9 : 14); dots[i * 4 + 2] += dx / d * k; dots[i * 4 + 3] += dy / d * k; }
+    }
+    ripple(x, y, RM ? 2.6 : 3.4);
+    rings.push({ x, y, age: 0 }); if (rings.length > 4) rings.shift();
+  };
+  const point = (x, y) => { const [lx, ly] = localXY(art, x, y); ptr.x = lx; ptr.y = ly; ptr.on = true; trail.push({ x: lx, y: ly, t: clock }); if (trail.length > 40) trail.shift(); };
+  bindGesture(art, {
+    down(x, y) { const [lx, ly] = localXY(art, x, y); ptr.x = lx; ptr.y = ly; ptr.on = true; },
+    scroll() { ptr.on = false; },
+    tap(x, y) { const [lx, ly] = localXY(art, x, y); slam(lx, ly); touched(art); },
+    start(x, y) { point(x, y); touched(art); },
+    move(x, y) { point(x, y); },
+    up() { if (!FINE) ptr.on = false; },
+  }, { axisX: true });
+  art.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') point(e.clientX, e.clientY); });
+  art.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') ptr.on = false; });
+
+  const buckets = [[], [], [], [], [], []];
+  return {
+    tick(t, dt) {
+      clock = t;
+      const w = sz.w, h = sz.h;
+      if (!n || !w) return;
+      const f = dt * 60, damp = Math.pow(.86, f), K = .09, R = 88, PUSH = RM ? 2.6 : 3.4;
+      nextIdle -= dt;
+      if (nextIdle <= 0) { ripple(w * (.2 + Math.random() * .6), h * (.2 + Math.random() * .6), RM ? .5 : .8); nextIdle = RM ? 4.5 : 2.8; }
+      for (let i = ripples.length - 1; i >= 0; i--) { ripples[i].age += dt; if (ripples[i].age > LIFE) ripples.splice(i, 1); }
+      for (let i = trail.length - 1; i >= 0; i--) if (t - trail[i].t > .55) trail.splice(0, i + 1), i = 0;
+      for (const b of buckets) b.length = 0;
+      for (let i = 0; i < n; i++) {
+        const j = i * 4, x0 = hx[i * 2], y0 = hx[i * 2 + 1];
+        let ox = dots[j], oy = dots[j + 1], vx = dots[j + 2], vy = dots[j + 3];
+        let ax = -ox * K, ay = -oy * K;
+        if (ptr.on) {
+          const dx = x0 + ox - ptr.x, dy = y0 + oy - ptr.y, d2 = dx * dx + dy * dy;
+          if (d2 < R * R) { const d = Math.sqrt(d2) + .01, s = (1 - d / R) ** 2 * PUSH; ax += dx / d * s; ay += dy / d * s; }
+        }
+        for (const rp of ripples) {
+          const dx = x0 - rp.x, dy = y0 - rp.y, d = Math.sqrt(dx * dx + dy * dy) + .01, band = Math.abs(d - rp.age * RS);
+          if (band < BW) { const s = (1 - band / BW) * rp.amp * (1 - rp.age / LIFE); ax += dx / d * s; ay += dy / d * s; }
+        }
+        vx = (vx + ax * f) * damp; vy = (vy + ay * f) * damp;
+        ox += vx * f; oy += vy * f;
+        dots[j] = ox; dots[j + 1] = oy; dots[j + 2] = vx; dots[j + 3] = vy;
+        const e = Math.min(1, (Math.abs(ox) + Math.abs(oy)) / 8);
+        const shimmer = .5 + .5 * Math.sin(t * (RM ? .8 : 1.3) - (x0 * .022 + y0 * .016));
+        const b = Math.min(5, ((shimmer * .32 + e) * 5) | 0);
+        buckets[b].push(x0 + ox, y0 + oy);
+      }
+      const P = palette(performance.now());
+      ctx.clearRect(0, 0, w, h);
+      // fading finger / cursor trail
+      if (trail.length > 1) {
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (let i = 1; i < trail.length; i++) {
+          const a = 1 - (t - trail[i].t) / .55;
+          if (a <= 0) continue;
+          ctx.globalAlpha = a * .35; ctx.strokeStyle = P.a2; ctx.lineWidth = 10 * a;
+          ctx.beginPath(); ctx.moveTo(trail[i - 1].x, trail[i - 1].y); ctx.lineTo(trail[i].x, trail[i].y); ctx.stroke();
+          ctx.globalAlpha = a * .9; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * a;
+          ctx.stroke();
+        }
+      }
+      for (let i = rings.length - 1; i >= 0; i--) {
+        const rg = rings[i]; rg.age += dt;
+        const a = 1 - rg.age / 1.1;
+        if (a <= 0) { rings.splice(i, 1); continue; }
+        ctx.globalAlpha = a * .85; ctx.strokeStyle = P.a2; ctx.lineWidth = 2 + 6 * a;
+        ctx.beginPath(); ctx.arc(rg.x, rg.y, rg.age * RS, 0, 6.2832); ctx.stroke();
+      }
+      if (ptr.on) {
+        const g = ctx.createRadialGradient(ptr.x, ptr.y, 0, ptr.x, ptr.y, 90);
+        g.addColorStop(0, P.a2); g.addColorStop(1, 'transparent');
+        ctx.globalAlpha = .28; ctx.fillStyle = g; ctx.fillRect(ptr.x - 90, ptr.y - 90, 180, 180);
+      }
+      for (let b = 0; b < 6; b++) {
+        const pts = buckets[b];
+        if (!pts.length) continue;
+        const r = 1.1 + b * .32;
+        ctx.globalAlpha = .22 + b * .15;
+        ctx.fillStyle = b >= 3 ? P.a2 : '#fff';
+        ctx.beginPath();
+        for (let k = 0; k < pts.length; k += 2) { ctx.moveTo(pts[k] + r, pts[k + 1]); ctx.arc(pts[k], pts[k + 1], r, 0, 6.2832); }
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    },
+  };
+}
+
+/* 03 3D — always turning; drag to spin with inertia, tap to blow it apart */
+function cubeCard(art) {
+  const cube = $('.cube', art);
+  const BASE = RM ? 12 : 36; // deg/s
+  let rx = -24, ry = 20, vx = 0, vy = BASE, dragging = false, lt = 0;
+  bindGesture(art, {
+    start() { dragging = true; vx = vy = 0; lt = performance.now(); art.classList.add('is-dragging'); touched(art); },
+    move(x, y, dx, dy) {
+      const now = performance.now(), d = Math.max(8, now - lt) / 1000; lt = now;
+      ry += dx * .6; rx = clamp(rx - dy * .6, -85, 85);
+      vy = clamp(dx * .6 / d, -900, 900); vx = clamp(-dy * .6 / d, -600, 600);
+    },
+    end() { dragging = false; art.classList.remove('is-dragging'); if (performance.now() - lt > 90) { vx = 0; vy = BASE; } },
+    tap() {
+      touched(art);
+      vy += RM ? 90 : 420;
+      cube.classList.add('is-hot');
+      gsap.timeline({ onComplete: () => cube.classList.remove('is-hot') })
+        .to(cube, { '--ex': RM ? .55 : 1, duration: .42, ease: 'back.out(2)', overwrite: 'auto' })
+        .to(cube, { '--ex': 0, duration: 1.4, ease: RM ? 'power2.out' : 'elastic.out(1, .4)' }, '+=.45');
+    },
+  }, { axisX: true });
+  return {
+    tick(t, dt) {
+      if (!dragging) {
+        const kk = 1 - Math.exp(-dt * 1.1);
+        vy += (BASE - vy) * kk; vx *= Math.exp(-dt * 2.5);
+        ry += vy * dt; rx += vx * dt;
+        rx += (-24 + Math.sin(t * .5) * (RM ? 3 : 8) - rx) * (1 - Math.exp(-dt * .9));
+      }
+      cube.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${(ry % 360).toFixed(2)}deg)`;
+    },
+  };
+}
+
+/* 04 Sound of silence — the bars breathe; a tap drops a beat through them */
+function barsCard(art) {
+  const bars = $$(':scope > i', art), N = bars.length;
+  const beats = [];
+  let centers = [], hover = -1, hoverAmp = 0, finger = -1, nextBlip = 2.5;
+  const measure = () => { centers = bars.map((b) => { const r = b.getBoundingClientRect(); return r.left + r.width / 2; }); };
+  const idxAt = (x) => { measure(); let bi = 0, bd = 1e9; centers.forEach((c, i) => { const d = Math.abs(c - x); if (d < bd) { bd = d; bi = i; } }); return bi; };
+  const beat = (o, amp) => { beats.push({ o, age: 0, amp }); if (beats.length > 8) beats.shift(); };
+  bindGesture(art, {
+    tap(x) { beat(idxAt(x), 1); touched(art); },
+    start(x) { finger = idxAt(x); beat(finger, .8); touched(art); },
+    move(x) { const i = idxAt(x); if (i !== finger) { finger = i; beat(i, .7); } },
+    end() { finger = -1; },
+  }, { axisX: true });
+  art.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') hover = idxAt(e.clientX); });
+  art.addEventListener('pointerleave', () => { hover = -1; });
+  const SPD = RM ? 12 : 22;
+  return {
+    tick(t, dt) {
+      nextBlip -= dt;
+      if (nextBlip <= 0) { beat((Math.random() * N) | 0, RM ? .25 : .4); nextBlip = (RM ? 6 : 3.5) + Math.random() * 3; }
+      for (let i = beats.length - 1; i >= 0; i--) { beats[i].age += dt; if (beats[i].age > 2.2) beats.splice(i, 1); }
+      hoverAmp += ((hover >= 0 || finger >= 0 ? 1 : 0) - hoverAmp) * (1 - Math.exp(-dt * 8));
+      const hi = finger >= 0 ? finger : hover;
+      const breath = .5 + .5 * Math.sin(t * (RM ? .7 : 1.1));
+      for (let i = 0; i < N; i++) {
+        let v = .06 + .1 * breath + .05 * (.5 + .5 * Math.sin(t * (RM ? 1 : 1.7) - i * .55));
+        for (const b of beats) {
+          const x = Math.abs(i - b.o) - b.age * SPD;
+          v += b.amp * Math.exp(-x * x * .5) * Math.exp(-b.age * 1.7);
+        }
+        if (hi >= 0) v += hoverAmp * .3 * Math.exp(-(i - hi) * (i - hi) * .6);
+        v = Math.min(1, v);
+        bars[i].style.transform = `scaleY(${v.toFixed(3)})`;
+        bars[i].style.opacity = (.55 + v * .45).toFixed(3);
+      }
+    },
+  };
+}
+
+/* 05 Entropy — order, then chaos, then a better kind of order */
+function blobCard(art) {
+  const label = $('.blob__state', art);
+  const cv = mk('canvas');
+  art.insertBefore(cv, label);
+  const sz = fitCanvas(cv, art);
+  const ctx = sz.ctx;
+  const N = 120, P = new Float32Array(N * 6); // x y vx vy sx sy
+  let phase = 'idle', pt = 0, rot = 0, alpha = 0;
+  const say = (s) => { if (s) { label.textContent = s; label.classList.add('is-on'); } else label.classList.remove('is-on'); art.dataset.phase = phase; };
+  const go = (p) => {
+    phase = p; pt = 0;
+    art.classList.toggle('is-order', p === 'order');
+    art.classList.toggle('is-scattered', p === 'chaos' || p === 'better');
+    if (p === 'order') say('order');
+    else if (p === 'chaos') { say('chaos'); scatter(true); }
+    else if (p === 'better') { say('better order'); for (let i = 0; i < N; i++) { P[i * 6 + 4] = P[i * 6]; P[i * 6 + 5] = P[i * 6 + 1]; } }
+    else if (p === 'melt') { say(''); for (let i = 0; i < N; i++) { P[i * 6 + 4] = P[i * 6]; P[i * 6 + 5] = P[i * 6 + 1]; } }
+    else say('');
+  };
+  function scatter(spawn) {
+    const w = sz.w, h = sz.h, ar = art.getBoundingClientRect();
+    const bl = $$(':scope > i', art).map((b) => { const r = b.getBoundingClientRect(); return [r.left - ar.left + r.width / 2, r.top - ar.top + r.height / 2, r.width * .36]; });
+    const sp = RM ? 70 : 240;
+    for (let i = 0; i < N; i++) {
+      const j = i * 6;
+      if (spawn) {
+        const b = bl[i % bl.length] || [w / 2, h / 2, 40];
+        const a = Math.random() * 6.2832, r = Math.sqrt(Math.random()) * b[2];
+        P[j] = clamp(b[0] + Math.cos(a) * r, 4, w - 4); P[j + 1] = clamp(b[1] + Math.sin(a) * r, 4, h - 4);
+      }
+      const a = Math.random() * 6.2832, s = sp * (.35 + Math.random());
+      P[j + 2] = Math.cos(a) * s; P[j + 3] = Math.sin(a) * s;
+    }
+  }
+  const run = () => {
+    touched(art);
+    if (phase === 'idle') go('order');
+    else if (phase === 'chaos') scatter(false);
+  };
+  bindGesture(art, { tap: run }, { hold: false });
+  const D = { order: .6, chaos: RM ? 1.6 : 1.3, better: RM ? 2.6 : 2.4, melt: 1.1 };
+  const eio = (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  return {
+    tick(t, dt) {
+      if (phase === 'idle') { if (alpha) { ctx.clearRect(0, 0, sz.w, sz.h); alpha = 0; } return; }
+      pt += dt;
+      const w = sz.w, h = sz.h, cx = w / 2, cy = h / 2;
+      if (phase === 'order') { if (pt > D.order) go('chaos'); return; }
+      if (phase === 'chaos') {
+        alpha = Math.min(1, alpha + dt * 6);
+        const jit = RM ? 120 : 600, fr = Math.exp(-dt * .8);
+        for (let i = 0; i < N; i++) {
+          const j = i * 6;
+          P[j + 2] = (P[j + 2] + (Math.random() - .5) * jit * dt) * fr; P[j + 3] = (P[j + 3] + (Math.random() - .5) * jit * dt) * fr;
+          P[j] += P[j + 2] * dt; P[j + 1] += P[j + 3] * dt;
+          if (P[j] < 4 || P[j] > w - 4) { P[j + 2] *= -1; P[j] = clamp(P[j], 4, w - 4); }
+          if (P[j + 1] < 4 || P[j + 1] > h - 4) { P[j + 3] *= -1; P[j + 1] = clamp(P[j + 1], 4, h - 4); }
+        }
+        if (pt > D.chaos) go('better');
+      } else if (phase === 'better') {
+        rot += dt * (RM ? .15 : .4);
+        const e = eio(Math.min(1, pt / 1.1)), R = Math.min(w, h) * .4, c = R / Math.sqrt(N), GA = 2.39996;
+        for (let i = 0; i < N; i++) {
+          const j = i * 6, r = c * Math.sqrt(i + .5), a = i * GA + rot;
+          const tx = cx + Math.cos(a) * r, ty = cy + Math.sin(a) * r;
+          P[j] = P[j + 4] + (tx - P[j + 4]) * e; P[j + 1] = P[j + 5] + (ty - P[j + 5]) * e;
+        }
+        if (pt > D.better) go('melt');
+      } else if (phase === 'melt') {
+        const e = Math.min(1, pt / D.melt), ee = e * e;
+        for (let i = 0; i < N; i++) { const j = i * 6; P[j] = P[j + 4] + (cx - P[j + 4]) * ee; P[j + 1] = P[j + 5] + (cy - P[j + 5]) * ee; }
+        alpha = 1 - e;
+        if (e >= 1) go('idle');
+      }
+      const C = palette(performance.now()), cols = [C.a1, C.a2, C.a3];
+      ctx.clearRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'lighter';
+      for (let k = 0; k < 3; k++) {
+        ctx.fillStyle = cols[k];
+        ctx.globalAlpha = alpha * .16; ctx.beginPath();
+        for (let i = k; i < N; i += 3) { ctx.moveTo(P[i * 6] + 7, P[i * 6 + 1]); ctx.arc(P[i * 6], P[i * 6 + 1], 7, 0, 6.2832); }
+        ctx.fill();
+        ctx.globalAlpha = alpha * .95; ctx.beginPath();
+        for (let i = k; i < N; i += 3) { ctx.moveTo(P[i * 6] + 2.4, P[i * 6 + 1]); ctx.arc(P[i * 6], P[i * 6 + 1], 2.4, 0, 6.2832); }
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    },
+  };
+}
+
+function initCards() {
+  if (!gsap) return;
+  const horiz = $('.horiz');
+  if (!horiz) return;
+  horiz.classList.add('cards-live');
+  const make = { orbit: orbitCard, grid: gridCard, cube: cubeCard, bars: barsCard, blob: blobCard };
+  const live = new Set();
+  const io = new IntersectionObserver((ents) => {
+    for (const en of ents) {
+      const c = en.target._card;
+      if (!c) continue;
+      en.target.closest('.card').classList.toggle('is-off', !en.isIntersecting);
+      if (en.isIntersecting) live.add(c); else live.delete(c);
+    }
+  }, { rootMargin: '60px' });
+  $$('[data-art]').forEach((art) => {
+    const fn = make[art.dataset.art];
+    if (!fn) return;
+    art._card = fn(art);
+    io.observe(art);
+  });
+  gsap.ticker.add((time, dms) => {
+    if (!pageVisible || !live.size) return;
+    const dt = Math.min(.05, dms / 1000);
+    for (const c of live) c.tick(time, dt);
   });
 }
 
@@ -743,8 +1362,8 @@ function initWordmark() {
   let clicks = [], busy = false;
   heroChars.forEach((c) => {
     c.addEventListener('pointerenter', () => {
-      if (busy || RM) return;
-      gsap.timeline().to(c, { yPercent: -14, duration: .25, ease: 'power2.out' }).to(c, { yPercent: 0, duration: .9, ease: 'elastic.out(1.1, .35)' });
+      if (busy) return;
+      gsap.timeline().to(c, { yPercent: RM ? -6 : -14, duration: .25, ease: 'power2.out' }).to(c, { yPercent: 0, duration: .9, ease: RM ? 'power2.out' : 'elastic.out(1.1, .35)' });
     });
   });
   word.addEventListener('click', () => {
@@ -1188,11 +1807,11 @@ const LearnDemo = (() => {
   function award(st) {
     xp += st.xp; n += 1;
     spells(st.spell);
-    line(`<span class="ok">&#10003;</span> ${D}mission ${String(n).padStart(2, '0')} &middot;${E} ${st.mission} <span class="xp">+${st.xp} xp</span>`, RM ? '' : 'in');
+    line(`<span class="ok">&#10003;</span> ${D}mission ${String(n).padStart(2, '0')} &middot;${E} ${st.mission} <span class="xp">+${st.xp} xp</span>`, 'in');
     misNum.textContent = String(n).padStart(2, '0');
     misTxt.textContent = n < STEPS.length ? STEPS[n].mission : `${15 - n} spells to go`;
     meter.style.transform = `scaleX(${n / 15})`;
-    if (RM || !gsap) xpEl.textContent = String(xp).padStart(3, '0');
+    if (!gsap) xpEl.textContent = String(xp).padStart(3, '0');
     else { const o = { v: xp - st.xp }; gsap.to(o, { v: xp, duration: .8, ease: 'power2.out', onUpdate: () => { xpEl.textContent = String(Math.round(o.v)).padStart(3, '0'); } }); }
   }
   function fx(st) {
@@ -1233,7 +1852,7 @@ const LearnDemo = (() => {
     promptLine();
     state = 2;
   }
-  if (!RM) header(), promptLine();
+  header(); promptLine();
   return { play, final };
 })();
 
@@ -1242,9 +1861,8 @@ function initLearn() {
   if (!sec) return;
   const l1 = splitText($('.learn__l1'), 'words');
   const l2 = $('.learn__l2');
-  if (RM) {
-    LearnDemo.final();
-  } else {
+  {
+    // reduced motion still types: only the 3D tip-up and the parallax glyph go
     gsap.set(l1, { yPercent: 115 });
     gsap.set(l2, { clipPath: 'inset(-10% 100% -10% 0%)' });
     ScrollTrigger.create({
@@ -1258,21 +1876,26 @@ function initLearn() {
     gsap.from('.learn__spells li', { y: 18, opacity: 0, duration: .8, ease: 'expo.out', stagger: .04, scrollTrigger: { trigger: '.learn__spells', start: 'top 90%', once: true } });
     gsap.from('.learn__actions', { y: 30, opacity: 0, duration: 1.1, ease: 'expo.out', scrollTrigger: { trigger: '.learn__actions', start: 'top 95%', once: true } });
     // the window tips up from the floor as it arrives
-    gsap.fromTo('.lterm', { rotateX: MOBILE ? 14 : 26, rotateY: MOBILE ? 0 : -10, y: 90, scale: .9, opacity: .35 }, {
-      rotateX: 0, rotateY: 0, y: 0, scale: 1, opacity: 1, ease: 'none',
-      scrollTrigger: { trigger: '.learn__stage', start: 'top bottom', end: 'center 58%', scrub: 1 },
-    });
-    gsap.fromTo('.learn__bg span', { xPercent: 12 }, { xPercent: -18, ease: 'none', scrollTrigger: { trigger: sec, start: 'top bottom', end: 'bottom top', scrub: true } });
+    if (RM) {
+      gsap.from('.lterm', { opacity: 0, y: 16, duration: 1.2, ease: 'power2.out', scrollTrigger: { trigger: '.learn__stage', start: 'top 92%', once: true } });
+    } else {
+      gsap.fromTo('.lterm', { rotateX: MOBILE ? 14 : 26, rotateY: MOBILE ? 0 : -10, y: 90, scale: .9, opacity: .35 }, {
+        rotateX: 0, rotateY: 0, y: 0, scale: 1, opacity: 1, ease: 'none',
+        scrollTrigger: { trigger: '.learn__stage', start: 'top bottom', end: 'center 58%', scrub: 1 },
+      });
+      gsap.fromTo('.learn__bg span', { xPercent: 12 }, { xPercent: -18, ease: 'none', scrollTrigger: { trigger: sec, start: 'top bottom', end: 'bottom top', scrub: true } });
+    }
     ScrollTrigger.create({ trigger: '.lterm', start: COARSE ? 'top 88%' : 'top 72%', once: true, onEnter: () => LearnDemo.play() });
   }
   // spotlight + subtle tilt on the window
   const lt = $('.lterm');
-  if (FINE && !RM) {
+  if (FINE) {
     const win = $('.lterm__win');
+    const amt = RM ? 3 : 7;
     lt.addEventListener('pointermove', (e) => {
       const r = lt.getBoundingClientRect();
       const px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
-      gsap.to(win, { rotateY: px * 7, rotateX: -py * 7, transformPerspective: 1200, duration: .7, ease: 'power3.out', overwrite: 'auto' });
+      gsap.to(win, { rotateY: px * amt, rotateX: -py * amt, transformPerspective: 1200, duration: .7, ease: 'power3.out', overwrite: 'auto' });
     });
     lt.addEventListener('pointerleave', () => gsap.to(win, { rotateY: 0, rotateX: 0, duration: 1.1, ease: 'elastic.out(1, .55)', overwrite: 'auto' }));
   }
@@ -1453,6 +2076,8 @@ async function boot() {
   initNav();
   initTermFab();
   initWordmark();
+  initTouchPlay();
+  initCards();
   $$('[data-goto]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); goto(a.dataset.goto); }));
 
   // Start WebGL (non-blocking) while the counter runs
