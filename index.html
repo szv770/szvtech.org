@@ -85,7 +85,7 @@
     </div>
 
     <div class="hero__bottom">
-      <div class="hero__scroll mono"><span class="hero__scroll-line"><i></i></span><span data-scramble>Scroll to wake it up</span></div>
+      <div class="hero__scroll mono"><span class="hero__scroll-line"><i></i></span><span class="hero__scroll-txt"><span data-scramble>Scroll to wake it up</span><span class="hero__hint only-touch" aria-hidden="true"><i></i>tap or hold the stars</span></span></div>
       <div class="hero__coords mono" aria-hidden="true">x <span id="cx">+0.000</span>&nbsp;&nbsp;y <span id="cy">+0.000</span></div>
     </div>
   </section>
@@ -113,6 +113,11 @@
           <span class="stage__label mono">04 &mdash; Scale</span>
           <h2 class="stage__title">Zoom out. It was a galaxy all along.</h2>
         </div>
+      </div>
+      <div class="morph__step mono" aria-hidden="true">
+        <span class="morph__dots"><i class="is-on"></i><i></i><i></i><i></i></span>
+        <span class="morph__count"><b>1</b>/4</span>
+        <span class="morph__cue">keep scrolling <em>&darr;</em></span>
       </div>
       <div class="morph__rail mono" aria-hidden="true">
         <span>Sphere</span><span>Knot</span><span>Wave</span><span>Galaxy</span>
@@ -147,14 +152,14 @@
       <div class="horiz__intro">
         <span class="label mono">(03) Obsessions</span>
         <h2 class="h2 split-words">Five things we can&rsquo;t stop thinking about.</h2>
-        <p class="muted"><span class="only-touch">Swipe through five pieces of glass &mdash; tap one to light it up.</span><span class="only-fine">Keep scrolling &mdash; the page turns sideways. Hover the glass.</span></p>
+        <p class="muted"><span class="only-touch">Five pieces of glass, all alive &mdash; tap, hold or drag each one.</span><span class="only-fine">Keep scrolling &mdash; the page turns sideways. Hover, click and drag the glass.</span></p>
         <div class="horiz__arrow mono"><span class="only-fine">&rarr;</span><span class="only-touch">&darr;</span></div>
       </div>
 
       <article class="card" data-tilt data-cursor="Tilt">
         <div class="card__in">
           <div class="card__top mono"><span>01</span><span>/ 05</span></div>
-          <div class="card__art art-orbit"><i></i><i></i><i></i><b></b></div>
+          <div class="card__art art-orbit" data-art="orbit" data-hover data-cursor="Spin"><i></i><i></i><i></i><b></b><span class="card__hint mono" aria-hidden="true"><span class="only-touch">tap · hold</span><span class="only-fine">click · hold</span></span></div>
           <h3 class="card__title">Motion</h3>
           <p class="card__txt">Nothing here sits still. Not even the stillness.</p>
         </div>
@@ -163,7 +168,7 @@
       <article class="card" data-tilt data-cursor="Tilt">
         <div class="card__in">
           <div class="card__top mono"><span>02</span><span>/ 05</span></div>
-          <div class="card__art art-grid"></div>
+          <div class="card__art art-grid" data-art="grid" data-hover data-cursor="Touch"><span class="card__hint mono" aria-hidden="true"><span class="only-touch">tap · drag</span><span class="only-fine">move · click</span></span></div>
           <h3 class="card__title">Interaction</h3>
           <p class="card__txt">Touch it and it touches back. Every hover is a small conversation.</p>
         </div>
@@ -172,7 +177,7 @@
       <article class="card" data-tilt data-cursor="Tilt">
         <div class="card__in">
           <div class="card__top mono"><span>03</span><span>/ 05</span></div>
-          <div class="card__art art-cube"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          <div class="card__art art-cube" data-art="cube" data-hover data-cursor="Drag"><span class="cube__floor" aria-hidden="true"></span><div class="cube"><i>1</i><i>6</i><i>3</i><i>4</i><i>5</i><i>2</i></div><span class="card__hint mono" aria-hidden="true"><span class="only-touch">drag to spin · tap to explode</span><span class="only-fine">drag to spin · click to explode</span></span></div>
           <h3 class="card__title">3D</h3>
           <p class="card__txt">Flat is a choice. We usually choose otherwise.</p>
         </div>
@@ -181,7 +186,7 @@
       <article class="card" data-tilt data-cursor="Tilt">
         <div class="card__in">
           <div class="card__top mono"><span>04</span><span>/ 05</span></div>
-          <div class="card__art art-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="card__art art-bars" data-art="bars" data-hover data-cursor="Beat"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><span class="card__hint mono" aria-hidden="true"><span class="only-touch">tap a bar</span><span class="only-fine">click a bar</span></span></div>
           <h3 class="card__title">Sound of silence</h3>
           <p class="card__txt">The pause between frames is where the feeling lives.</p>
         </div>
@@ -190,7 +195,7 @@
       <article class="card" data-tilt data-cursor="Tilt">
         <div class="card__in">
           <div class="card__top mono"><span>05</span><span>/ 05</span></div>
-          <div class="card__art art-blob"><i></i><i></i></div>
+          <div class="card__art art-blob" data-art="blob" data-hover data-cursor="Chaos"><i></i><i></i><span class="blob__state mono" aria-hidden="true"></span><span class="card__hint mono" aria-hidden="true"><span class="only-touch">tap</span><span class="only-fine">click</span></span></div>
           <h3 class="card__title">Entropy</h3>
           <p class="card__txt">Order, then chaos, then a better kind of order.</p>
         </div>
