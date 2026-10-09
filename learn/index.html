@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Learn the terminal · SZVTECH</title>
+<meta name="description" content="A training terminal: real Windows and Linux commands inside a pretend computer. Nothing can break.">
+<meta name="theme-color" content="#05050a">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Crect x='6' y='6' width='52' height='52' rx='12' fill='none' stroke='url(%23g)' stroke-width='3'/%3E%3Cpath d='M18 24l10 8-10 8' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='32' y='38' width='14' height='4.5' rx='2' fill='%2322d3ee'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/learn/learn.css">
+<script>document.documentElement.classList.add('js');if(location.hash==='#free')document.documentElement.classList.add('is-free','no-boot');</script>
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="glow" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<!-- Boot -->
+<div class="boot" id="boot" aria-hidden="true">
+  <div class="boot__in">
+    <div class="boot__head mono"><span>SZVTECH BIOS v1.0.26</span><span>training edition</span></div>
+    <pre class="boot__lines" id="bootLines"></pre>
+    <div class="boot__day" id="bootDay"><span class="mono">Line of the day</span><p></p></div>
+  </div>
+  <div class="boot__skip mono">press any key to skip</div>
+</div>
+
+<header class="top">
+  <a class="logo" href="/" aria-label="SZVTECH home"><span class="logo__mark" aria-hidden="true"></span><span>SZVTECH</span></a>
+  <span class="top__mid mono"><span class="live-dot" aria-hidden="true"></span>Training terminal</span>
+  <div class="top__right">
+    <div class="xpchip mono" id="xpchip" title="Your level"><span class="xpchip__lv">LV <b id="hdrLv">1</b></span><span class="xpchip__name" id="hdrName">Curious</span><span class="xpchip__bar"><i id="hdrBar"></i></span></div>
+    <button class="ibtn" id="soundBtn" type="button" aria-pressed="false" aria-label="Sound effects" title="Sound effects (off)">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><g class="snd-on"><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></g><g class="snd-off"><path d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></g></svg>
+    </button>
+    <button class="ibtn ibtn--q" id="cheatBtn" type="button" aria-label="Cheat sheet" title="Cheat sheet">?</button>
+    <button class="ibtn ibtn--txt mono" id="panelBtn" type="button" aria-controls="panel" aria-expanded="true">Missions</button>
+  </div>
+</header>
+
+<main class="app">
+  <div class="hero">
+    <div class="hero__l">
+      <span class="label mono">(&infin;) Training terminal &mdash; 15 missions</span>
+      <h1 class="hero__h">Learn the <span class="is-grad">terminal.</span></h1>
+    </div>
+    <p class="hero__sub">Real commands. A pretend computer. Nothing can break.<br><span class="muted">Windows and Linux, side by side &mdash; both spellings work here.</span></p>
+  </div>
+
+  <button class="mstrip" id="mstrip" type="button" aria-controls="panel" aria-expanded="false">
+    <span class="mstrip__n mono" id="msN">01/15</span>
+    <span class="mstrip__t" id="msT">Where am I?</span>
+    <span class="mstrip__bar" aria-hidden="true"><i id="msBar"></i></span>
+    <span class="mstrip__open mono">Missions <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
+  </button>
+
+  <div class="stage">
+    <section class="term" id="term" aria-label="Training terminal">
+      <div class="term__bar">
+        <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="term__title mono" id="termTitle">Command Prompt &mdash; training</span>
+        <span class="term__safe mono" title="Nothing you type here touches your real computer"><span aria-hidden="true">&#9679;</span> sandbox</span>
+      </div>
+      <div class="term__crt" id="crt">
+        <div class="term__screen" id="screen">
+          <div class="term__out" id="out" role="log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="term__line" id="line">
+            <span class="term__prompt" id="prompt">C:\Users\you&gt;</span><span class="term__field"><span class="term__pre" id="pre"></span><span class="term__caret" id="caret"> </span><span class="term__post" id="post"></span><label class="sr-only" for="cmd">Type a terminal command, then press Enter</label><input class="term__input" id="cmd" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" inputmode="text"></span>
+          </div>
+        </div>
+      </div>
+      <div class="chips" id="chips" aria-label="Suggested commands"></div>
+    </section>
+
+    <div class="panel-scrim" id="scrim" aria-hidden="true"></div>
+    <aside class="panel" id="panel" aria-label="Missions and progress">
+      <div class="panel__grab" aria-hidden="true"></div>
+      <div class="panel__head">
+        <div class="lvl">
+          <span class="lvl__num mono" id="lvNum">1</span>
+          <div class="lvl__txt">
+            <span class="lvl__name" id="lvName">Curious</span>
+            <span class="lvl__xp mono"><b id="xpNow">0</b> / <span id="xpNext">150</span> XP</span>
+          </div>
+        </div>
+        <button class="ibtn panel__close" id="panelClose" type="button" aria-label="Close missions"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      </div>
+      <div class="xpbar" aria-hidden="true"><i id="xpFill"></i></div>
+
+      <div class="mcard" id="mcard" aria-live="polite"></div>
+
+      <section class="psec">
+        <h2 class="psec__h mono">Missions <span id="mCount">0/15</span></h2>
+        <ol class="mlist" id="mlist"></ol>
+      </section>
+      <section class="psec">
+        <h2 class="psec__h mono">Badges <span id="bCount">0</span></h2>
+        <div class="badges" id="badges"></div>
+      </section>
+      <p class="panel__foot mono">Progress saves in this browser. <button type="button" class="linkbtn" id="resetBtn">Start over</button></p>
+    </aside>
+  </div>
+</main>
+
+<!-- Badge unlock -->
+<div class="unlock" id="unlock" role="status" aria-live="polite">
+  <div class="unlock__card">
+    <div class="unlock__ring"><span class="unlock__icon mono" id="unIcon">&gt;_</span></div>
+    <span class="unlock__kicker mono">Badge unlocked</span>
+    <strong class="unlock__name" id="unName">Hello, world</strong>
+    <span class="unlock__desc" id="unDesc"></span>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Cheat sheet -->
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetH" hidden>
+  <div class="sheet__card">
+    <div class="sheet__top">
+      <div>
+        <span class="label mono">Cheat sheet</span>
+        <h2 class="sheet__h" id="sheetH">What you know so far</h2>
+      </div>
+      <button class="ibtn" id="sheetClose" type="button" aria-label="Close cheat sheet"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.6"/></svg></button>
+    </div>
+    <div class="sheet__table" id="sheetTable"></div>
+    <p class="sheet__foot mono">Unlock rows by using a command once. Type <kbd>help</kbd> in the terminal for everything.</p>
+  </div>
+</div>
+
+<noscript><p class="noscript">The training terminal needs JavaScript. Everything else on SZVTECH works without it.</p></noscript>
+
+<script src="/learn/learn.js" defer></script>
+</body>
+</html>

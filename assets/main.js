@@ -64,6 +64,10 @@ function goto(target) {
   else el && el.scrollIntoView({ behavior: RM ? 'auto' : 'smooth' });
 }
 
+/* The training terminal lives at /learn/ (its own page). */
+const LEARN_URL = '/learn/';
+const LEARN_LINK = `<a class="c2" href="${LEARN_URL}">learn</a>`;
+
 /* Toast */
 let toastTl = null;
 function toast(msg) {
@@ -588,6 +592,8 @@ function initScroll() {
     ScrollTrigger.create({ trigger: el, start: 'top 88%', once: true, onEnter: () => countUp(el) });
   });
 
+  initLearn();
+
   // ---------- outro ----------
   const outChars = splitText($('.outro__txt'), 'chars');
   gsap.fromTo(outChars, { yPercent: 110, rotateX: -70, opacity: 0 }, {
@@ -843,10 +849,14 @@ const Term = (() => {
       Object.entries(PUBLIC).forEach(([k, c]) => print(`  <span class="c2">${k.padEnd(14)}</span><span class="dim">${c.d}</span>`));
       print('<span class="dim">some doors are not on this list.</span>');
     } },
-    whoami: { d: 'who are you, really', fn: () => print('guest &mdash; a curious visitor. <span class="dim">probably human. probably.</span>') },
+    whoami: { d: 'who are you, really', fn: () => {
+      print('guest &mdash; a curious visitor. <span class="dim">probably human. probably.</span>');
+      print(`<span class="dim">fun fact: whoami works in real terminals too. ${LEARN_LINK} teaches the rest.</span>`);
+    } },
     about: { d: 'what is this place', fn: () => {
       print('<span class="grad">SZVTECH</span> is a private playground for things that move.');
       print('<span class="dim">particles, shaders, type in motion, small experiments that refuse to sit still.</span>');
+      print(`<span class="dim">also: a training terminal for the real thing. type</span> ${LEARN_LINK}`);
     } },
     date: { d: 'print the current date', fn: () => print(new Date().toString()) },
     clear: { d: 'clear the screen', fn: () => { out.innerHTML = ''; } },
@@ -867,8 +877,35 @@ const Term = (() => {
     } },
     matrix: { d: 'follow the white rabbit', fn: () => { print('<span class="c2">wake up...</span>'); FX.matrix(5000); } },
     party: { d: 'you know what this does', fn: () => { print('<span class="c3">&#10022; &#10022; &#10022;</span> party mode'); FX.confetti(); explode(1.1); } },
+    learn: { d: 'boot the training terminal', fn: (a) => {
+      const free = /^(free|play|freeplay)$/i.test(a[0] || '');
+      print(`<span class="c3">&#9670;</span> booting training terminal&hellip; <span class="dim">${free ? 'free play, no missions' : '15 spells, missions, xp'}</span>`);
+      return portal(LEARN_URL + (free ? '#free' : ''));
+    } },
     exit: { d: 'close the terminal', fn: () => hide() },
   };
+
+  /* Real shell commands this toy shell doesn't run: point people at /learn instead. */
+  const REAL = {
+    dir: 'lists what is inside a folder (windows)', cd: 'moves you between folders', tree: 'draws a folder and everything under it',
+    color: 'repaints the console. try color 0a (windows)', pwd: 'prints the folder you are in (linux)', cat: 'prints a file (linux)',
+    type: 'prints a file (windows)', mkdir: 'creates a folder', md: 'creates a folder (windows)', rmdir: 'removes a folder', rd: 'removes a folder (windows)',
+    rm: 'deletes things. carefully (linux)', del: 'deletes files (windows)', erase: 'deletes files (windows)', copy: 'copies files (windows)', cp: 'copies files (linux)',
+    move: 'moves files (windows)', mv: 'moves or renames files (linux)', ren: 'renames files (windows)', touch: 'creates an empty file (linux)',
+    ping: 'checks if another machine answers', ipconfig: 'shows your network setup (windows)', ifconfig: 'shows your network setup (linux)',
+    ip: 'shows your network setup (linux)', tracert: 'traces the hops to a server (windows)', traceroute: 'traces the hops to a server (linux)',
+    nslookup: 'asks dns who a name belongs to', netstat: 'lists open network connections', ver: 'prints the windows version', uname: 'prints the system name (linux)',
+    hostname: 'prints this machine\'s name', systeminfo: 'dumps everything about the machine (windows)', tasklist: 'lists running programs (windows)',
+    taskkill: 'stops a running program (windows)', ps: 'lists running programs (linux)', top: 'live view of what the cpu is doing (linux)', kill: 'stops a running program (linux)',
+    man: 'opens the manual for a command (linux)', history: 'shows what you typed before', grep: 'finds text inside files (linux)', find: 'finds files, or text in files',
+    findstr: 'finds text inside files (windows)', chmod: 'changes who may touch a file (linux)', nano: 'a tiny text editor (linux)', vim: 'an editor you can never leave (linux)',
+    vi: 'an editor you can never leave (linux)', title: 'renames the console window (windows)', start: 'opens a program or file (windows)', ssh: 'logs into another machine',
+    curl: 'fetches things from the web', wget: 'downloads things from the web', shutdown: 'turns the machine off. not today.', cls: 'clears the screen (windows)',
+  };
+  function realHint(cmd, what) {
+    print(`<span class="c2">${esc(cmd)}</span> is a real command <span class="dim">&mdash; ${what}.</span>`);
+    print(`<span class="dim">this shell only fakes a few. want to learn it properly? type</span> ${LEARN_LINK}`);
+  }
 
   async function portal(path) {
     print(`<span class="c2">&rsaquo;</span> opening portal &rarr; <span class="c1">${path}</span>`);
@@ -907,6 +944,8 @@ const Term = (() => {
     if (PUBLIC[c]) return PUBLIC[c].fn(args);
     if (SECRET[c]) return SECRET[c](args);
     if (c === 'hello' || c === 'hi') return print('hi. the machine hears you.');
+    if (c === 'cls') { out.innerHTML = ''; return realHint('cls', 'windows-speak for clear. done'); }
+    if (Object.prototype.hasOwnProperty.call(REAL, c)) return realHint(c, REAL[c]);
     print(`<span class="err">command not found:</span> ${esc(cmd)} <span class="dim">&mdash; type 'help'</span>`);
   }
 
@@ -930,6 +969,7 @@ const Term = (() => {
     booted = true;
     print('<span class="grad">SZVTECH</span> <span class="dim">shell v2.6.0 &mdash; ' + new Date().toLocaleDateString() + '</span>');
     print('<span class="dim">the machine is listening. type</span> <span class="c2">help</span> <span class="dim">to begin.</span>');
+    print(`<span class="dim">new:</span> ${LEARN_LINK} <span class="dim">boots a training terminal for real commands.</span>`);
   }
 
   function show() {
@@ -1074,11 +1114,161 @@ const Term = (() => {
 })();
 
 /* -------------------------------------------------------------------------- */
+/* Learn teaser: a fake training terminal that types itself on scroll          */
+/* -------------------------------------------------------------------------- */
+const LearnDemo = (() => {
+  const win = $('.lterm');
+  if (!win) return { play() {}, final() {} };
+  const body = $('.lterm__body', win), out = $('.lterm__out', win);
+  const xpEl = $('.lterm__xp b', win), misNum = $('.lterm__mission b', win), misTxt = $('.lterm__mission em', win), meter = $('.lterm__meter i', win);
+  const spells = (k) => { const li = $(`.learn__spells [data-spell="${k}"]`); if (li) li.classList.add('is-done'); };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const D = '<span class="d">', H = '<span class="h">', E = '</span>';
+  const STEPS = [
+    { cmd: 'dir', spell: 'dir', xp: 10, mission: 'look around', out: [
+      ` Volume in drive C is ${H}SZVTECH${E}`,
+      ' Directory of C:\\',
+      '',
+      `${D}10/09/2026  09:41${E}  &lt;DIR&gt;  ${H}projects${E}`,
+      `${D}10/09/2026  09:41${E}  &lt;DIR&gt;  ${H}secrets${E}`,
+      `${D}10/09/2026  09:41${E}   1,337  todo.txt`,
+    ] },
+    { cmd: 'cd projects', spell: 'cd', xp: 10, mission: 'move around', prompt: 'C:\\projects&gt;', out: [] },
+    { cmd: 'tree', spell: 'tree', xp: 15, mission: 'see the whole map', out: [
+      'C:\\PROJECTS',
+      `├───${H}particles${E}`,
+      `│   └───shaders`,
+      `├───${H}portal${E}`,
+      `└───${H}dreams${E}`,
+    ] },
+    { cmd: 'color 0a', spell: 'color', xp: 15, mission: 'hacker mode', fx: 'green', out: [] },
+  ];
+  let prompt = 'C:\\&gt;', xp = 0, n = 0, state = 0; // 0 idle, 1 playing, 2 done
+
+  const line = (html, cls = '') => { const d = mk('span', 'll ' + cls); d.innerHTML = html || '&#8203;'; out.append(d); body.scrollTop = body.scrollHeight; return d; };
+  const promptLine = () => line(`<span class="p">${prompt}</span><span class="c"></span><span class="k"> </span>`, 'is-active');
+  function header() {
+    out.textContent = '';
+    line(`${H}SZVTECH${E} training shell ${D}[version 1.0.15]${E}`);
+    line(`${D}15 spells. missions. xp. type to learn.${E}`);
+    line('');
+  }
+  function award(st) {
+    xp += st.xp; n += 1;
+    spells(st.spell);
+    line(`<span class="ok">&#10003;</span> ${D}mission ${String(n).padStart(2, '0')} &middot;${E} ${st.mission} <span class="xp">+${st.xp} xp</span>`, RM ? '' : 'in');
+    misNum.textContent = String(n).padStart(2, '0');
+    misTxt.textContent = n < STEPS.length ? STEPS[n].mission : `${15 - n} spells to go`;
+    meter.style.transform = `scaleX(${n / 15})`;
+    if (RM || !gsap) xpEl.textContent = String(xp).padStart(3, '0');
+    else { const o = { v: xp - st.xp }; gsap.to(o, { v: xp, duration: .8, ease: 'power2.out', onUpdate: () => { xpEl.textContent = String(Math.round(o.v)).padStart(3, '0'); } }); }
+  }
+  function fx(st) {
+    if (st.fx === 'green') { win.classList.add('is-green', 'flash'); setTimeout(() => win.classList.remove('flash'), 600); }
+    if (st.prompt) prompt = st.prompt;
+  }
+  function final() {
+    if (state === 2) return;
+    state = 2;
+    header();
+    for (const st of STEPS) {
+      line(`<span class="p">${prompt}</span><span class="c">${st.cmd}</span>`);
+      st.out.forEach((o) => line(o));
+      fx(st); award(st);
+      line('');
+    }
+    promptLine();
+  }
+  async function play() {
+    if (state) return;
+    state = 1;
+    header();
+    await wait(300);
+    for (const st of STEPS) {
+      const pl = promptLine();
+      await wait(st === STEPS[0] ? 350 : 420);
+      const c = $('.c', pl);
+      for (const ch of st.cmd) { c.textContent += ch; await wait(42 + Math.random() * 70); }
+      await wait(240);
+      pl.classList.remove('is-active');
+      for (const o of st.out) { line(o, 'in'); await wait(45); }
+      fx(st);
+      await wait(st.out.length ? 200 : 300);
+      award(st);
+      line('');
+    }
+    await wait(200);
+    promptLine();
+    state = 2;
+  }
+  if (!RM) header(), promptLine();
+  return { play, final };
+})();
+
+function initLearn() {
+  const sec = $('#learn');
+  if (!sec) return;
+  const l1 = splitText($('.learn__l1'), 'words');
+  const l2 = $('.learn__l2');
+  if (RM) {
+    LearnDemo.final();
+  } else {
+    gsap.set(l1, { yPercent: 115 });
+    gsap.set(l2, { clipPath: 'inset(-10% 100% -10% 0%)' });
+    ScrollTrigger.create({
+      trigger: '.learn__title', start: 'top 85%', once: true,
+      onEnter: () => {
+        gsap.to(l1, { yPercent: 0, duration: 1.1, ease: 'expo.out', stagger: .05 });
+        l2.classList.add('is-typing');
+        gsap.to(l2, { clipPath: 'inset(-10% 0% -10% 0%)', duration: 1.2, ease: 'steps(26)', delay: .55, onComplete: () => setTimeout(() => l2.classList.remove('is-typing'), 1600) });
+      },
+    });
+    gsap.from('.learn__spells li', { y: 18, opacity: 0, duration: .8, ease: 'expo.out', stagger: .04, scrollTrigger: { trigger: '.learn__spells', start: 'top 90%', once: true } });
+    gsap.from('.learn__actions', { y: 30, opacity: 0, duration: 1.1, ease: 'expo.out', scrollTrigger: { trigger: '.learn__actions', start: 'top 95%', once: true } });
+    // the window tips up from the floor as it arrives
+    gsap.fromTo('.lterm', { rotateX: MOBILE ? 14 : 26, rotateY: MOBILE ? 0 : -10, y: 90, scale: .9, opacity: .35 }, {
+      rotateX: 0, rotateY: 0, y: 0, scale: 1, opacity: 1, ease: 'none',
+      scrollTrigger: { trigger: '.learn__stage', start: 'top bottom', end: 'center 58%', scrub: 1 },
+    });
+    gsap.fromTo('.learn__bg span', { xPercent: 12 }, { xPercent: -18, ease: 'none', scrollTrigger: { trigger: sec, start: 'top bottom', end: 'bottom top', scrub: true } });
+    ScrollTrigger.create({ trigger: '.lterm', start: 'top 72%', once: true, onEnter: () => LearnDemo.play() });
+  }
+  // spotlight + subtle tilt on the window
+  const lt = $('.lterm');
+  if (FINE && !RM) {
+    const win = $('.lterm__win');
+    lt.addEventListener('pointermove', (e) => {
+      const r = lt.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
+      gsap.to(win, { rotateY: px * 7, rotateX: -py * 7, transformPerspective: 1200, duration: .7, ease: 'power3.out', overwrite: 'auto' });
+    });
+    lt.addEventListener('pointerleave', () => gsap.to(win, { rotateY: 0, rotateX: 0, duration: 1.1, ease: 'elastic.out(1, .55)', overwrite: 'auto' }));
+  }
+}
+
+/* Type `cmd` or `learn` anywhere: glitch, toast, step through to /learn/ */
+let unlocking = false;
+function unlockLearn() {
+  if (unlocking) return;
+  unlocking = true;
+  toast('Training terminal unlocked — booting…');
+  if (!RM) {
+    document.body.classList.add('glitching');
+    setTimeout(() => document.body.classList.remove('glitching'), 700);
+    S.pulse = 1; gsap.to(S, { pulse: 0, duration: .9, ease: 'power3.out' });
+    setTimeout(() => warp(1.2), 350);
+  }
+  setTimeout(() => { window.location.href = LEARN_URL; }, RM ? 700 : 1500);
+}
+
+/* -------------------------------------------------------------------------- */
 /* Keyboard: terminal toggle + Konami                                          */
 /* -------------------------------------------------------------------------- */
 function initKeys() {
   const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
   let seq = [];
+  const WORDS = ['cmd', 'learn'];
+  let typed = '', typedAt = 0;
   addEventListener('keydown', (e) => {
     const k = e.key;
     if ((e.ctrlKey || e.metaKey) && !e.altKey && k && k.toLowerCase() === 'k') { e.preventDefault(); Term.toggle(); return; }
@@ -1097,7 +1287,18 @@ function initKeys() {
       warp(2);
       FX.confetti();
       toast('Cheat code accepted — hyperspace engaged');
+      return;
     }
+    // secret words: only plain letters, never while typing into a field
+    const t = e.target;
+    if (!k || k.length !== 1 || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (!/[a-z]/i.test(k)) { typed = ''; return; }
+    const now = performance.now();
+    if (now - typedAt > 1500) typed = '';
+    typedAt = now;
+    typed = (typed + k.toLowerCase()).slice(-8);
+    if (WORDS.some((w) => typed.endsWith(w))) { typed = ''; unlockLearn(); }
   });
 }
 
@@ -1115,9 +1316,13 @@ function initClock() {
 
 function consoleHello() {
   console.log(
-    '%c SZVTECH %c\n\nYou opened the hood. Respect.\nThere is a machine under here that talks back.\nTry pressing ` (backtick) anywhere on the page.\n',
+    '%c SZVTECH %c\n\nYou opened the hood. Respect.\nThere is a machine under here that talks back.\nTry pressing ` (backtick) anywhere on the page.\n\n%cC:\\> learn%c  Curious how terminals actually work? Fifteen real commands,\n            missions and XP, zero setup: %c' + location.origin + LEARN_URL + '%c\n',
     'font: 800 22px Syne, sans-serif; color: #fff; background: linear-gradient(90deg,#8b5cf6,#e879f9,#22d3ee); padding: 8px 16px; border-radius: 8px;',
-    'font: 12px "JetBrains Mono", monospace; color: #a5a3c2; line-height: 1.6;'
+    'font: 12px "JetBrains Mono", monospace; color: #a5a3c2; line-height: 1.6;',
+    'font: 600 12px "JetBrains Mono", monospace; color: #05050a; background: #22d3ee; padding: 2px 6px; border-radius: 4px;',
+    'font: 12px "JetBrains Mono", monospace; color: #a5a3c2; line-height: 1.6;',
+    'font: 12px "JetBrains Mono", monospace; color: #22d3ee; text-decoration: underline;',
+    'font: 12px "JetBrains Mono", monospace; color: #a5a3c2;'
   );
 }
 
@@ -1132,6 +1337,7 @@ async function boot() {
     root.classList.add('no-gsap');
     document.body.classList.remove('is-loading');
     initKeysFallback();
+    LearnDemo.final();
     return;
   }
   gsap.registerPlugin(ScrollTrigger);

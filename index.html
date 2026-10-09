@@ -49,6 +49,7 @@
     <a href="#type" data-goto="#type"><span class="mono">02</span><span data-scramble>Kinetic</span></a>
     <a href="#obsessions" data-goto="#obsessions"><span class="mono">03</span><span data-scramble>Obsessions</span></a>
     <a href="#numbers" data-goto="#numbers"><span class="mono">04</span><span data-scramble>Numbers</span></a>
+    <a href="#learn" data-goto="#learn" class="nav__learn"><span class="mono">05</span><span data-scramble>Learn</span><i class="nav__new" aria-hidden="true"></i></a>
   </nav>
   <div class="nav__time mono"><span class="live-dot"></span><span id="clock">--:--:--</span></div>
 </header>
@@ -118,7 +119,7 @@
       <span>Feel alive</span><i>&#10022;</i><span>Stay curious</span><i>&#10022;</i><span>Break the grid</span><i>&#10022;</i><span>Ship the weird</span><i>&#10022;</i><span>Think in motion</span><i>&#10022;</i>
     </div></div>
     <div class="band band--b"><div class="band__track">
-      <span>Sixty frames</span><i>&#9675;</i><span>Zero templates</span><i>&#9675;</i><span>Light as data</span><i>&#9675;</i><span>Noise as texture</span><i>&#9675;</i><span>Play first</span><i>&#9675;</i>
+      <span>Sixty frames</span><i>&#9675;</i><span>Zero templates</span><i>&#9675;</i><span>Light as data</span><i>&#9675;</i><span>Type cmd</span><i>&#9675;</i><span>Noise as texture</span><i>&#9675;</i><span>Play first</span><i>&#9675;</i>
     </div></div>
   </section>
 
@@ -207,19 +208,62 @@
     </div>
   </section>
 
+  <!-- LEARN THE TERMINAL -->
+  <section class="learn" id="learn">
+    <div class="learn__bg mono" aria-hidden="true"><span>C:\&gt;_</span></div>
+    <div class="learn__copy">
+      <span class="label mono">(05) Training terminal</span>
+      <h2 class="h2 learn__title" aria-label="The keyboard is a superpower. Learn the first 15 spells."><span class="learn__l1">The keyboard is a superpower.</span> <span class="learn__l2"><span class="is-grad">Learn the first 15 spells.</span></span></h2>
+      <p class="learn__txt" data-reveal>dir. cd. cls. color&nbsp;0a. tree. The commands movie hackers type are real, and they take one afternoon to learn. Windows&nbsp;CMD and Linux side by side, with missions and&nbsp;XP. Nothing to install.</p>
+      <ul class="learn__spells mono" aria-label="Some of the commands you will learn">
+        <li data-spell="dir">dir</li><li data-spell="cd">cd</li><li data-spell="tree">tree</li><li data-spell="color">color 0a</li><li>cls</li><li>ls</li><li>pwd</li><li>mkdir</li><li>ping</li><li>ipconfig</li><li class="is-more">+5</li>
+      </ul>
+      <div class="learn__actions">
+        <a class="btn btn--solid" href="/learn/" data-magnetic data-cursor="Boot"><span class="btn__in"><span class="btn__ps" aria-hidden="true">&gt;_</span><span data-scramble>Open the training terminal</span> <span aria-hidden="true">&rarr;</span></span></a>
+        <div class="learn__alt mono">
+          <span class="hide-touch">or type <kbd>c</kbd><kbd>m</kbd><kbd>d</kbd> anywhere</span>
+          <a href="/learn/#free" class="learn__free"><span data-scramble>skip to free play</span> &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="learn__stage">
+      <a class="lterm" href="/learn/" data-cursor="Play" aria-label="Open the training terminal">
+        <span class="lterm__glow" aria-hidden="true"></span>
+        <span class="lterm__win">
+          <span class="lterm__bar">
+            <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="lterm__title mono">C:\Users\guest &mdash; training.exe</span>
+            <span class="lterm__xp mono">XP <b>000</b></span>
+          </span>
+          <span class="lterm__body" aria-hidden="true"><span class="lterm__out"></span></span>
+          <span class="lterm__foot mono">
+            <span class="lterm__mission">mission <b>00</b>/15 &middot; <em>waiting for input</em></span>
+            <span class="lterm__meter"><i></i></span>
+          </span>
+          <span class="lterm__scan" aria-hidden="true"></span>
+        </span>
+      </a>
+    </div>
+  </section>
+
   <!-- OUTRO -->
   <section class="outro" id="outro">
-    <span class="label mono">(05) Before you drift off</span>
+    <span class="label mono">(06) Before you drift off</span>
     <h2 class="outro__big"><span class="outro__txt">Stay curious.</span></h2>
     <p class="outro__sub" data-reveal>The best things here are the ones you find on your own.</p>
     <div class="outro__actions" data-reveal>
       <button class="btn" type="button" data-magnetic data-goto="#top"><span class="btn__in"><span data-scramble>Back to the beginning</span> <span aria-hidden="true">&uarr;</span></span></button>
+      <a class="btn btn--ghost" href="/learn/" data-magnetic><span class="btn__in"><span class="btn__ps" aria-hidden="true">&gt;_</span><span data-scramble>Learn the terminal</span></span></a>
     </div>
   </section>
 
   <footer class="foot">
     <span class="mono">&copy; 2026 SZVTECH</span>
-    <span class="foot__hint mono">press <kbd>`</kbd> to talk to the machine</span>
+    <span class="foot__mid">
+      <span class="foot__hint mono">press <kbd>`</kbd> to talk to the machine</span>
+      <a class="foot__learn mono" href="/learn/" aria-label="Open the training terminal"><span class="foot__ps" aria-hidden="true">C:\&gt;</span><span data-scramble>cd learn</span><i class="foot__caret" aria-hidden="true"></i></a>
+    </span>
     <span class="mono foot__clock">Local <span id="clock2">--:--</span></span>
   </footer>
 </main>
