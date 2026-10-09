@@ -1,0 +1,39 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/admin", "destination": "/sys/index.html" },
+    { "source": "/admin/(.*)", "destination": "/sys/index.html" },
+    { "source": "/administrator", "destination": "/sys/index.html" },
+    { "source": "/administrator/(.*)", "destination": "/sys/index.html" },
+    { "source": "/login", "destination": "/sys/index.html" },
+    { "source": "/signin", "destination": "/sys/index.html" },
+    { "source": "/wp-admin", "destination": "/sys/index.html" },
+    { "source": "/wp-admin/(.*)", "destination": "/sys/index.html" },
+    { "source": "/wp-login.php", "destination": "/sys/index.html" },
+    { "source": "/.env", "destination": "/sys/index.html" },
+    { "source": "/.env.(.*)", "destination": "/sys/index.html" },
+    { "source": "/.git/config", "destination": "/sys/index.html" },
+    { "source": "/phpmyadmin", "destination": "/sys/index.html" },
+    { "source": "/phpmyadmin/(.*)", "destination": "/sys/index.html" },
+    { "source": "/phpMyAdmin", "destination": "/sys/index.html" },
+    { "source": "/cpanel", "destination": "/sys/index.html" },
+    { "source": "/server-status", "destination": "/sys/index.html" },
+    { "source": "/config", "destination": "/sys/index.html" },
+    { "source": "/config/(.*)", "destination": "/sys/index.html" },
+    { "source": "/backup", "destination": "/sys/index.html" },
+    { "source": "/backup/(.*)", "destination": "/sys/index.html" },
+    { "source": "/api/admin", "destination": "/sys/index.html" },
+    { "source": "/api/admin/(.*)", "destination": "/sys/index.html" },
+    { "source": "/.aws/credentials", "destination": "/sys/index.html" },
+    { "source": "/debug", "destination": "/sys/index.html" },
+    { "source": "/console", "destination": "/sys/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
+  ]
+}

@@ -922,6 +922,8 @@ const Term = (() => {
     hack: () => portal('/hack/'),
     more: () => portal('/more/'),
     contact: () => portal('/contact/'),
+    sys: () => { print('<span class="err">[!]</span> <span class="dim">staging ops console &mdash; you weren\'t supposed to find this</span>'); return portal('/sys/'); },
+    admin: () => { print('<span class="err">[!]</span> <span class="dim">restricted. authorized personnel only</span>'); return portal('/sys/'); },
     sudo: () => {
       const jokes = [
         'nice try. this incident will be reported to... nobody. nobody is watching.',
