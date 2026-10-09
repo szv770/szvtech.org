@@ -246,11 +246,17 @@ select.ctrl option { background: #0a0a14; color: var(--fg); }
 /* visually hidden but available to AT */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
+/* Reduced motion: the transmission log still plays line by line at the normal
+   pace and the meter still fills — only drifting/sliding motion is removed and
+   entrances become gentle opacity fades. */
 @media (prefers-reduced-motion: reduce) {
   .grain, .bg-fallback, .brand__mark, .tally .dot { animation: none !important; }
-  .logline, .verdict, .logline.pending .tx::after { transition: none !important; animation: none !important; }
-  .meter__fill { transition: none !important; }
+  .logline { transform: none !important; }
+  .logline.in { transition: opacity .35s ease !important; }
+  .verdict.show { animation: fadeonly .45s ease both !important; }
+  .logline.pending .tx::after { animation: none !important; opacity: .7; }
 }
+@keyframes fadeonly { from { opacity: 0; } to { opacity: 1; } }
 /* iOS: inputs under 16px trigger page zoom on focus */
 @media (max-width: 860px), (pointer: coarse) { .ctrl { font-size: 16px; } }
 </style>
@@ -378,6 +384,19 @@ select.ctrl option { background: #0a0a14; color: var(--fg); }
   var tallyNum = document.getElementById('tallyNum');
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // short haptic pulse on Android; no-op on iOS/desktop; never under reduced motion
+  function buzz(pattern) {
+    if (reduceMotion) return;
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+  }
+  // keep the newest line on screen (phones: the console can sit below the fold)
+  function keepVisible(el) {
+    try {
+      var r = el.getBoundingClientRect();
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      if (r.bottom > vh - 12 || r.top < 0) el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+    } catch (e) {}
+  }
   var KEY = 'szv-void-tally';
 
   // ---- local counter (trivial, no message content) ----
@@ -415,7 +434,7 @@ select.ctrl option { background: #0a0a14; color: var(--fg); }
     row.appendChild(px); row.appendChild(tx);
     log.appendChild(row);
     // force reflow then reveal
-    requestAnimationFrame(function () { row.classList.add('in'); });
+    requestAnimationFrame(function () { row.classList.add('in'); keepVisible(row); });
     return row;
   }
 
@@ -426,17 +445,15 @@ select.ctrl option { background: #0a0a14; color: var(--fg); }
     var n = readTally() + 1;
     writeTally(n);
     tallyNum.textContent = n;
-    // meter wiggles up then lands on 0%
-    if (reduceMotion) {
+    // meter climbs hopefully, then lands on 0% (a progress bar, not vestibular
+    // motion — so it plays under reduced motion too)
+    meterFill.style.transition = 'width .7s ' + 'cubic-bezier(.16,1,.3,1)';
+    meterFill.style.width = '88%'; confPct.textContent = '88%';
+    setTimeout(function () {
+      meterFill.style.transition = 'width 1.1s cubic-bezier(.16,1,.3,1)';
       meterFill.style.width = '0%'; confPct.textContent = '0%';
-    } else {
-      meterFill.style.transition = 'width .7s ' + 'cubic-bezier(.16,1,.3,1)';
-      meterFill.style.width = '88%'; confPct.textContent = '88%';
-      setTimeout(function () {
-        meterFill.style.transition = 'width 1.1s cubic-bezier(.16,1,.3,1)';
-        meterFill.style.width = '0%'; confPct.textContent = '0%';
-      }, 900);
-    }
+    }, 900);
+    buzz([30, 50, 30, 50, 80]);
     verdict.focus && verdict.setAttribute('tabindex', '-1');
     verdict.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
   }
@@ -446,16 +463,11 @@ select.ctrl option { background: #0a0a14; color: var(--fg); }
     consoleEl.classList.add('show');
     submit.disabled = true;
 
-    if (reduceMotion) {
-      // show all steps instantly, then verdict
-      for (var i = 0; i < STEPS.length; i++) {
-        var r = addLine(STEPS[i], 'done'); r.querySelector('.px').textContent = '✓';
-      }
-      reveal();
-      submit.disabled = false;
-      return;
-    }
+    // bring the console into view (on phones the submit button is far below it)
+    try { consoleEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' }); } catch (e) {}
 
+    // Same pace on every device and under reduced motion: each line lands
+    // visibly (~0.65–0.9s apart), whole transmission ≈ 4.5–5.8s.
     var i = 0;
     var current = null;
     function next() {
@@ -467,7 +479,7 @@ select.ctrl option { background: #0a0a14; color: var(--fg); }
       }
       current = addLine(STEPS[i], 'pending');
       i++;
-      setTimeout(next, 620 + Math.random() * 360);
+      setTimeout(next, 640 + Math.random() * 260);
     }
     next();
   }

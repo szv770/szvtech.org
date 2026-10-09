@@ -162,7 +162,7 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;padding:clamp(
 .breach__pctline{display:flex;align-items:baseline;gap:14px;color:var(--muted);font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;}
 .breach__pct{font-family:var(--f-display);font-weight:800;font-size:clamp(2.6rem,10vw,5.5rem);line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums;}
 .bar{height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin:16px 0 6px;}
-.bar i{display:block;height:100%;width:0;background:var(--grad);box-shadow:0 0 14px var(--a2);transition:width .25s linear;}
+.bar i{display:block;height:100%;width:0;background:var(--grad);box-shadow:0 0 14px var(--a2);} /* driven per-frame by JS; a CSS transition here kept restarting and lagged/stalled */
 .breach__log{
   flex:1;min-height:0;margin-top:14px;overflow:hidden;
   font-family:var(--f-mono);font-size:clamp(11px,2.4vw,13px);line-height:1.75;color:rgba(170,255,210,.82);
@@ -233,10 +233,23 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;padding:clamp(
   .plat__hint{display:none;}
   .top__badge .hide-sm{display:none;}
 }
-@media(prefers-reduced-motion:reduce){
-  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;}
-  .bar i{transition:none;}
+/* touch: comfortable tap targets, no hover dependence */
+@media (pointer:coarse){
+  .breach__skip{min-height:44px;min-width:88px;padding:10px 16px;font-size:12px;}
+  .breach__skip .kb{display:none;}
 }
+/* Reduced motion: the STORY still plays at normal pace (log lines, % counter,
+   progress bar). Only vestibular-style motion is removed: background drift,
+   grain jitter, spinning mark, matrix rain (JS), glitch shake, slide-ins. */
+@media(prefers-reduced-motion:reduce){
+  .bg-fallback,.grain,.brand .mark,.dot,.launch:hover{animation:none!important;}
+  .breach__log .ln{animation:lnfade .35s ease both;}
+  .granted.glitch .granted__txt{animation:none!important;}
+  .granted.is-on .granted__txt{animation:lnfade .5s ease both;}
+  .plat,.launch,.cta{transition-property:border-color,background-color,box-shadow,color!important;}
+  .plat:hover,.launch:hover,.cta:hover{transform:none!important;}
+}
+@keyframes lnfade{from{opacity:0;}to{opacity:1;}}
 /* iOS: inputs under 16px trigger page zoom on focus */
 @media (max-width: 860px), (pointer: coarse) { .field input#handle { font-size: 16px; } }
 </style>
@@ -299,7 +312,7 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;padding:clamp(
 <section class="breach" id="breach" aria-hidden="true" aria-label="Breach in progress">
   <div class="breach__head">
     <span class="breach__tag"><span class="dot" aria-hidden="true"></span><span id="bTarget">BREACHING</span></span>
-    <button class="breach__skip" id="skip" type="button">skip &middot; space</button>
+    <button class="breach__skip" id="skip" type="button">skip<span class="kb"> &middot; space</span></button>
   </div>
   <div class="breach__stage" id="bStage" aria-live="polite">INITIALIZING</div>
   <div class="breach__pctline"><span class="breach__pct" id="bPct">00</span><span>% &middot; <span id="bStatus">warming up the mainframe</span></span></div>
@@ -341,6 +354,11 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;padding:clamp(
   "use strict";
   var RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $ = function(s){ return document.querySelector(s); };
+  /* short haptic pulse on Android; no-op on iOS/desktop; never under reduced motion */
+  function buzz(pattern){
+    if(RM) return;
+    try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
+  }
 
   /* ---- inline SVG icons (decorative) ---- */
   var ICON = {
@@ -453,7 +471,8 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;padding:clamp(
       'asking the mainframe nicely &hellip; <span class="ok">it said yes</span>' ]}
   ];
 
-  var seq = { running:false, raf:0, t0:0, dur: RM ? 1200 : 7600, nextLine:0, flat:[], done:false };
+  /* same pace everywhere (desktop, phone, reduced motion) — the timing IS the joke */
+  var seq = { running:false, raf:0, t0:0, dur: 7600, nextLine:0, flat:[], done:false };
   /* flatten lines with their stage + target progress */
   function buildFlat(){
     seq.flat = [];
@@ -525,7 +544,8 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;padding:clamp(
     tmoff($('#breach'));
     tmon(g); g.setAttribute('aria-hidden','false');
     if(!RM) g.classList.add('glitch');
-    var hold = RM ? 400 : 1300;
+    buzz([40,60,90]);
+    var hold = 1300;
     setTimeout(function(){
       tmoff(g); g.classList.remove('glitch');
       mxStop();

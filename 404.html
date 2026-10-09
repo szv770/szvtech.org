@@ -232,11 +232,16 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
 .banner h2 .grad{background:linear-gradient(100deg,var(--magenta),var(--violet) 50%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 .banner p{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--muted);line-height:1.8}
 
+@keyframes rmfade{from{opacity:0}to{opacity:1}}
+@media (pointer:coarse){.hud button{min-height:40px;padding:8px 14px}}
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion:reduce){
   .aurora i,.grain,.status b,.magnet::after,.alt .ps i{animation:none}
-  .rise,.hint{animation:none;opacity:1;transform:none}
-  .hint{opacity:.8}
+  /* entrance still staggers in, as a gentle fade with no slide */
+  .rise{animation-name:rmfade;transform:none}
+  .hint{animation:none;opacity:.8;transform:none}
+  .banner,.banner.show{transform:translate3d(-50%,-50%,0)}
+  .hud{transition:opacity .4s ease}
   .magnet,.magnet span{transition:background-position .3s,box-shadow .3s}
   .magnet{transform:none}.magnet span{transform:none}
 }
@@ -514,7 +519,7 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
     // blast the 404 apart
     for (var i = 0; i < N; i++) {
       var a = Math.atan2(Y[i] - (stage.y + stage.h / 2), X[i] - (stage.x + stage.w / 2)) + (Math.random() - 0.5) * 0.8;
-      var f = 6 + Math.random() * 14;
+      var f = reduce.matches ? 1 + Math.random() * 2 : 6 + Math.random() * 14; // reduced motion: gentle drift, no explosion
       VX[i] += Math.cos(a) * f; VY[i] += Math.sin(a) * f;
     }
     if (reduce.matches) loopKick();
@@ -606,7 +611,8 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
       var ro = game.rocks[j]; ro.x += ro.vx * dt; ro.y += ro.vy * dt; ro.rot += ro.vr * dt;
       var rx = ro.x - game.px, ry = ro.y - game.py;
       if (game.inv <= 0 && rx * rx + ry * ry < (ro.r * 0.85 + pr * 0.7) * (ro.r * 0.85 + pr * 0.7)) {
-        game.lives--; game.inv = 1.4; game.shake = 1; burst(game.px, game.py, "#e14bff", 26); updateHud();
+        game.lives--; game.inv = 1.4; game.shake = reduce.matches ? 0 : 1; burst(game.px, game.py, "#e14bff", 26); updateHud();
+        if (!reduce.matches) { try { if (navigator.vibrate) navigator.vibrate(game.lives <= 0 ? [60, 50, 120] : 35); } catch (e) {} }
         if (game.lives <= 0) gameOver();
       }
       if (ro.x < -80 || ro.x > W + 80 || ro.y < -80 || ro.y > H + 80) game.rocks.splice(j, 1);

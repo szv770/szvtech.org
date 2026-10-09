@@ -82,7 +82,7 @@ input,button{font:inherit;color:inherit}
 @keyframes ln{from{opacity:0;transform:translateX(-4px)}}
 .gate__out .ok{color:var(--ok)}.gate__out .warn{color:var(--warn)}.gate__out .err{color:var(--err)}.gate__out .c2{color:var(--a2)}
 .bar{height:6px;border-radius:4px;background:#13131f;overflow:hidden;margin:4px 0}
-.bar>i{display:block;height:100%;width:0;background:var(--grad);transition:width .2s linear}
+.bar>i{display:block;height:100%;width:0;background:var(--grad);transition:width .1s linear}
 .gate__foot{margin-top:20px;padding-top:14px;border-top:1px solid var(--line-2);display:flex;flex-direction:column;gap:6px;color:var(--dim)}
 .gate__hint{color:#55556e;font-style:italic}
 
@@ -296,10 +296,23 @@ td.mono{font-family:var(--f-mono);color:var(--muted)}
 }
 
 /* reduced motion */
+/* Reduced motion: login/bypass logs, brute-force + decrypt + unseal bars still
+   play at the normal pace (JS). Only sliding/zooming/jittering motion goes;
+   entrances become gentle opacity fades. */
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .grain,.glow,.live{animation:none!important}
   .scan{display:none}
-  .live{animation:none}
+  .gate__card,.ending__in,.modal__card,.view{animation:rmfade .45s ease both!important}
+  .gate__out .ln,.logln,.rootterm__body .ln{animation:rmfade .25s ease both!important}
+  .access.bump{animation:none!important}
+  .file:hover,.pathcard:hover{transform:none!important}
+  .toast,.toast.show{transform:translate(-50%,0)!important}
+}
+@keyframes rmfade{from{opacity:0}to{opacity:1}}
+/* touch: comfortable tap targets */
+@media (pointer:coarse){
+  .chip,.nav,.suggest button,.pager button{min-height:40px}
+  .btn,.go{min-height:46px}
 }
 
 /* iOS: inputs under 16px trigger page zoom on focus */

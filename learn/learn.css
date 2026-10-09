@@ -438,4 +438,14 @@ kbd, code { font-family: var(--f-mono); }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
   .grain, .glow, .logo__mark, .live-dot { animation: none !important; }
   .term__caret { animation: none !important; }
+  /* the story still plays (boot log, typing, tree, badges) — entrances become gentle fades, no zoom/slide */
+  .boot { transition-duration: .45s, 0s !important; }
+  .boot__day { transform: none !important; transition: opacity .5s ease !important; }
+  .term__out .tl.in { animation: rm-fade .25s ease both !important; }
+  .unlock__card { transform: none !important; }
+  .unlock.is-on .unlock__card { animation: rm-fade .4s ease forwards !important; }
+  .unlock.is-out .unlock__card { animation: rm-fade-out .4s ease forwards !important; }
+  .unlock.is-on .unlock__ring::before { animation: none !important; opacity: 0; }
 }
+@keyframes rm-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rm-fade-out { from { opacity: 1; } to { opacity: 0; } }
