@@ -16,7 +16,8 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='url(%23g)' stroke-width='4.5'/%3E%3Cpath d='M32 19v13l9 6' fill='none' stroke='%23f3f1ff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;800&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<link rel="modulepreload" href="/time/cities.js?v=8a8909ac4d">
 <style>
 :root {
   --bg: #05050a;
@@ -283,15 +284,21 @@ body::after {
   body::after { animation: none; }
 }
 </style>
+<link rel="stylesheet" href="/time/time.css?v=2262e7d573">
 </head>
 <body>
-  <header class="bar">
-    <span class="city"><i aria-hidden="true"></i>New York</span>
-    <span id="date">&nbsp;</span>
+  <div id="sky" aria-hidden="true"></div>
+
+  <header class="bar top" id="top">
+    <button class="city" id="cityBtn" type="button" aria-haspopup="dialog" aria-controls="citySheet" title="Change location">
+      <i aria-hidden="true"></i><span class="cname" id="cname">New York</span><svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4"/></svg>
+    </button>
+    <span class="favdots" id="favdots" aria-hidden="true"></span>
+    <span id="date" class="alt"><span class="greg" id="greg">&nbsp;</span><span class="heb" id="heb" title="Hebrew date — begins at nightfall"></span></span>
   </header>
 
   <main id="stage">
-    <div id="clock" class="stack" role="button" tabindex="0" aria-label="Current time in New York. Tap to switch 12/24 hour.">
+    <div id="clock" class="stack" role="button" tabindex="0" aria-label="Current time in New York. Tap to switch 12/24 hour. Long-press for bedside mode.">
       <div class="grp h"><span class="d"></span><span class="d"></span></div>
       <div class="col c1" aria-hidden="true"><i></i><i></i></div>
       <div class="grp m"><span class="d"></span><span class="d"></span></div>
@@ -302,213 +309,68 @@ body::after {
     <span class="sr" id="sr" aria-live="off"></span>
   </main>
 
-  <footer class="bar">
+  <footer class="bar" id="foot">
     <a class="home" href="/">&larr; SZVTECH</a>
+    <div id="arcwrap" aria-hidden="true"><span class="edge" id="riseT"></span><svg id="arcBig" class="arc"></svg><span class="edge" id="setT"></span></div>
+    <button id="zline" type="button" aria-haspopup="dialog" aria-controls="zSheet"><svg id="arcMini" class="arc mini" aria-hidden="true"></svg><span id="ztext"><span id="zlabel"></span><span class="zin"> in </span><span id="zcount"></span></span></button>
     <span id="mer">&nbsp;</span>
   </footer>
 
-<script>
-(() => {
-  'use strict';
-  const TZ = 'America/New_York';
-  const KEY = 'szv-time-24h';
-  const $ = (s) => document.querySelector(s);
-  const clock = $('#clock'), stage = $('#stage');
-  const dateEl = $('#date'), merEl = $('#mer'), srEl = $('#sr');
-  const fill = $('.sweep .fill'), pulse = $('.pulse');
-  const dots = [...document.querySelectorAll('.col i')];
-  const cells = [...document.querySelectorAll('.h .d, .m .d, .s .d')]; // H1 H2 M1 M2 S1 S2
-  const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
-  let reduce = mqReduce.matches;
-  mqReduce.addEventListener && mqReduce.addEventListener('change', (e) => { reduce = e.matches; startSweep(); });
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="scrim" aria-hidden="true"></div>
 
-  let h24 = false;
-  try { h24 = localStorage.getItem(KEY) === '1'; } catch (e) {}
+  <section class="sheet" id="citySheet" role="dialog" aria-modal="true" aria-labelledby="cityTitle">
+    <div class="sheet-head">
+      <span class="grab" aria-hidden="true"></span>
+      <div class="sh-row">
+        <h2 id="cityTitle">Location</h2>
+        <button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button>
+      </div>
+      <label class="search">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+        <input id="q" type="search" placeholder="Search cities" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="Search cities">
+      </label>
+    </div>
+    <div class="sheet-body" id="cityBody">
+      <div class="quick" id="quick">
+        <button class="qbtn" id="geoBtn" type="button">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15"/></svg>
+          <span><b>Use my location</b><small id="geoStatus">Stays on this device</small></span>
+        </button>
+        <form class="zip" id="zipForm" autocomplete="off">
+          <label class="zf"><span>US ZIP</span><input id="zipIn" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="11213" aria-label="US ZIP code"></label>
+          <select id="zipTz" aria-label="Time zone for ZIP"></select>
+          <button type="submit" class="go">Set</button>
+          <small class="zstatus" id="zipStatus">Zmanim from Chabad.org</small>
+        </form>
+      </div>
+      <div id="list" role="listbox" aria-label="Cities"></div>
+      <p class="empty" id="empty" hidden>No matching city. Try a US ZIP code above.</p>
+    </div>
+  </section>
 
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: TZ, hourCycle: 'h23',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-    weekday: 'short', month: 'short', day: 'numeric', timeZoneName: 'short'
-  });
+  <section class="sheet" id="zSheet" role="dialog" aria-modal="true" aria-labelledby="zTitle">
+    <div class="sheet-head">
+      <span class="grab" aria-hidden="true"></span>
+      <div class="sh-row">
+        <div class="zt"><h2 id="zTitle">Zmanim</h2><small id="zWhere"></small></div>
+        <button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button>
+      </div>
+      <div class="seg" id="zDays" role="tablist">
+        <button type="button" role="tab" data-day="0">Today</button><button type="button" role="tab" data-day="1">Tomorrow</button>
+      </div>
+      <p class="zday" id="zDay"></p>
+    </div>
+    <div class="sheet-body">
+      <ol class="zlist" id="zList"></ol>
+      <div class="zset">
+        <div class="opt"><span>Candle lighting<small>minutes before sunset</small></span><div class="chips" id="candleChips"></div></div>
+        <div class="opt"><span>Shabbos ends</span><div class="chips" id="endChips"></div></div>
+      </div>
+      <p class="znote" id="zNote"></p>
+    </div>
+  </section>
 
-  function nyParts(date) {
-    const p = {};
-    for (const { type, value } of fmt.formatToParts(date)) p[type] = value;
-    let H = parseInt(p.hour, 10) % 24;
-    return {
-      H, M: parseInt(p.minute, 10), S: parseInt(p.second, 10),
-      weekday: p.weekday, month: p.month, day: p.day,
-      zone: p.timeZoneName || ''
-    };
-  }
-
-  /* ---------- digit cells ---------- */
-  const EASE_ROLL = 'cubic-bezier(.22, 1.25, .36, 1)';
-  function setCell(cell, ch, animate, delay) {
-    if (cell.dataset.v === ch && cell.firstChild) return;
-    cell.dataset.v = ch;
-    // drop any leftovers from interrupted animations
-    while (cell.childNodes.length > 1) cell.firstChild.remove();
-    const old = cell.firstChild;
-    const nu = document.createElement('span');
-    nu.textContent = ch;
-    cell.appendChild(nu);
-    if (!animate || !nu.animate) { if (old) old.remove(); return; }
-    const isSec = cell.closest('.s');
-    const dur = isSec ? 560 : 820;
-    const opts = { duration: dur, easing: EASE_ROLL, delay: delay || 0, fill: 'backwards' };
-    if (reduce) {
-      nu.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, easing: 'ease-out', delay: delay || 0, fill: 'backwards' });
-      if (old) old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, easing: 'ease-in', delay: delay || 0, fill: 'forwards' }).onfinish = () => old.remove();
-      return;
-    }
-    nu.animate([
-      { transform: 'translateY(105%)', opacity: .15 },
-      { transform: 'translateY(0)', opacity: 1 }
-    ], opts);
-    if (old) {
-      old.animate([
-        { transform: 'translateY(0)', opacity: 1 },
-        { transform: 'translateY(-105%)', opacity: .1 }
-      ], { ...opts, fill: 'forwards' }).onfinish = () => old.remove();
-    }
-  }
-
-  let last = null;
-  function render(now, mode) {
-    const t = nyParts(now);
-    const hDisp = h24 ? t.H : (t.H % 12 || 12);
-    const hs = String(hDisp).padStart(2, '0');
-    const ms = String(t.M).padStart(2, '0');
-    const ss = String(t.S).padStart(2, '0');
-    const chars = hs + ms + ss;
-    const animate = mode !== 'instant';
-    cells.forEach((c, i) => setCell(c, chars[i], animate, mode === 'intro' ? 90 * i : 0));
-    cells[0].classList.toggle('off', !h24 && hs[0] === '0');
-
-    dateEl.textContent = `${t.weekday} · ${t.month} ${t.day} · ${t.zone}`;
-    merEl.innerHTML = h24 ? '24H' : `<b>${t.H < 12 ? 'AM' : 'PM'}</b>`;
-    if (!last || last.M !== t.M || last.H !== t.H) {
-      srEl.textContent = `${hDisp}:${ms}${h24 ? '' : (t.H < 12 ? ' AM' : ' PM')} in New York`;
-    }
-
-    // per-second life: colon blink + glow heartbeat
-    if (animate && !reduce && pulse.animate) {
-      for (const d of dots) d.animate([{ opacity: 1 }, { opacity: .28 }], { duration: 1000, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' });
-      pulse.animate([
-        { transform: 'scale(.82)', opacity: .95 },
-        { transform: 'scale(1.18)', opacity: 0 }
-      ], { duration: 900, easing: 'cubic-bezier(.16,1,.3,1)' });
-    }
-    if (!last || t.S === 0 || mode) startSweep(now);
-    last = t;
-  }
-
-  /* ---------- minute sweep ---------- */
-  let sweepAnim = null;
-  function startSweep(now) {
-    now = now || new Date();
-    const elapsed = nyParts(now).S * 1000 + now.getMilliseconds();
-    const from = elapsed / 60000;
-    if (sweepAnim) { sweepAnim.cancel(); sweepAnim = null; }
-    if (reduce || !fill.animate) {
-      fill.style.transform = `translateX(${(-(1 - from) * 100).toFixed(3)}%)`;
-      return;
-    }
-    fill.style.transform = '';
-    sweepAnim = fill.animate([
-      { transform: `translateX(${(-(1 - from) * 100).toFixed(3)}%)` },
-      { transform: 'translateX(0%)' }
-    ], { duration: Math.max(1, 60000 - elapsed), easing: 'linear', fill: 'forwards' });
-  }
-
-  /* ---------- ticking on exact second boundaries ---------- */
-  let timer = 0;
-  function schedule() {
-    clearTimeout(timer);
-    const ms = 1000 - (Date.now() % 1000);
-    timer = setTimeout(() => { render(new Date()); schedule(); }, ms + 4);
-  }
-
-  /* ---------- fit: as large as the space allows ---------- */
-  function setAppHeight() {
-    const vv = window.visualViewport;
-    const h = vv ? vv.height : window.innerHeight;
-    document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
-  }
-  const LAYOUTS = ['row', 'split', 'stack'];
-  const BIAS = { row: 1.12, split: 1, stack: 1 }; // prefer one clean row when it's close
-  let fitRAF = 0;
-  function fit() {
-    cancelAnimationFrame(fitRAF);
-    fitRAF = requestAnimationFrame(() => {
-      setAppHeight();
-      const W = stage.clientWidth, H = stage.clientHeight;
-      if (!W || !H) return;
-      let best = null;
-      for (const L of LAYOUTS) {
-        clock.className = L + (clock.dataset.ready ? ' ready' : '');
-        let size = 100;
-        // two passes: the 2px line + rounding don't scale linearly
-        for (let k = 0; k < 2; k++) {
-          clock.style.fontSize = size + 'px';
-          const r = clock.getBoundingClientRect();
-          size = size * Math.min(W / r.width, H / r.height);
-        }
-        size = Math.floor(size * 0.995);
-        const score = size * BIAS[L];
-        if (!best || score > best.score) best = { L, size, score };
-      }
-      clock.className = best.L + (clock.dataset.ready ? ' ready' : '');
-      clock.style.fontSize = best.size + 'px';
-    });
-  }
-
-  /* ---------- 12h / 24h toggle ---------- */
-  function toggle() {
-    h24 = !h24;
-    try { localStorage.setItem(KEY, h24 ? '1' : '0'); } catch (e) {}
-    render(new Date(), 'toggle');
-  }
-  clock.addEventListener('click', toggle);
-  clock.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
-
-  /* ---------- wake lock ---------- */
-  let wakeWanted = false, wakeLock = null;
-  async function requestWake() {
-    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
-    try {
-      if (wakeLock && !wakeLock.released) return;
-      wakeLock = await navigator.wakeLock.request('screen');
-    } catch (e) { /* ignore: battery saver, unsupported, denied */ }
-  }
-  document.addEventListener('pointerdown', () => { wakeWanted = true; requestWake(); }, { passive: true });
-
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      render(new Date(), 'instant');
-      schedule();
-      if (wakeWanted) requestWake();
-    } else {
-      clearTimeout(timer);
-    }
-  });
-
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
-  addEventListener('resize', fit);
-  addEventListener('orientationchange', fit);
-  if (window.visualViewport) visualViewport.addEventListener('resize', fit);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
-
-  /* ---------- go ---------- */
-  fit();
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    clock.dataset.ready = '1';
-    clock.classList.add('ready');
-    render(new Date(), 'intro');
-    schedule();
-  }));
-})();
-</script>
+<script type="module" src="/time/ui.js?v=3ce47126d9"></script>
 </body>
 </html>
