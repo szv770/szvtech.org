@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme-keys="off">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -8,10 +8,11 @@
 <meta name="description" content="A training terminal: real Windows and Linux commands inside a pretend computer. Nothing can break.">
 <meta name="theme-color" content="#05050a">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Crect x='6' y='6' width='52' height='52' rx='12' fill='none' stroke='url(%23g)' stroke-width='3'/%3E%3Cpath d='M18 24l10 8-10 8' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='32' y='38' width='14' height='4.5' rx='2' fill='%2322d3ee'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/learn/learn.css?v=e423f8a3ae">
+<link rel="stylesheet" href="/learn/learn.css?v=2073722af1">
 <script>document.documentElement.classList.add('js');if(location.hash==='#free')document.documentElement.classList.add('is-free','no-boot');</script>
 </head>
 <body>
@@ -133,11 +134,12 @@
     </div>
     <div class="sheet__table" id="sheetTable"></div>
     <p class="sheet__foot mono">Unlock rows by using a command once. Type <kbd>help</kbd> in the terminal for everything.</p>
+    <p class="sheet__theme mono"><span>Site theme <span class="sheet__theme-hint">&middot; or type <kbd>theme</kbd></span></span><span data-szv-theme-dots></span></p>
   </div>
 </div>
 
 <noscript><p class="noscript">The training terminal needs JavaScript. Everything else on SZVTECH works without it.</p></noscript>
 
-<script src="/learn/learn.js?v=76587cc1d3" defer></script>
+<script src="/learn/learn.js?v=a0c37d154f" defer></script>
 </body>
 </html>

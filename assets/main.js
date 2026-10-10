@@ -16,12 +16,13 @@ const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
 const gsap = window.gsap;
 const ScrollTrigger = window.ScrollTrigger;
 
-const THEMES = {
-  violet:  ['#8b5cf6', '#22d3ee', '#e879f9'],
-  cyan:    ['#22d3ee', '#3b82f6', '#5eead4'],
-  magenta: ['#ff2fa0', '#8b5cf6', '#ffb86b'],
-  lime:    ['#a3e635', '#22d3ee', '#fde047'],
-};
+/* Palettes live in /assets/theme.js (window.SZVTheme), shared by every page. */
+const TH = window.SZVTheme || null;
+const themeNames = () => (TH ? TH.list() : ['violet']);
+function themeCols(name) {
+  const p = TH && TH.palette(name);
+  return p ? [p.a1, p.a2, p.a3] : ['#8b5cf6', '#22d3ee', '#e879f9'];
+}
 
 /* Shared scene state — scroll tweens write here, the WebGL frame reads it. */
 const Z0 = MOBILE ? 9.2 : 7.4;
@@ -85,17 +86,10 @@ function toast(msg) {
     .to(t, { yPercent: 140, opacity: 0, duration: .5, ease: 'power3.in' }, '+=2.4');
 }
 
-/* Theme */
-function setTheme(name) {
-  const cols = THEMES[name];
-  if (!cols) return false;
-  root.style.setProperty('--a1', cols[0]);
-  root.style.setProperty('--a2', cols[1]);
-  root.style.setProperty('--a3', cols[2]);
-  if (GL) GL.setTheme(cols);
-  try { localStorage.setItem('szv-theme', name); } catch (e) { /* ignore */ }
-  return true;
-}
+/* Theme — CSS variables are painted by theme.js; the particles follow here.
+   Fires for picks on this page AND for picks made in other tabs. */
+function setTheme(name) { return TH ? TH.set(name) : false; }
+if (TH) TH.on((name, p) => { PAL.at = 0; if (GL) GL.setTheme([p.a1, p.a2, p.a3]); });
 
 /* -------------------------------------------------------------------------- */
 /* WebGL particle field                                                        */
@@ -314,7 +308,7 @@ async function initGL() {
   geo.setAttribute('aGalaxy', new THREE.BufferAttribute(sh.gal, 3));
   geo.setAttribute('aRnd', new THREE.BufferAttribute(sh.rnd, 4));
 
-  const cols = (THEMES[currentThemeName()] || THEMES.violet).map((c) => new THREE.Color(c));
+  const cols = themeCols(currentThemeName()).map((c) => new THREE.Color(c));
   const uniforms = {
     uTime: { value: 0 }, uMorph: { value: 0 }, uSize: { value: MOBILE ? 44 : 34 }, uPR: { value: DPR * (innerHeight / 900) },
     uExplode: { value: 1 }, uWarp: { value: 0 }, uMouseForce: { value: 0 }, uNoise: { value: RM ? .14 : .22 }, uGrab: { value: 0 },
@@ -382,22 +376,22 @@ async function initGL() {
     renderer.render(scene, camera);
   }
 
+  const themeTw = {};
   function setThemeGL(c) {
     ['uC1', 'uC2', 'uC3'].forEach((u, i) => {
       const target = new THREE.Color(c[i]);
       const from = uniforms[u].value.clone();
+      if (themeTw[u]) themeTw[u].kill();
+      if (RM || !gsap) { uniforms[u].value.copy(target); return; }
       const o = { t: 0 };
-      gsap.to(o, { t: 1, duration: 1, ease: 'power2.out', onUpdate: () => uniforms[u].value.copy(from).lerp(target, o.t) });
+      themeTw[u] = gsap.to(o, { t: 1, duration: 1, ease: 'power2.out', onUpdate: () => uniforms[u].value.copy(from).lerp(target, o.t) });
     });
   }
 
   return { frame, resize, setTheme: setThemeGL, renderer };
 }
 
-function currentThemeName() {
-  try { const t = localStorage.getItem('szv-theme'); if (t && THEMES[t]) return t; } catch (e) { /* ignore */ }
-  return 'violet';
-}
+function currentThemeName() { return TH ? TH.get() : 'violet'; }
 
 /* -------------------------------------------------------------------------- */
 /* Pointer + custom cursor                                                     */
@@ -1575,11 +1569,20 @@ const Term = (() => {
       print('<span class="dim">-rw-r--r--</span>  noise.glsl');
       print('<span class="dim">-rw-r--r--</span>  todo.md            <span class="dim"># 1. make it feel alive</span>');
     } },
-    theme: { d: 'theme <violet|cyan|magenta|lime>', fn: (a) => {
+    theme: { d: `theme &lt;${themeNames().join('|')}&gt;`, fn: (a) => {
       const n = (a[0] || '').toLowerCase();
-      if (!n) { print(`usage: theme &lt;${Object.keys(THEMES).join('|')}&gt;   <span class="dim">current: ${currentThemeName()}</span>`); return; }
-      if (setTheme(n)) print(`<span class="ok">&#10003;</span> accent shifted to <span class="c1">${n}</span>`);
-      else print(`<span class="err">unknown theme:</span> ${esc(n)}. try ${Object.keys(THEMES).join(', ')}`);
+      if (!n) {
+        print(`usage: theme &lt;${themeNames().join('|')}&gt;   <span class="dim">current: ${currentThemeName()}</span>`);
+        print('<span class="dim">applies to every page on the site. tip: press t anywhere to cycle.</span>');
+        return;
+      }
+      if (n === 'next' || n === 'random') {
+        const list = themeNames().filter((t) => t !== currentThemeName());
+        return PUBLIC.theme.fn([n === 'next' ? themeNames()[(themeNames().indexOf(currentThemeName()) + 1) % themeNames().length] : list[Math.floor(Math.random() * list.length)]]);
+      }
+      if (n === currentThemeName()) { print(`<span class="dim">already ${esc(n)}.</span>`); return; }
+      if (setTheme(n)) print(`<span class="ok">&#10003;</span> accent shifted to <span class="c1">${n}</span> <span class="dim">&mdash; site-wide</span>`);
+      else print(`<span class="err">unknown theme:</span> ${esc(n)}. try ${themeNames().join(', ')}`);
     } },
     matrix: { d: 'follow the white rabbit', fn: () => { print('<span class="c2">wake up...</span>'); FX.matrix(5000); } },
     party: { d: 'you know what this does', fn: () => { print('<span class="c3">&#10022; &#10022; &#10022;</span> party mode'); FX.confetti(); explode(1.1); } },
@@ -1662,7 +1665,7 @@ const Term = (() => {
     if (!v || v.includes(' ')) {
       if (v.toLowerCase().startsWith('theme ')) {
         const part = v.slice(6).toLowerCase();
-        const m = Object.keys(THEMES).filter((t) => t.startsWith(part));
+        const m = themeNames().filter((t) => t.startsWith(part));
         if (m.length === 1) input.value = 'theme ' + m[0];
         else if (m.length > 1) print(m.join('   '), 'dim');
       }
@@ -2091,13 +2094,14 @@ function initClock() {
 }
 
 function consoleHello() {
+  const [c1, c2, c3] = themeCols(currentThemeName());
   console.log(
     '%c SZVTECH %c\n\nYou opened the hood. Respect.\nThere is a machine under here that talks back.\nTry pressing ` (backtick) anywhere on the page.\n\n%cC:\\> learn%c  Curious how terminals actually work? Fifteen real commands,\n            missions and XP, zero setup: %c' + location.origin + LEARN_URL + '%c\n',
-    'font: 800 22px Syne, sans-serif; color: #fff; background: linear-gradient(90deg,#8b5cf6,#e879f9,#22d3ee); padding: 8px 16px; border-radius: 8px;',
+    'font: 800 22px Syne, sans-serif; color: #fff; background: linear-gradient(90deg,' + c1 + ',' + c3 + ',' + c2 + '); padding: 8px 16px; border-radius: 8px;',
     'font: 12px "JetBrains Mono", monospace; color: #a5a3c2; line-height: 1.6;',
-    'font: 600 12px "JetBrains Mono", monospace; color: #05050a; background: #22d3ee; padding: 2px 6px; border-radius: 4px;',
+    'font: 600 12px "JetBrains Mono", monospace; color: #05050a; background: ' + c2 + '; padding: 2px 6px; border-radius: 4px;',
     'font: 12px "JetBrains Mono", monospace; color: #a5a3c2; line-height: 1.6;',
-    'font: 12px "JetBrains Mono", monospace; color: #22d3ee; text-decoration: underline;',
+    'font: 12px "JetBrains Mono", monospace; color: ' + c2 + '; text-decoration: underline;',
     'font: 12px "JetBrains Mono", monospace; color: #a5a3c2;'
   );
 }
@@ -2119,8 +2123,6 @@ async function boot() {
     return;
   }
   gsap.registerPlugin(ScrollTrigger);
-  const saved = currentThemeName();
-  if (saved !== 'violet') setTheme(saved);
 
   initLenis();
   prepSplits();
@@ -2138,7 +2140,9 @@ async function boot() {
   $$('[data-goto]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); goto(a.dataset.goto); }));
 
   // Start WebGL (non-blocking) while the counter runs
-  const glReady = initGL().then((g) => { GL = g; if (GL && saved !== 'violet') GL.setTheme(THEMES[saved]); return g; });
+  // GL is built with the current theme; picks made while it loads still land
+  const glStart = currentThemeName();
+  const glReady = initGL().then((g) => { GL = g; if (GL && currentThemeName() !== glStart) GL.setTheme(themeCols(currentThemeName())); return g; });
 
   initScroll();
   runIntro();

@@ -652,6 +652,8 @@ body.glitching::after {
 .menu__learn { position: relative; }
 .menu__learn .nav__new { position: static; margin-left: 4px; align-self: center; }
 .menu__foot { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); }
+.menu__theme { display: inline-flex; align-items: center; gap: 12px; color: var(--dim); margin-top: calc(-1 * clamp(14px, 4vh, 40px)); }
+.foot__theme { margin: -6px -4px; }
 
 /* ==========================================================================
    Touch affordance: floating button that opens the hidden terminal

@@ -759,8 +759,8 @@ function drawArc(svg, W, H, now, sd, big) {
   const pt = (f) => { const a = Math.PI * (1 - f); return [cx + rx * Math.cos(a), base - ry * Math.sin(a)]; };
   const t = +now, rise = +sd.rise, set = +sd.set;
   const id = svg.id;
-  let body = `<defs><linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset=".55" stop-color="var(--a2)"/><stop offset="1" stop-color="var(--a3)"/></linearGradient>` +
-    `<radialGradient id="${id}h"><stop offset="0" stop-color="#fff7d6" stop-opacity=".9"/><stop offset=".35" stop-color="var(--a2)" stop-opacity=".45"/><stop offset="1" stop-color="var(--a2)" stop-opacity="0"/></radialGradient></defs>`;
+  let body = `<defs><linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="var(--a1)"/><stop offset=".55" stop-color="var(--a3)"/><stop offset="1" stop-color="var(--a2)"/></linearGradient>` +
+    `<radialGradient id="${id}h"><stop offset="0" stop-color="#fff7d6" stop-opacity=".9"/><stop offset=".35" stop-color="var(--a3)" stop-opacity=".45"/><stop offset="1" stop-color="var(--a3)" stop-opacity="0"/></radialGradient></defs>`;
   body += `<line class="hz" x1="0" y1="${base}" x2="${W}" y2="${base}"/>`;
   body += `<path class="track" d="M${pad},${base} A${rx},${ry} 0 0 1 ${W - pad},${base}"/>`;
   if (t >= rise && t <= set) {
@@ -793,8 +793,8 @@ function drawArcs(now) {
   arcMini.style.display = sd && zm !== 'rich' ? '' : 'none';
 }
 
-// sky palette by solar altitude (degrees)
-const SKY = [
+// sky palette by solar altitude (degrees) — the original violet sky
+const SKY_VIOLET = [
   [-90, [44, 30, 110, .10], [20, 14, 60, 0], [5, 5, 10, 0]],
   [-18, [52, 34, 128, .12], [30, 20, 80, .02], [8, 6, 20, .2]],
   [-12, [104, 66, 214, .19], [139, 92, 246, .08], [18, 12, 44, .34]],
@@ -806,6 +806,28 @@ const SKY = [
   [90, [34, 211, 238, .15], [90, 170, 255, .09], [12, 44, 76, .44]],
 ];
 const mix = (a, b, f) => a.map((v, i) => v + (b[i] - v) * f);
+// Other site themes (/assets/theme.js): the same sky rebuilt from that palette —
+// night tinted from a1, dusk a1→a3, day a2. Sunrise/sunset stay naturally warm.
+function skyFor(p) {
+  if (!p || p.name === 'violet') return SKY_VIOLET;
+  const { a1, a2, a3, a12, a1lo } = p.rgb;
+  const k = (c, f, al) => [c[0] * f, c[1] * f, c[2] * f, al];
+  const m = (x, y, f, al) => [...mix(x, y, f), al];
+  const sk = (f, al) => [...mix([5, 5, 10], mix(a1lo, a2, f), .22), al];
+  return [
+    [-90, k(a1, .32, .10), k(a1, .14, 0), [5, 5, 10, 0]],
+    [-18, k(a1, .38, .12), k(a1, .22, .02), [...mix([5, 5, 10], a1lo, .1), .2]],
+    [-12, k(a1, .8, .19), [...a1, .08], sk(0, .34)],
+    [-6, m(a1, a3, .55, .22), [...a1, .1], sk(.1, .38)],
+    [-1, [236, 104, 172, .24], [251, 146, 60, .12], sk(.15, .38)],
+    [4, [248, 152, 96, .17], [...a3, .09], sk(.5, .38)],
+    [14, [...a2, .12], [...a12, .08], sk(.75, .4)],
+    [40, [...a2, .15], m(a12, a2, .5, .09), sk(1, .44)],
+    [90, [...a2, .15], m(a12, a2, .5, .09), sk(1, .44)],
+  ];
+}
+const THEME = window.SZVTheme || null;
+let SKY = skyFor(THEME && THEME.palette());
 const rgba = (c) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${c[3].toFixed(3)})`;
 function altitudeProxy(now) {
   // when there are no coordinates (ZIP-only): estimate from the day's times
@@ -843,6 +865,12 @@ function updateSky(now) {
   if (!skySet) { skySet = true; requestAnimationFrame(() => requestAnimationFrame(() => sky.classList.remove('now'))); }
   sky.dataset.alt = alt.toFixed(1);
 }
+
+if (THEME) THEME.on((name, p) => {
+  SKY = skyFor(p);
+  if (skySet && !reduce) { sky.classList.add('quick'); setTimeout(() => sky.classList.remove('quick'), 3500); }
+  updateSky(nowDate());
+});
 
 function onMinute(now) {
   updateHebrew(now);
