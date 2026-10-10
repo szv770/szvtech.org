@@ -1037,6 +1037,26 @@ def(['progress', 'xp', 'level'], {
 });
 def(['?', 'cheatsheet'], { hidden: true, fn() { if (!cap) openSheet(); } });
 def(['sound'], { hidden: true, fn(c) { const a = lc(posArgs(c)[0] || ''); setSound(a ? a === 'on' : !S.sound); p('Sound effects ' + (S.sound ? 'on.' : 'off.')); } });
+/* site theme (shared with every SZVTECH page) — separate from `color`, which only recolors this terminal */
+def(['theme'], {
+  hidden: true,
+  fn(c) {
+    const T = window.SZVTheme;
+    if (!T) { err('theme: not available on this page'); failed = true; return; }
+    const names = T.list(), a = lc(posArgs(c)[0] || '');
+    const dots = (n) => { const q = T.palette(n); return `<span style="color:${q.a1}">\u25CF</span><span style="color:${q.a3}">\u25CF</span><span style="color:${q.a2}">\u25CF</span>`; };
+    if (!a) {
+      p(`usage: theme <${names.join('|')}>`);
+      names.forEach((n) => ph(`  ${dots(n)}  ${n === T.get() ? `<span class="c2">${n}</span> <span class="dim">(current)</span>` : esc(n)}`));
+      note('<span class="dim">(recolors the whole site, every page. not a real command — color is the real one, and it only recolors this terminal.)</span>');
+      return;
+    }
+    const n = a === 'next' ? names[(names.indexOf(T.get()) + 1) % names.length] : a;
+    if (!names.includes(n)) { err(`theme: unknown theme '${a}'. try: ${names.join(', ')}`); failed = true; return; }
+    T.set(n);
+    ph(`${dots(n)}  accent shifted to <span class="c2">${esc(n)}</span> <span class="dim">— site-wide</span>`);
+  },
+});
 def(['fortune'], { hidden: true, fn() { ph(`<span class="grad">${esc(LINES[Math.floor(Math.random() * LINES.length)])}</span>`, 'wisdom'); } });
 def(['reset'], {
   hidden: true,
@@ -1518,8 +1538,10 @@ function complete() {
   const word = m ? m[3] : '';
   const isFirst = !before.slice(0, before.length - word.length - (m && m[2] ? 1 : 0)).trim();
   let options = [], dirPart = '', sepCh = '\\';
-  if (isFirst) {
-    options = [...CMDS.keys()].filter((n) => n.startsWith(lc(word)) && n !== 'echo.' && n !== '?' && !(CMDS.get(n).hidden && !['hint', 'missions', 'matrix', 'neofetch', 'progress', 'fortune'].includes(n))).sort().map((n) => ({ n, d: false }));
+  if (!isFirst && /^\s*theme\s+\S*$/i.test(before) && window.SZVTheme) {
+    options = window.SZVTheme.list().filter((n) => n.startsWith(lc(word))).map((n) => ({ n, d: false }));
+  } else if (isFirst) {
+    options = [...CMDS.keys()].filter((n) => n.startsWith(lc(word)) && n !== 'echo.' && n !== '?' && !(CMDS.get(n).hidden && !['hint', 'missions', 'matrix', 'neofetch', 'progress', 'fortune', 'theme'].includes(n))).sort().map((n) => ({ n, d: false }));
   } else {
     const i = Math.max(word.lastIndexOf('\\'), word.lastIndexOf('/'));
     dirPart = i >= 0 ? word.slice(0, i + 1) : '';
@@ -1647,12 +1669,16 @@ async function matrix() {
 /* --------------------------------------------------------------------------
    Effects: particles, background, sound, toast, badge unlock
    -------------------------------------------------------------------------- */
+/* Site theme (/assets/theme.js): canvas colors come from the shared palette. */
+const THEME = window.SZVTheme || null;
+const themePal = () => (THEME ? THEME.palette() : { a1: '#8b5cf6', a2: '#22d3ee', a3: '#e879f9', rgb: { a1: [139, 92, 246], a2: [34, 211, 238], a3: [232, 121, 249] } });
 const fx = $('#fx'), fctx = fx.getContext('2d');
 let parts = [], fxOn = false;
 function sizeFx() { const d = Math.min(2, devicePixelRatio || 1); fx.width = innerWidth * d; fx.height = innerHeight * d; fctx.setTransform(d, 0, 0, d, 0, 0); }
 function burst(x, y, n = 50) {
   if (reduced()) return;
-  const cols = ['#8b5cf6', '#e879f9', '#22d3ee', '#7dffb3', '#ffffff'];
+  const tp = themePal();
+  const cols = [tp.a1, tp.a3, tp.a2, '#7dffb3', '#ffffff'];
   for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 6.5; parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2.4, life: 1, d: 0.012 + Math.random() * 0.016, r: 1.2 + Math.random() * 2.6, c: cols[i % cols.length], sq: Math.random() < 0.4 }); }
   if (!fxOn) { fxOn = true; requestAnimationFrame(fxLoop); }
 }
@@ -1674,13 +1700,17 @@ function bgInit() {
     const d = Math.min(1.5, devicePixelRatio || 1);
     W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; x.setTransform(d, 0, 0, d, 0, 0);
     const n = Math.round(Math.min(70, (W * H) / 22000));
-    dots = Array.from({ length: n }, (_, i) => ({ x: Math.random() * W, y: Math.random() * H, r: 0.4 + Math.random() * 1.4, s: 0.06 + Math.random() * 0.22, ph: Math.random() * 6.28, c: i % 3 === 0 ? '34,211,238' : i % 3 === 1 ? '139,92,246' : '232,121,249' }));
+    dots = Array.from({ length: n }, (_, i) => ({ x: Math.random() * W, y: Math.random() * H, r: 0.4 + Math.random() * 1.4, s: 0.06 + Math.random() * 0.22, ph: Math.random() * 6.28, c: i % 3 === 0 ? 'a2' : i % 3 === 1 ? 'a1' : 'a3' }));
   };
+  let rgbs = {};
+  const setRgbs = () => { const r = themePal().rgb; rgbs = { a1: r.a1.join(','), a2: r.a2.join(','), a3: r.a3.join(',') }; };
+  setRgbs();
+  if (THEME) THEME.on(() => { setRgbs(); if (reduced()) draw(0); });
   const draw = (t) => {
     x.clearRect(0, 0, W, H);
     for (const d of dots) {
       const a = 0.18 + 0.32 * (0.5 + 0.5 * Math.sin(t / 1400 + d.ph));
-      x.fillStyle = `rgba(${d.c},${a})`;
+      x.fillStyle = `rgba(${rgbs[d.c]},${a})`;
       x.beginPath(); x.arc(d.x, d.y, d.r, 0, 6.283); x.fill();
     }
   };

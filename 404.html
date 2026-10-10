@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#05050a">
 <title>404 — Lost in the void · SZVTECH</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='url(%23g)' stroke-width='6'/%3E%3Ccircle cx='46' cy='18' r='4' fill='%2322d3ee'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500&family=Syne:wght@600;700;800&display=swap">
@@ -16,11 +17,12 @@
   --ink:#ecebff;
   --muted:rgba(214,212,255,.56);
   --faint:rgba(214,212,255,.14);
-  --violet:#8b5cf6;
-  --cyan:#22d3ee;
+  --violet:var(--a1,#8b5cf6);
+  --cyan:var(--a2,#22d3ee);
   --magenta:#e14bff;
   --lime:#b6ff5c;
-  --grad:linear-gradient(100deg,#a78bfa 0%,#8b5cf6 30%,#5b8cff 60%,#22d3ee 100%);
+  /* own name: theme.js sets the shared --grad on html:root */
+  --grad404:linear-gradient(100deg,var(--a1-hi,#a78bfa) 0%,var(--a1,#8b5cf6) 30%,var(--a12,#5b8cff) 60%,var(--a2,#22d3ee) 100%);
   --display:"Syne","Space Grotesk",system-ui,sans-serif;
   --sans:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -36,10 +38,10 @@ body{
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   overflow-x:hidden;
   background:
-    radial-gradient(1200px 700px at 50% 38%,rgba(91,60,200,.16),transparent 70%),
+    radial-gradient(1200px 700px at 50% 38%,color-mix(in srgb, var(--a1-lo) 16%, transparent),transparent 70%),
     var(--bg);
 }
-::selection{background:rgba(139,92,246,.45);color:#fff}
+::selection{background:color-mix(in srgb, var(--a1) 45%, transparent);color:#fff}
 
 /* ---------- atmosphere ---------- */
 .aurora{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
@@ -47,8 +49,8 @@ body{
   position:absolute;display:block;border-radius:50%;
   width:70vmax;height:70vmax;opacity:.55;will-change:transform;
 }
-.aurora i:nth-child(1){left:-25vmax;top:-30vmax;background:radial-gradient(closest-side,rgba(139,92,246,.42),rgba(139,92,246,0));animation:float1 22s var(--ease) infinite alternate}
-.aurora i:nth-child(2){right:-28vmax;bottom:-34vmax;background:radial-gradient(closest-side,rgba(34,211,238,.30),rgba(34,211,238,0));animation:float2 26s var(--ease) infinite alternate}
+.aurora i:nth-child(1){left:-25vmax;top:-30vmax;background:radial-gradient(closest-side,color-mix(in srgb, var(--a1) 42%, transparent),color-mix(in srgb, var(--a1) 0%, transparent));animation:float1 22s var(--ease) infinite alternate}
+.aurora i:nth-child(2){right:-28vmax;bottom:-34vmax;background:radial-gradient(closest-side,color-mix(in srgb, var(--a2) 30%, transparent),color-mix(in srgb, var(--a2) 0%, transparent));animation:float2 26s var(--ease) infinite alternate}
 .aurora i:nth-child(3){left:30%;top:55%;width:40vmax;height:40vmax;background:radial-gradient(closest-side,rgba(225,75,255,.16),rgba(225,75,255,0));animation:float3 30s var(--ease) infinite alternate}
 @keyframes float1{to{transform:translate3d(14vmax,10vmax,0) scale(1.1)}}
 @keyframes float2{to{transform:translate3d(-12vmax,-8vmax,0) scale(1.15)}}
@@ -85,7 +87,7 @@ body{
   font-family:var(--display);font-weight:700;letter-spacing:.06em;font-size:15px;
   padding:6px 0;
 }
-.brand-dot{width:10px;height:10px;border-radius:50%;background:var(--grad);box-shadow:0 0 14px rgba(139,92,246,.9),0 0 26px rgba(34,211,238,.5)}
+.brand-dot{width:10px;height:10px;border-radius:50%;background:var(--grad404);box-shadow:0 0 14px color-mix(in srgb, var(--a1) 90%, transparent),0 0 26px color-mix(in srgb, var(--a2) 50%, transparent)}
 .status{display:inline-flex;align-items:center;gap:8px}
 .status b{width:7px;height:7px;border-radius:50%;background:var(--magenta);box-shadow:0 0 10px var(--magenta);animation:blink 2.4s ease-in-out infinite}
 @keyframes blink{50%{opacity:.25}}
@@ -106,8 +108,8 @@ main{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-family:var(--display);font-weight:800;line-height:.8;
   font-size:clamp(120px,30vw,380px);letter-spacing:-.04em;
-  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 40px rgba(139,92,246,.35));
+  background:var(--grad404);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 40px color-mix(in srgb, var(--a1) 35%, transparent));
   user-select:none;
 }
 .canvas-ok .fallback-404{opacity:0;visibility:hidden}
@@ -121,7 +123,7 @@ h1{
   font-size:clamp(26px,4.6vw,52px);line-height:1.04;letter-spacing:-.02em;
   text-wrap:balance;
 }
-h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1 .grad{background:var(--grad404);-webkit-background-clip:text;background-clip:text;color:transparent}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .path{
   margin:16px auto 0;max-width:100%;
@@ -140,14 +142,14 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
   min-height:52px;padding:0 26px 0 28px;border-radius:999px;
   text-decoration:none;color:#0b0716;
   font-family:var(--sans);font-weight:500;font-size:16px;letter-spacing:.01em;
-  background:var(--grad);background-size:160% 100%;background-position:0% 50%;
-  box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 10px 40px -8px rgba(139,92,246,.7),0 0 60px -10px rgba(34,211,238,.55);
+  background:var(--grad404);background-size:160% 100%;background-position:0% 50%;
+  box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 10px 40px -8px color-mix(in srgb, var(--a1) 70%, transparent),0 0 60px -10px color-mix(in srgb, var(--a2) 55%, transparent);
   transform:translate3d(var(--mx),var(--my),0);
   transition:transform .55s var(--ease),background-position .6s var(--ease),box-shadow .4s var(--ease);
   will-change:transform;touch-action:manipulation;
 }
 .magnet.is-near{transition:transform .18s var(--ease),background-position .6s var(--ease),box-shadow .4s var(--ease)}
-.magnet:hover{background-position:100% 50%;box-shadow:0 0 0 1px rgba(255,255,255,.2) inset,0 14px 50px -6px rgba(139,92,246,.85),0 0 80px -6px rgba(34,211,238,.7)}
+.magnet:hover{background-position:100% 50%;box-shadow:0 0 0 1px rgba(255,255,255,.2) inset,0 14px 50px -6px color-mix(in srgb, var(--a1) 85%, transparent),0 0 80px -6px color-mix(in srgb, var(--a2) 70%, transparent)}
 .magnet span{display:inline-block;transform:translate3d(calc(var(--mx) * .35),calc(var(--my) * .35),0);transition:inherit}
 .magnet svg{width:18px;height:18px;transition:transform .45s var(--ease)}
 .magnet:hover svg{transform:translateX(-3px) rotate(-8deg)}
@@ -178,6 +180,7 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
 .alt .joke{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:rgba(214,212,255,.36)}
 .alt .joke code{color:rgba(214,212,255,.6)}
 .foot{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.foot-theme{margin:-6px 0}
 .hint{
   display:inline-flex;align-items:center;gap:8px;opacity:0;
   animation:hintIn 1.2s var(--ease) 2.4s forwards;
@@ -209,7 +212,7 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
   padding:9px 10px 9px 16px;border-radius:999px;
   background:rgba(10,8,22,.62);border:1px solid rgba(214,212,255,.14);
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  box-shadow:0 10px 40px -10px rgba(139,92,246,.5);
+  box-shadow:0 10px 40px -10px color-mix(in srgb, var(--a1) 50%, transparent);
   font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
   transition:transform .6s var(--ease),opacity .4s var(--ease);white-space:nowrap;
 }
@@ -282,6 +285,7 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
 
   <footer class="foot ui">
     <span class="label hint"><span class="k-desk">psst — press <kbd>space</kbd></span><span class="k-touch">psst — tap the 404</span></span>
+    <span class="foot-theme" data-szv-theme-dots></span>
     <span class="label coords" id="coords" aria-hidden="true">x 0000 · y 0000</span>
   </footer>
 </div>
@@ -358,11 +362,23 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
   var stars = [];
   var PALN = 28;
   var palette = [], hot = [];
+  // site theme (/assets/theme.js); violet keeps its hand-tuned original stops
+  var TH = window.SZVTheme || null;
+  var TC = { a1: "139,92,246", a2: "34,211,238", a1hi: "167,139,250", a12: "91,140,255" };
+  function readTheme() {
+    if (!TH) return;
+    var r = TH.palette().rgb;
+    TC = { a1: r.a1.join(","), a2: r.a2.join(","), a1hi: r.a1hi.join(","), a12: r.a12.join(","), name: TH.get(), rgb: r };
+  }
+  readTheme();
 
   function lerp(a, b, t) { return a + (b - a) * t; }
   function mix(c1, c2, t) { return [lerp(c1[0], c2[0], t), lerp(c1[1], c2[1], t), lerp(c1[2], c2[2], t)]; }
-  (function buildPalette() {
-    var stops = [[167, 139, 250], [139, 92, 246], [96, 120, 255], [34, 211, 238]];
+  function buildPalette() {
+    var stops = !TC.rgb || TC.name === "violet"
+      ? [[167, 139, 250], [139, 92, 246], [96, 120, 255], [34, 211, 238]]
+      : [TC.rgb.a1hi, TC.rgb.a1, TC.rgb.a12, TC.rgb.a2];
+    palette = []; hot = [];
     for (var i = 0; i < PALN; i++) {
       var t = i / (PALN - 1) * (stops.length - 1);
       var k = Math.min(stops.length - 2, Math.floor(t));
@@ -371,7 +387,9 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
       var h = mix([225, 75, 255], [182, 255, 92], i / (PALN - 1));
       hot.push("rgb(" + (h[0] | 0) + "," + (h[1] | 0) + "," + (h[2] | 0) + ")");
     }
-  })();
+  }
+  buildPalette();
+  if (TH) TH.on(function () { readTheme(); buildPalette(); buildGlow(); if (reduce.matches && N) drawStatic(); });
 
   function measureStage() {
     var r = stageEl.getBoundingClientRect();
@@ -458,14 +476,22 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
     // convert to viewport coords
     for (var q = 0; q < N; q++) { X[q] += stage.x; Y[q] += stage.y; }
 
-    // soft glow sprite of the text
+    glowArgs = { w: w, h: h, size: size, family: family, xs: xs };
+    buildGlow();
+  }
+
+  // soft glow sprite of the text (rebuilt on theme change)
+  var glowArgs = null;
+  function buildGlow() {
+    if (!glowArgs) return;
+    var w = glowArgs.w, h = glowArgs.h, size = glowArgs.size, family = glowArgs.family, xs = glowArgs.xs;
     glowPad = Math.round(size * 0.25);
     glow = document.createElement("canvas");
     glow.width = w + glowPad * 2; glow.height = h + glowPad * 2;
     var g = glow.getContext("2d");
     g.filter = "blur(" + Math.round(size * 0.09) + "px)";
     var grad = g.createLinearGradient(glowPad, 0, glowPad + w, 0);
-    grad.addColorStop(0, "rgba(139,92,246,1)"); grad.addColorStop(1, "rgba(34,211,238,1)");
+    grad.addColorStop(0, "rgba(" + TC.a1 + ",1)"); grad.addColorStop(1, "rgba(" + TC.a2 + ",1)");
     g.font = "800 " + size + "px " + family;
     g.textBaseline = "middle";
     g.fillStyle = grad;
@@ -708,7 +734,7 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
   function drawCursorGlow() {
     if (!mouse.active || isTouch || game.on) return;
     var g = ctx.createRadialGradient(mouse.sx, mouse.sy, 0, mouse.sx, mouse.sy, 160);
-    g.addColorStop(0, "rgba(139,92,246,0.16)"); g.addColorStop(1, "rgba(139,92,246,0)");
+    g.addColorStop(0, "rgba(" + TC.a1 + ",0.16)"); g.addColorStop(1, "rgba(" + TC.a1 + ",0)");
     ctx.fillStyle = g; ctx.fillRect(mouse.sx - 160, mouse.sy - 160, 320, 320);
   }
 
@@ -750,7 +776,7 @@ h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:tex
       var blink = game.inv > 0 ? (Math.sin(t * 0.04) > 0 ? 1 : 0.35) : 1;
       ctx.globalCompositeOperation = "lighter";
       var pg = ctx.createRadialGradient(game.px, game.py, 0, game.px, game.py, 46);
-      pg.addColorStop(0, "rgba(167,139,250," + 0.85 * blink + ")"); pg.addColorStop(0.3, "rgba(91,140,255," + 0.35 * blink + ")"); pg.addColorStop(1, "rgba(34,211,238,0)");
+      pg.addColorStop(0, "rgba(" + TC.a1hi + "," + 0.85 * blink + ")"); pg.addColorStop(0.3, "rgba(" + TC.a12 + "," + 0.35 * blink + ")"); pg.addColorStop(1, "rgba(" + TC.a2 + ",0)");
       ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(game.px, game.py, 46, 0, 6.283); ctx.fill();
       ctx.globalAlpha = blink; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(game.px, game.py, 5, 0, 6.283); ctx.fill();
       ctx.globalAlpha = 1;

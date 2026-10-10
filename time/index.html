@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="NYC Time">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='url(%23g)' stroke-width='4.5'/%3E%3Cpath d='M32 19v13l9 6' fill='none' stroke='%23f3f1ff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;800&family=Syne:wght@600;700&display=swap" rel="stylesheet">
@@ -24,10 +25,12 @@
   --fg: #f3f1ff;
   --muted: rgba(226, 224, 255, .5);
   --dim: rgba(226, 224, 255, .3);
+  /* shared accents (theme.js paints them site-wide; these are the no-JS fallbacks) */
   --a1: #8b5cf6;
-  --a2: #e879f9;
-  --a3: #22d3ee;
-  --grad: linear-gradient(100deg, var(--a1), var(--a2) 50%, var(--a3));
+  --a2: #22d3ee;
+  --a3: #e879f9;
+  /* /time's own sweep: a1 -> a3 -> a2 at 50% (theme.js owns the shared --grad) */
+  --tgrad: linear-gradient(100deg, var(--a1), var(--a3) 50%, var(--a2));
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --mx: 14px;               /* tiny side margin */
   --my: 12px;               /* tiny top/bottom margin */
@@ -66,9 +69,9 @@ body {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   background:
-    radial-gradient(70% 55% at 12% 0%, rgba(139, 92, 246, .16), transparent 70%),
-    radial-gradient(60% 50% at 100% 100%, rgba(34, 211, 238, .11), transparent 70%),
-    radial-gradient(50% 40% at 85% 10%, rgba(232, 121, 249, .07), transparent 70%),
+    radial-gradient(70% 55% at 12% 0%, color-mix(in srgb, var(--a1) 16%, transparent), transparent 70%),
+    radial-gradient(60% 50% at 100% 100%, color-mix(in srgb, var(--a2) 11%, transparent), transparent 70%),
+    radial-gradient(50% 40% at 85% 10%, color-mix(in srgb, var(--a3) 7%, transparent), transparent 70%),
     var(--bg);
 }
 /* film grain */
@@ -112,8 +115,8 @@ body::after {
 .city { display: inline-flex; align-items: center; gap: .7em; color: var(--fg); }
 .city i {
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--a3);
-  box-shadow: 0 0 10px var(--a3);
+  background: var(--a2);
+  box-shadow: 0 0 10px var(--a2);
   flex: none;
 }
 .home {
@@ -127,7 +130,7 @@ body::after {
 #mer { color: var(--fg); }
 #mer b {
   font-weight: 500;
-  background: var(--grad);
+  background: var(--tgrad);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -191,7 +194,7 @@ body::after {
 
 /* seconds: one gradient across the pair */
 .s .d > span {
-  background: linear-gradient(160deg, var(--a1) 5%, var(--a2) 48%, var(--a3) 95%);
+  background: linear-gradient(160deg, var(--a1) 5%, var(--a3) 48%, var(--a2) 95%);
   background-size: 1.2em var(--cell-h);
   -webkit-background-clip: text;
   background-clip: text;
@@ -206,7 +209,7 @@ body::after {
   inset: -12% -18%;
   z-index: -1;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(232, 121, 249, .28), rgba(139, 92, 246, .12) 55%, transparent);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--a3) 28%, transparent), color-mix(in srgb, var(--a1) 12%, transparent) 55%, transparent);
   opacity: var(--glow, .5);
   pointer-events: none;
 }
@@ -215,7 +218,7 @@ body::after {
   inset: -12% -18%;
   z-index: -1;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(34, 211, 238, .22), rgba(232, 121, 249, .1) 60%, transparent);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--a2) 22%, transparent), color-mix(in srgb, var(--a3) 10%, transparent) 60%, transparent);
   opacity: 0;
   pointer-events: none;
   will-change: transform, opacity;
@@ -233,11 +236,11 @@ body::after {
   height: .11em;
   margin-left: -.055em;
   border-radius: 50%;
-  background: linear-gradient(140deg, var(--a1), var(--a2));
+  background: linear-gradient(140deg, var(--a1), var(--a3));
   will-change: opacity;
 }
 .col i:first-child { top: .22em; }
-.col i:last-child { top: .5em; background: linear-gradient(140deg, var(--a2), var(--a3)); }
+.col i:last-child { top: .5em; background: linear-gradient(140deg, var(--a3), var(--a2)); }
 
 /* minute progress: thin gradient line sweeping each minute */
 .sweep {
@@ -254,7 +257,7 @@ body::after {
   position: absolute;
   inset: 0;
   border-radius: 2px;
-  background: var(--grad);
+  background: var(--tgrad);
   transform: translateX(-100%);
   will-change: transform;
 }
@@ -268,7 +271,7 @@ body::after {
   margin-top: -3px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0 8px 2px var(--a3), 0 0 22px 6px rgba(34, 211, 238, .45);
+  box-shadow: 0 0 8px 2px var(--a2), 0 0 22px 6px color-mix(in srgb, var(--a2) 45%, transparent);
 }
 .ticks {
   position: absolute;
@@ -284,7 +287,7 @@ body::after {
   body::after { animation: none; }
 }
 </style>
-<link rel="stylesheet" href="/time/time.css?v=f1d6108883">
+<link rel="stylesheet" href="/time/time.css?v=57a4f60f01">
 </head>
 <body>
   <div id="sky" aria-hidden="true"></div>
@@ -344,6 +347,7 @@ body::after {
           <button type="submit" class="go">Set</button>
           <small class="zstatus" id="zipStatus">Zmanim from Chabad.org</small>
         </form>
+        <div class="qtheme"><span>Theme<small>every SZVTECH page<span class="kb"> &middot; <kbd>t</kbd> cycles</span></small></span><span data-szv-theme-dots></span></div>
       </div>
       <div id="list" role="listbox" aria-label="Cities"></div>
       <p class="empty" id="empty" hidden>No matching city. Try a US ZIP code above.</p>
@@ -372,6 +376,6 @@ body::after {
     </div>
   </section>
 
-<script type="module" src="/time/ui.js?v=d7546b0f56"></script>
+<script type="module" src="/time/ui.js?v=3ecff3be44"></script>
 </body>
 </html>
