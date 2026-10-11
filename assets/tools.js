@@ -30,7 +30,7 @@ export const TOOLS = [
   { id: 'convert', path: '/convert/', name: 'Convert', blurb: 'Type anything: 5 ft 11 in to cm', icon: 'convert', live: true,
     demo: ['5 ft 11 in → 180.3 cm', '72 °F → 22.2 °C', '1 cup → 236.6 ml', '26.2 mi → 42.16 km', '150 lb → 68.04 kg'] },
   { id: 'dev',     path: '/dev/',     name: 'Dev',     blurb: 'Encoders, hashes, little dev helpers', icon: 'code', live: false },
-  { id: 'net',     path: '/net/',     name: 'Net Lab', blurb: 'Your IP, latency, speed test, DNS', icon: 'wifi', live: false },
+  { id: 'net',     path: '/net/',     name: 'Net Lab', blurb: 'Your IP, live ping, DNS, device info', icon: 'wifi', live: true },
   { id: 'sky',     path: '/sky/',     name: 'Sky',     blurb: 'The ISS live, passes, Moon & planets', icon: 'orbit', live: false },
 ];
 

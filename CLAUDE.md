@@ -42,18 +42,22 @@ to re-explain it.
 | `/` | Homepage: Three.js particle hero that morphs on scroll, GSAP/ScrollTrigger + Lenis, kinetic type, touchable glass cards, stats, learn teaser | — |
 | hidden terminal (on `/`) | Fake shell in `assets/main.js` (`Term`): `help`, `whoami`, `about`, `date`, `ls`, `echo`, `theme <name>`, `matrix`, `party`, `learn`, `exit`; **secret** (not in `help`): `hack`, `more`, `contact`, `sys`, `admin`, `sudo`, `snake`; real shell commands (`dir`, `cd`, …) hint toward /learn | Backtick or Ctrl/Cmd+K; floating `>_` button + footer link on touch; console message |
 | `/learn/` | Training terminal: missions, XP, real Windows/Linux commands | Nav item 05 + menu, teaser section, footer `cd learn`, `learn` command, typing `cmd`/`learn` anywhere on `/`, 404 link |
-| `/time/` | Full-screen NYC clock synced to `/api/now`; ~180 cities, ZIP, zmanim (Chabad.org), Hebrew date, live sky, bedside mode (long-press) | Direct URL (owner's bookmark) |
+| `/time/` | Full-screen clock (device time zone by default) synced to `/api/now`; ⓘ "How time works" sheet; ~180 cities, ZIP, zmanim (Chabad.org), Hebrew date, live sky, bedside mode (long-press) | Direct URL (owner's bookmark) |
 | `/hack/` | Parody "breach console" that ends in a gotcha → /learn | secret `hack` command |
 | `/contact/` | Gag "transmission into the void" — sends nothing | secret `contact` command |
 | `/more/` | Old legacy "Access Console" page (not themed; smoke test skips it) | secret `more` command |
 | `/sys/` | **Inert honeypot decoy**: fake 7-level "internal control panel" maze for snoopers, ends by pointing them to ethical hacking (TryHackMe, HTB, OWASP, HackerOne). All data fake | `vercel.json` rewrites tempting paths (`/admin`, `/wp-admin`, `/.env`, `/login`, `/phpmyadmin`, `/.git/config`, …) → `/sys/index.html`; `sys`/`admin` commands; a "TODO(ops)" breadcrumb comment in `index.html` |
+| `/timer/`, `/world/`, `/qr/`, `/convert/` | Stopwatch/timer, world clock board, QR make & scan, unit converter (embeddable modules: `mount(el, opts)`) | Homepage Tools grid + menu + footer + terminal, all generated from `assets/tools.js` |
+| `/luach/`, `/zmanim/` | Jewish calendar and all-zmanim view (share `szv-time-loc` with /time) | Tools grid (from `assets/tools.js`) |
+| `/net/` | Network lab: IP/location from headers (`/api/ip`), live ping, DNS-over-HTTPS lookup, device info. **Speed test is parked** (`api/_speed.js`, `net/SPEED.md`) to save Vercel bandwidth | Tools grid (from `assets/tools.js`) |
+| `/api/ip` | Visitor IP + Cloudflare/Vercel location headers, no-store, nothing logged | used by /net |
 | `/404.html` | Animated particle 404 with a hidden mini-game | any bad URL |
 | `/api/now` | Server time JSON (no-store) for clock sync | used by /time |
 | `/api/zmanim` | Validated Chabad.org zmanim RSS → JSON (`zip` or `cityid`, `date`, `days`) | used by /time |
 
 Hidden pages (`hack`, `more`, `contact`, `sys`) are **never linked visibly**;
 discovery is part of the fun. New tool pages may be in the open (nav/menu) or
-hidden — ask the owner which.
+hidden — ask the owner which. Public tools are one line in `assets/tools.js` (`live: true` puts them on the homepage).
 
 ## 4. Stack & conventions
 
