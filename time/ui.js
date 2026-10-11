@@ -2,6 +2,7 @@
 // Hebrew date, favorites and a bedside mode. The big digits stay the point.
 import { CITIES, cityById, DEFAULT_CITY_ID, REGIONS, zipToTz, US_ZONES } from '/time/cities.js?v=8a8909ac4d';
 import { deviceTz, validTz, canonTz, offsetMin, fmtOffset, genericName, shortGeneric, abbr, prettyTz, regionOf, zones as allZones } from '/time/tz.js?v=75921ea087';
+import { createHub } from '/time/hub.js?v=b5849b182e';
 
 /* ======================================================================
    small helpers
@@ -80,7 +81,7 @@ const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toL
    ====================================================================== */
 const clock = $('#clock'), stage = $('#stage');
 const greg = $('#greg'), heb = $('#heb'), dateEl = $('#date'), merEl = $('#mer'), srEl = $('#sr');
-const fill = $('.sweep .fill'), pulse = $('.pulse');
+const fill = $('.sweep .fill'), pulse = $('.pulse'), miniT = $('#miniT');
 const dots = $$('.col i');
 const cells = $$('.h .d, .m .d, .s .d'); // H1 H2 M1 M2 S1 S2
 const cname = $('#cname'), cityBtn = $('#cityBtn'), favdotsEl = $('#favdots'), infoBtn = $('#infoBtn');
@@ -101,6 +102,8 @@ const state = {
 if (!Array.isArray(state.favs)) state.favs = [];
 const calm = () => reduce || state.night;
 if (state.night) html.classList.add('night');
+let hub = null; // the mode hub (Clock · Timer · World · Zmanim), created at the end
+const inClock = () => !hub || hub.mode === 'clock';
 
 /* ======================================================================
    locations
@@ -436,6 +439,8 @@ function render(now, mode) {
   const gText = `${t.weekday} · ${t.month} ${t.day}`; // the zone + offset live in the label now
   if (greg.textContent !== gText) { greg.textContent = gText; layoutHeader(); }
   merEl.innerHTML = state.h24 ? '24H' : `<b>${t.H < 12 ? 'AM' : 'PM'}</b>`;
+  const mt = `${hDisp}:${ms}${state.h24 ? '' : t.H < 12 ? ' AM' : ' PM'}`;
+  if (miniT.textContent !== mt) miniT.textContent = mt;
   const minuteChanged = !last || last.M !== t.M || last.H !== t.H || mode;
   if (minuteChanged) {
     srEl.textContent = `${hDisp}:${ms}${state.h24 ? '' : (t.H < 12 ? ' AM' : ' PM')} in ${displayName(state.loc)}`;
@@ -1024,6 +1029,7 @@ function setLocation(loc, opts = {}) {
   renderFavDots();
   if (opts.persist !== false) saveLoc();
   if (opts.url) writeURL(loc);
+  if (hub) hub.locChanged(slim(loc));
   if (skySet) { sky.classList.add('quick'); setTimeout(() => sky.classList.remove('quick'), 3500); }
   if (fmt && clock.dataset.ready) render(nowDate(), 'instant');
   updateHebrew(nowDate());
@@ -1114,7 +1120,7 @@ function toggle24() {
 }
 function toggleNight() {
   state.night = !state.night;
-  html.classList.toggle('night', state.night);
+  html.classList.toggle('night', state.night && inClock());
   lsSet(KEY.night, state.night ? '1' : '0');
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = '#000000';
@@ -1129,7 +1135,7 @@ stage.style.touchAction = 'none';
 stage.addEventListener('pointerdown', (e) => {
   if (e.button > 0) return;
   consumed = false;
-  gesture = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, swipe: false, lp: 0 };
+  gesture = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, swipe: false, lp: 0, axis: '', vs: [] };
   const g = gesture;
   g.lp = setTimeout(() => {
     if (gesture === g && !g.moved) { consumed = true; g.done = true; toggleNight(); }
@@ -1142,8 +1148,17 @@ stage.addEventListener('pointermove', (e) => {
   if (!g.moved && Math.hypot(dx, dy) > 10) {
     g.moved = true; clearTimeout(g.lp);
     try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+    // up / down changes mode; sideways keeps cycling favourite cities
+    g.axis = Math.abs(dy) > Math.abs(dx) && hub ? 'v' : 'h';
+    if (g.axis === 'v') { g.y0 = e.clientY - Math.sign(dy) * 10; hub.dragStart(); }
   }
-  if (g.moved && Math.abs(dx) > Math.abs(dy) && !calm() && !switching && canCycle()) {
+  if (g.axis === 'v') {
+    const d = e.clientY - g.y0;
+    g.vs.push([performance.now(), d]); if (g.vs.length > 5) g.vs.shift();
+    hub.dragMove(d);
+    return;
+  }
+  if (g.moved && g.axis === 'h' && !calm() && !switching && canCycle()) {
     g.swipe = true;
     clock.style.transform = `translateX(${(dx * 0.28).toFixed(1)}px)`;
     clock.style.opacity = String(1 - Math.min(.5, Math.abs(dx) / 600));
@@ -1156,6 +1171,12 @@ function endGesture(e, cancelled) {
   gesture = null;
   const dx = e.clientX - g.x, dy = e.clientY - g.y;
   if (g.moved) consumed = true;
+  if (g.axis === 'v') {
+    const L = g.vs, d = L.length ? L[L.length - 1][1] : 0;
+    const v = L.length > 1 ? (L[L.length - 1][1] - L[0][1]) / Math.max(1, L[L.length - 1][0] - L[0][0]) : 0;
+    hub.dragEnd(d, v, cancelled);
+    return;
+  }
   if (!cancelled && !g.done && g.moved && Math.abs(dx) > 50 && Math.abs(dx) > 1.4 * Math.abs(dy)) {
     if (canCycle() && !switching) { clock.style.opacity = ''; cycle(dx < 0 ? 1 : -1); }
     else { springBack(); cycle(dx < 0 ? 1 : -1); }
@@ -1175,6 +1196,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { if (openSheet) closeSheet(); return; }
   if (openSheet || e.target.closest && e.target.closest('input, select, textarea')) return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (!inClock()) return; // the other modes have their own keys
   if (e.key === 'ArrowRight') { e.preventDefault(); cycle(1); }
   else if (e.key === 'ArrowLeft') { e.preventDefault(); cycle(-1); }
   else if (e.key === 'b' || e.key === 'B') toggleNight();
@@ -1457,7 +1479,8 @@ listEl.addEventListener('click', (e) => {
 });
 qEl.addEventListener('input', renderList);
 qEl.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { const first = listEl.querySelector('.pick'); if (first) first.click(); }
+  // preventDefault: focus returns to the opener as the sheet closes, and Enter would "click" it again
+  if (e.key === 'Enter') { e.preventDefault(); const first = listEl.querySelector('.pick'); if (first) first.click(); }
   if (e.key === 'ArrowDown') { const first = listEl.querySelector('.pick'); if (first) { e.preventDefault(); first.focus(); } }
 });
 function openCitySheet() {
@@ -1676,3 +1699,33 @@ Promise.race([firstSample, new Promise((r) => setTimeout(r, 700))]).then(() => r
   schedule();
 })));
 zReady.then(() => { if (!state.sched) loadSchedule(); updateSky(nowDate()); drawArcs(nowDate()); });
+
+/* ======================================================================
+   hub: Clock · Timer · World · Zmanim (see /time/hub.js)
+   ====================================================================== */
+const hubSr = $('#hubsr');
+hub = createHub({
+  now,
+  reduce: () => reduce,
+  loc: () => slim(state.loc),
+  clockEls: () => [top, stage, zline, $('#arcwrap'), syncEl, merEl],
+  clockMoveEls: () => [stage],
+  sheetOpen: () => !!openSheet,
+  openPicker: () => openCitySheet(),
+  announce: (name) => { hubSr.textContent = ''; setTimeout(() => { hubSr.textContent = name; }, 30); },
+  pickCity: (e) => {
+    // a card in World: show that place on the big clock
+    let loc = null;
+    if (e.city && e.city.id) { const c = cityById(e.city.id); if (c) loc = fromCity(c); }
+    if (!loc && e.here) loc = zoneLoc(deviceTz, true);
+    if (!loc && e.tz && validTz(e.tz)) loc = zoneLoc(e.tz, false);
+    hub.setMode('clock');
+    if (loc && !sameLoc(loc, state.loc)) setTimeout(() => switchTo(loc, 1), reduce ? 260 : 200);
+  },
+  onMode: (to, from) => {
+    if (gesture) { clearTimeout(gesture.lp); gesture = null; }
+    html.classList.toggle('night', state.night && to === 'clock');
+    if (to === 'clock') { render(nowDate(), 'instant'); fit(); }
+    if (from === 'clock' && openSheet) closeSheet();
+  },
+});

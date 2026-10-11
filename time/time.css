@@ -728,3 +728,160 @@ html.night .tx-ybar b, html.night .tx-tr b, html.night .tx-day .now { background
 #zlabel:empty ~ .zin, #zlabel:empty ~ .zfor { visibility: hidden; }
 .tx .tx-day { margin-top: 30px; }
 .tx .tx-year, .tx .tx-gauge, .tx .tx-days { margin-top: 14px; }
+
+/* ======================================================================
+   hub: Clock · Timer · World · Zmanim (time/hub.js)
+   The clock keeps every pixel: the modes sit in absolutely placed panes over
+   the same frame, and the rail floats in the right margin.
+   ====================================================================== */
+.hub-off { visibility: hidden !important; pointer-events: none !important; }
+
+.pane {
+  position: absolute;
+  top: max(var(--my), env(safe-area-inset-top));
+  bottom: calc(max(var(--my), env(safe-area-inset-bottom)) + 24px);
+  left: max(var(--mx), env(safe-area-inset-left));
+  /* the rail keeps its own lane on the right, so no control ever sits under a dot */
+  right: calc(max(var(--mx), env(safe-area-inset-right)) + 24px);
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--sans);
+  letter-spacing: normal;
+  text-transform: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#pane-world {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  touch-action: pan-x pan-y;
+}
+#pane-world::-webkit-scrollbar { display: none; }
+#pane-world .wld { --wtabs-bg: rgba(5, 5, 10, .88); }
+.pane.loading::before, .pane.failed::before {
+  content: "Loading…";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 500 10.5px/1 var(--mono);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.pane.failed::before { content: "Couldn’t load — check your connection"; letter-spacing: .08em; }
+
+/* the footer keeps its place in every mode; outside the clock only the home link + a small time remain */
+body:not([data-mode="clock"]) #foot { pointer-events: none; }
+body:not([data-mode="clock"]) #foot .home { pointer-events: auto; }
+#mini {
+  grid-area: mer;
+  justify-self: end;
+  align-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 500 10.5px/14px var(--mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 15px 0 15px 14px;
+  margin: -15px 0;
+  border-radius: 10px;
+  outline: none;
+  pointer-events: auto;
+  transition: color .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+#mini svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; opacity: .8; }
+#mini:hover, #mini:focus-visible { color: var(--fg); }
+#mini:focus-visible span { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--a3); }
+
+/* ---------- the rail: four quiet dots in the right margin ---------- */
+#rail {
+  position: fixed;
+  z-index: 8;
+  right: max(0px, calc(env(safe-area-inset-right) - 8px));
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  opacity: .6;
+  transition: opacity .4s ease;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+#rail.awake, #rail.focus { opacity: 1; }
+#rail button {
+  position: relative;
+  width: 40px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  outline: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#rail i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(226, 224, 255, .26);
+  transition: height .45s var(--ease), background .3s ease, box-shadow .3s ease;
+}
+#rail [aria-selected="true"] i {
+  height: 18px;
+  background: linear-gradient(180deg, var(--a1), var(--a3) 55%, var(--a2));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--a3) 45%, transparent);
+}
+#rail button.preview i { height: 10px; background: rgba(243, 241, 255, .8); }
+#rail button:focus-visible i { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--a2); }
+#rail .lb {
+  position: absolute;
+  right: 30px;
+  top: 50%;
+  transform: translate(8px, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px 7px 10px;
+  border-radius: 999px;
+  font: 500 10px/1 var(--mono);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+  background: rgba(14, 12, 26, .78);
+  border: 1px solid var(--line);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease, transform .45s var(--ease), color .3s;
+}
+#rail .lb svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+#rail [aria-selected="true"] .lb, #rail .preview .lb { color: var(--fg); border-color: var(--line2); }
+#rail [aria-selected="true"] .lb svg { stroke: var(--a2); }
+#rail.awake .lb, #rail.focus .lb { opacity: 1; transform: translate(0, -50%); }
+@media (hover: hover) and (pointer: fine) {
+  #rail:hover { opacity: 1; }
+  #rail button:hover .lb { opacity: 1; transform: translate(0, -50%); }
+}
+html.night #rail [aria-selected="true"] i { background: var(--fg); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) {
+  #rail .lb, #rail.awake .lb, #rail.focus .lb { transform: translate(0, -50%); }
+  #rail i { transition: background .3s ease; }
+}
+#clock * { pointer-events: none; } /* taps & swipes always land on the clock itself, never on a digit that is replaced mid-gesture */
