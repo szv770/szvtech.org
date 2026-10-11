@@ -21,7 +21,7 @@ Idempotent: running it twice changes nothing the second time.
 import hashlib, pathlib, re, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SKIP_DIRS = {'node_modules', '.git'}
+SKIP_DIRS = {'node_modules', '.git', '.wip'}
 REF = re.compile(r'(?P<attr>src|href)="(?P<path>(?!https?:|//|data:|#)[^"?#]+\.(?:js|css))(?:\?v=[0-9a-f]+)?"')
 # local module specifiers: '/x.js', './x.js', '../x.mjs' (bare and https: specifiers are left alone)
 SPEC = r'(?P<q>[\'"])(?P<path>(?:/|\.\.?/)[^\'"?#\s]+\.m?js)(?:\?v=[0-9a-f]+)?(?P=q)'
