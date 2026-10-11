@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Convert · SZVTECH</title>
+<meta name="description" content="A fast, calm unit converter: type anything, get the answer.">
+<meta name="theme-color" content="#05050a">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Cpath d='M17 24h27l-7-7M47 40H20l7 7' fill='none' stroke='url(%23g)' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/convert/convert.css?v=c027948d08">
+<link rel="modulepreload" href="/convert/units.js?v=af1c121a55">
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <a class="home" href="/">← SZVTECH</a>
+    <h1 class="brand"><span>Convert</span></h1>
+  </header>
+
+  <nav class="cats" id="cats" aria-label="Categories"></nav>
+
+  <section class="card conv" id="conv" aria-label="Converter">
+    <label class="smart" id="smart">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
+      <input id="q" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Type anything — 5 ft 11 in to cm" aria-label="Type a conversion">
+      <kbd class="kb" aria-hidden="true">/</kbd>
+      <button type="button" class="qx" id="qx" aria-label="Clear" hidden><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
+    </label>
+    <div class="qhint" id="qhint" aria-live="polite"></div>
+
+    <div class="pane from">
+      <div class="lbl"><span>From</span><button type="button" class="pm" id="neg" aria-label="Toggle minus sign">±</button></div>
+      <div class="row">
+        <input id="fromVal" class="val" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="Value to convert">
+        <button type="button" class="ubtn" id="fromBtn" aria-haspopup="dialog"><b></b><small></small><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 2l4.5 4 4.5-4"/></svg></button>
+      </div>
+    </div>
+
+    <div class="mid">
+      <span class="formula" id="formula"></span>
+      <button type="button" class="swap" id="swap" aria-label="Swap units (X)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v15M4 15l4 4 4-4M16 20V5M12 9l4-4 4 4"/></svg></button>
+    </div>
+
+    <div class="pane to">
+      <div class="lbl"><span>To</span><span class="approx" id="approx" title="Rounded for display">≈ rounded</span></div>
+      <div class="row">
+        <input id="toVal" class="val big" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="Result (editable)">
+        <button type="button" class="ubtn" id="toBtn" aria-haspopup="dialog"><b></b><small></small><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 2l4.5 4 4.5-4"/></svg></button>
+      </div>
+    </div>
+
+    <button type="button" class="ing" id="ingBtn" hidden><span>Ingredient</span><b id="ingName"></b><em id="ingDens"></em><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 2l4.5 4 4.5-4"/></svg></button>
+    <p class="note" id="note" hidden></p>
+
+    <div class="tools">
+      <div class="prec" id="prec" role="group" aria-label="Precision">
+        <div class="seg" id="precMode">
+          <button type="button" data-m="auto">Auto</button><button type="button" data-m="sig">Sig</button><button type="button" data-m="dec">Dec</button>
+        </div>
+        <div class="step" id="precStep">
+          <button type="button" data-d="-1" aria-label="Fewer digits">−</button><output id="precN">6</output><button type="button" data-d="1" aria-label="More digits">+</button>
+        </div>
+      </div>
+      <button type="button" class="tbtn" id="grp" aria-pressed="true" title="Thousands separators">1,000</button>
+      <button type="button" class="tbtn ico" id="star" aria-pressed="false" aria-label="Save this pair (S)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.2l2.35 4.9 5.35.68-3.93 3.7.98 5.3L10 14.2l-4.75 2.58.98-5.3L2.3 7.78l5.35-.68z"/></svg></button>
+      <button type="button" class="tbtn copy" id="copy" aria-label="Copy result (C)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copy</span></button>
+    </div>
+  </section>
+
+  <section class="card all" id="allCard" aria-label="All units">
+    <div class="ch"><h2 id="allTitle">All units</h2><small id="allSub">tap to copy</small></div>
+    <ul class="alist" id="all"></ul>
+  </section>
+
+  <section class="card saved" id="savedCard" aria-label="Saved and recent">
+    <div class="ch"><h2>Saved pairs</h2><small id="favHint">★ a pair to keep it here</small></div>
+    <div class="favs" id="favs"></div>
+    <div class="ch rh"><h2>Recent</h2><button type="button" class="link" id="clearRecent" hidden>Clear</button></div>
+    <ol class="recent" id="recent"></ol>
+  </section>
+
+  <footer class="foot">
+    <span class="keys"><kbd>/</kbd> type anything <kbd>X</kbd> swap <kbd>C</kbd> copy <kbd>S</kbd> save <kbd>[</kbd><kbd>]</kbd> category <kbd>Esc</kbd> clear</span>
+    <span class="priv">Exact definitions · runs entirely in your browser</span>
+    <span class="dots" data-szv-theme-dots aria-label="Theme"></span>
+  </footer>
+</div>
+
+<div id="scrim" aria-hidden="true"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-head">
+    <span class="grab" aria-hidden="true"></span>
+    <div class="sh-row"><h2 id="sheetTitle">Unit</h2><button type="button" class="x" data-close aria-label="Close"><svg viewBox="0 0 14 14"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
+    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><input id="sq" type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search units" aria-label="Search units" enterkeyhint="go"></label>
+  </div>
+  <div class="sheet-body"><ul class="plist" id="plist" role="listbox" aria-labelledby="sheetTitle"></ul><p class="pempty" id="pempty" hidden>No match.</p></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="/convert/convert.js?v=5bca051dab"></script>
+</body>
+</html>
