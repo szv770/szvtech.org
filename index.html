@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css?v=389b26530f">
+<link rel="stylesheet" href="/assets/style.css?v=a74049c659">
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
 </script>
@@ -48,10 +48,11 @@
   <a class="nav__logo" href="#top" data-goto="#top" aria-label="SZVTECH, back to top"><span class="nav__mark"></span><span data-scramble>SZVTECH</span></a>
   <nav class="nav__links" aria-label="Sections">
     <a href="#morph" data-goto="#morph"><span class="mono">01</span><span data-scramble>Morph</span></a>
-    <a href="#type" data-goto="#type"><span class="mono">02</span><span data-scramble>Kinetic</span></a>
-    <a href="#obsessions" data-goto="#obsessions"><span class="mono">03</span><span data-scramble>Obsessions</span></a>
-    <a href="#numbers" data-goto="#numbers"><span class="mono">04</span><span data-scramble>Numbers</span></a>
-    <a href="#learn" data-goto="#learn" class="nav__learn"><span class="mono">05</span><span data-scramble>Learn</span><i class="nav__new" aria-hidden="true"></i></a>
+    <a href="#tools" data-goto="#tools" class="nav__tools"><span class="mono">02</span><span data-scramble>Tools</span></a>
+    <a href="#type" data-goto="#type"><span class="mono">03</span><span data-scramble>Kinetic</span></a>
+    <a href="#obsessions" data-goto="#obsessions"><span class="mono">04</span><span data-scramble>Obsessions</span></a>
+    <a href="#numbers" data-goto="#numbers"><span class="mono">05</span><span data-scramble>Numbers</span></a>
+    <a href="#learn" data-goto="#learn" class="nav__learn"><span class="mono">06</span><span data-scramble>Learn</span><i class="nav__new" aria-hidden="true"></i></a>
   </nav>
   <div class="nav__time mono"><span class="live-dot"></span><span id="clock">--:--:--</span></div>
   <button class="nav__burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
@@ -62,10 +63,12 @@
   <div class="menu__inner">
     <nav class="menu__nav" aria-label="Sections">
       <a href="#morph" data-goto="#morph" data-menu><span class="mono">01</span><span>Morph</span></a>
-      <a href="#type" data-goto="#type" data-menu><span class="mono">02</span><span>Kinetic</span></a>
-      <a href="#obsessions" data-goto="#obsessions" data-menu><span class="mono">03</span><span>Obsessions</span></a>
-      <a href="#numbers" data-goto="#numbers" data-menu><span class="mono">04</span><span>Numbers</span></a>
-      <a href="/learn/" class="menu__learn" data-menu><span class="mono">05</span><span>Learn</span><i class="nav__new" aria-hidden="true"></i></a>
+      <a href="#tools" data-goto="#tools" data-menu><span class="mono">02</span><span>Tools</span></a>
+      <div class="menu__tools" data-tools-menu aria-label="Tools"></div>
+      <a href="#type" data-goto="#type" data-menu><span class="mono">03</span><span>Kinetic</span></a>
+      <a href="#obsessions" data-goto="#obsessions" data-menu><span class="mono">04</span><span>Obsessions</span></a>
+      <a href="#numbers" data-goto="#numbers" data-menu><span class="mono">05</span><span>Numbers</span></a>
+      <a href="/learn/" class="menu__learn" data-menu><span class="mono">06</span><span>Learn</span><i class="nav__new" aria-hidden="true"></i></a>
     </nav>
     <div class="menu__foot mono">
       <span class="live-dot"></span><span>Private playground &mdash; N&deg; 001</span>
@@ -128,9 +131,28 @@
     </div>
   </section>
 
+  <!-- TOOLS (rendered from /assets/tools.js) -->
+  <section class="tools" id="tools" aria-labelledby="tools-title">
+    <div class="tools__head">
+      <div class="tools__intro">
+        <span class="label mono">(02) Tools</span>
+        <h2 class="h2 split-words" id="tools-title">Small tools, made exactly right.</h2>
+      </div>
+      <div class="tools__aside">
+        <p class="tools__sub" data-reveal>The everyday things you&rsquo;d open another site for, rebuilt to feel like this place. Fast, private, nothing to install.</p>
+        <span class="tools__count mono" data-reveal><span class="live-dot"></span><span data-tools-count>Tools</span></span>
+      </div>
+    </div>
+    <div class="tools__grid" data-tools-grid></div>
+    <div class="tools__soon" data-tools-soon hidden>
+      <span class="tools__soon-label mono">On the bench</span>
+      <ul class="tools__soon-list" data-tools-soon-list></ul>
+    </div>
+  </section>
+
   <!-- KINETIC TYPE -->
   <section class="kinetic" id="type">
-    <span class="label mono kinetic__label">(02) Kinetic</span>
+    <span class="label mono kinetic__label">(03) Kinetic</span>
     <div class="kline k1"><span>Motion is</span></div>
     <div class="kline k2 is-outline"><span>a language</span></div>
     <div class="kline k3"><span class="k3__txt">spoken in</span></div>
@@ -152,7 +174,7 @@
   <section class="horiz" id="obsessions">
     <div class="horiz__track">
       <div class="horiz__intro">
-        <span class="label mono">(03) Obsessions</span>
+        <span class="label mono">(04) Obsessions</span>
         <h2 class="h2 split-words">Five things we can&rsquo;t stop thinking about.</h2>
         <p class="muted"><span class="only-touch">Five pieces of glass, all alive &mdash; tap, hold or drag each one.</span><span class="only-fine">Keep scrolling &mdash; the page turns sideways. Hover, click and drag the glass.</span></p>
         <div class="horiz__arrow mono"><span class="only-fine">&rarr;</span><span class="only-touch">&darr;</span></div>
@@ -210,7 +232,7 @@
   <!-- STATS -->
   <section class="stats" id="numbers">
     <div class="stats__head">
-      <span class="label mono">(04) By the numbers</span>
+      <span class="label mono">(05) By the numbers</span>
       <h2 class="h2 split-words">Numbers we made up, and still believe in.</h2>
     </div>
     <div class="stats__grid">
@@ -237,7 +259,7 @@
   <section class="learn" id="learn">
     <div class="learn__bg mono" aria-hidden="true"><span>C:\&gt;_</span></div>
     <div class="learn__copy">
-      <span class="label mono">(05) Training terminal</span>
+      <span class="label mono">(06) Training terminal</span>
       <h2 class="h2 learn__title" aria-label="The keyboard is a superpower. Learn the first 15 spells."><span class="learn__l1">The keyboard is a superpower.</span> <span class="learn__l2"><span class="is-grad">Learn the first 15 spells.</span></span></h2>
       <p class="learn__txt" data-reveal>dir. cd. cls. color&nbsp;0a. tree. The commands movie hackers type are real, and they take one afternoon to learn. Windows&nbsp;CMD and Linux side by side, with missions and&nbsp;XP. Nothing to install.</p>
       <ul class="learn__spells mono" aria-label="Some of the commands you will learn">
@@ -274,7 +296,7 @@
 
   <!-- OUTRO -->
   <section class="outro" id="outro">
-    <span class="label mono">(06) Before you drift off</span>
+    <span class="label mono">(07) Before you drift off</span>
     <h2 class="outro__big"><span class="outro__txt">Stay curious.</span></h2>
     <p class="outro__sub" data-reveal>The best things here are the ones you find on your own.</p>
     <div class="outro__actions" data-reveal>
@@ -291,6 +313,7 @@
       <span class="foot__theme" data-szv-theme-dots></span>
     </span>
     <span class="mono foot__clock">Local <span id="clock2">--:--</span></span>
+    <nav class="foot__tools mono" aria-label="Tools" data-tools-foot></nav>
   </footer>
 </main>
 
@@ -321,6 +344,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-<script type="module" src="/assets/main.js?v=67b8f63420"></script>
+<script type="module" src="/assets/main.js?v=0ef72e2f4d"></script>
 </body>
 </html>

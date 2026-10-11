@@ -3,6 +3,8 @@
    One rAF loop (GSAP ticker) drives Lenis, WebGL, cursor, marquee & FX.
    ========================================================================== */
 
+import { TOOLS, liveTools, soonTools, icon as toolIcon } from '/assets/tools.js?v=95be41100e';
+
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
 const MOBILE = matchMedia('(max-width: 767px)').matches;
@@ -598,7 +600,7 @@ function initScroll() {
   // dim particles behind the content-heavy sections
   gsap.fromTo(S, { bright: 1, camZ: cams[3].camZ, camY: cams[3].camY }, {
     bright: .42, camZ: Z0 * 1.25, camY: 3.2, ease: 'none', immediateRender: false,
-    scrollTrigger: { trigger: '#type', start: 'top bottom', end: 'top top', scrub: true },
+    scrollTrigger: { trigger: '#tools', start: 'top bottom', end: 'top top', scrub: true },
   });
 
   // ---------- kinetic type ----------
@@ -672,6 +674,7 @@ function initScroll() {
   });
 
   initLearn();
+  ToolsUI.reveal();
 
   // ---------- outro ----------
   const outChars = splitText($('.outro__txt'), 'chars');
@@ -1591,12 +1594,26 @@ const Term = (() => {
       print(`<span class="c3">&#9670;</span> booting training terminal&hellip; <span class="dim">${free ? 'free play, no missions' : '15 spells, missions, xp'}</span>`);
       return portal(LEARN_URL + (free ? '#free' : ''));
     } },
-    time: { d: 'the clock — exact time, zmanim', fn: () => portal('/time/') },
-    timer: { d: 'stopwatch, timers & focus sessions', fn: () => portal('/timer/') },
-    world: { d: 'world clock & meeting planner', fn: () => portal('/world/') },
-    qr: { d: 'make & scan QR codes, on your device', fn: () => portal('/qr/') },
-    exit: { d: 'close the terminal', fn: () => hide() },
+    tools: { d: 'list every tool (tools &lt;name&gt; opens one)', fn: (a) => {
+      const want = (a[0] || '').toLowerCase().replace(/^\/+|\/+$/g, '');
+      if (want) {
+        const t = TOOLS.find((x) => x.id === want || x.name.toLowerCase() === want);
+        if (t && t.live) return portal(t.path);
+        if (t) return print(`<span class="c3">${esc(t.name)}</span> <span class="dim">is still on the bench. soon.</span>`);
+        return print(`<span class="err">no such tool:</span> ${esc(want)} <span class="dim">&mdash; type 'tools'</span>`);
+      }
+      print('<span class="dim">tools &mdash; tap one, or type its name:</span>');
+      liveTools().forEach((t) => print(`  <a class="c2" href="${esc(t.path)}">${esc(t.id)}</a>${' '.repeat(Math.max(1, 10 - t.id.length))}${esc(t.blurb.toLowerCase())} <span class="dim">${esc(t.path)}</span>`));
+      const soon = soonTools();
+      if (soon.length) print(`<span class="dim">on the bench: ${soon.map((t) => esc(t.id)).join(', ')} &mdash; soon.</span>`);
+    } },
   };
+  // one command per live tool, straight from /assets/tools.js
+  liveTools().forEach((t) => {
+    if (!/^[a-z0-9]+$/.test(t.id) || PUBLIC[t.id]) return;
+    PUBLIC[t.id] = { d: esc(t.blurb.toLowerCase()), fn: () => portal(t.path) };
+  });
+  PUBLIC.exit = { d: 'close the terminal', fn: () => hide() };
 
   /* Real shell commands this toy shell doesn't run: point people at /learn instead. */
   const REAL = {
@@ -1981,6 +1998,277 @@ function unlockLearn() {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Tools: homepage section, menu chips, footer row — all from /assets/tools.js */
+/* -------------------------------------------------------------------------- */
+const ToolsUI = (() => {
+  /* Server-corrected time for the live clocks (one light /api/now sync, the
+     lowest-RTT of a few samples); the device clock until it lands. */
+  let off = 0, synced = false, syncing = false, realign = null;
+  const nowMs = () => Date.now() + off;
+  async function sync() {
+    if (synced || syncing || !window.fetch) return;
+    syncing = true;
+    let best = null;
+    for (let i = 0; i < 3; i++) {
+      const ctl = window.AbortController ? new AbortController() : null;
+      const to = ctl && setTimeout(() => ctl.abort(), 4000);
+      try {
+        const t0 = performance.now();
+        const r = await fetch('/api/now?r=' + Math.random().toString(36).slice(2), { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
+        const j = await r.json();
+        const rtt = performance.now() - t0;
+        if (r.ok && j && Number.isFinite(j.t) && rtt < 3000) {
+          const o = j.t + rtt / 2 - Date.now();
+          if (!best || rtt < best.rtt) best = { rtt, o };
+        }
+      } catch (e) { clearTimeout(to); break; }
+      clearTimeout(to);
+    }
+    syncing = false;
+    if (best && Math.abs(best.o) < 864e5) { off = best.o; synced = true; tickAll(); if (realign) realign(); }
+  }
+
+  const fmts = {};
+  function parts(ms, tz, opts) {
+    const k = tz + '|' + JSON.stringify(opts);
+    try {
+      const f = fmts[k] || (fmts[k] = new Intl.DateTimeFormat('en-US', { timeZone: tz, ...opts }));
+      const o = {};
+      for (const p of f.formatToParts(new Date(ms))) o[p.type] = p.value;
+      return o;
+    } catch (e) { return null; }
+  }
+  const HMS = { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true, weekday: 'short', month: 'short', day: 'numeric' };
+  const HM = { hour: 'numeric', minute: '2-digit', hour12: true };
+  const H24 = { hour: 'numeric', hourCycle: 'h23' };
+  // the visitor's own time zone (what /time shows by default), not a fixed city
+  const HERE_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; } })();
+  const HERE_NAME = (() => {
+    try {
+      const n = new Intl.DateTimeFormat('en-US', { timeZone: HERE_TZ, timeZoneName: 'longGeneric' })
+        .formatToParts(new Date()).find((x) => x.type === 'timeZoneName');
+      if (n && !/^GMT/.test(n.value)) return n.value;
+    } catch (e) { /* older engines */ }
+    return HERE_TZ.split('/').pop().replace(/_/g, ' ');
+  })();
+
+  /* Tiny live elements, keyed by tool id. Each returns { tick(ms), slow? }.
+     Unknown ids get the `demo` text cycler (if any) or a glowing glyph, so a
+     new tool needs no code here. */
+  const WIDGETS = {
+    time(live, t) {
+      live.innerHTML = `<span class="tw-place mono">${esc(HERE_NAME)}</span>`
+        + '<span class="tw-clock"><b class="tw-hm">--:--</b><span class="tw-s">:--</span><span class="tw-ap mono"></span></span>'
+        + '<span class="tw-date mono">&nbsp;</span>';
+      const hm = $('.tw-hm', live), sec = $('.tw-s', live), ap = $('.tw-ap', live), date = $('.tw-date', live);
+      return { tick(ms) {
+        const p = parts(ms, HERE_TZ, HMS);
+        if (!p) return;
+        hm.textContent = `${p.hour}:${p.minute}`;
+        sec.textContent = ':' + p.second;
+        ap.textContent = p.dayPeriod || '';
+        date.textContent = `${p.weekday}, ${p.month} ${p.day}`;
+      } };
+    },
+    timer(live) {
+      live.innerHTML = '<span class="tw-ring"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="tw-ring-bg" cx="24" cy="24" r="20"/><circle class="tw-ring-fg" cx="24" cy="24" r="20" pathLength="100"/></svg><span class="tw-ring-t mono">0:00</span></span>'
+        + '<span class="tw-hint mono"><i></i><span class="only-touch">tap to start</span><span class="only-fine">click to start</span></span>';
+      return null;
+    },
+    world(live) {
+      const CITIES = [['London', 'Europe/London'], ['Jerusalem', 'Asia/Jerusalem'], ['Tokyo', 'Asia/Tokyo']];
+      live.innerHTML = CITIES.map(([n]) => `<span class="tw-row"><i class="tw-sun"></i><span class="tw-city">${esc(n)}</span><span class="tw-t mono">--:--</span></span>`).join('');
+      const rows = $$('.tw-row', live);
+      return { tick(ms) {
+        CITIES.forEach(([, tz], i) => {
+          const p = parts(ms, tz, HM), h = parts(ms, tz, H24);
+          if (!p || !h) return;
+          rows[i].querySelector('.tw-t').innerHTML = `${esc(p.hour)}:${esc(p.minute)}<small>${esc((p.dayPeriod || '').toLowerCase())}</small>`;
+          const hr = +h.hour;
+          rows[i].classList.toggle('is-day', hr >= 6 && hr < 18);
+        });
+      } };
+    },
+    zmanim(live) {
+      // decorative sun arc (no made-up times: the real ones live on /zmanim)
+      live.innerHTML = '<span class="tw-arc"><svg viewBox="0 0 120 52" aria-hidden="true"><path class="tw-arc-p" d="M6 48 Q60 -12 114 48"/><line class="tw-arc-h" x1="0" y1="48" x2="120" y2="48"/></svg><i class="tw-arc-sun"></i></span>'
+        + '<span class="tw-arc-l mono"><span>Alos</span><span>Netz</span><span>Shkiah</span><span>Tzeis</span></span>';
+      return null;
+    },
+    luach(live) {
+      // the visitor's civil day and its Hebrew date (daytime; the Hebrew day
+      // itself turns at nightfall, which /luach handles properly)
+      const HEB = { Tishri: 'Tishrei', Heshvan: 'Cheshvan', Tevet: 'Teves', Nisan: 'Nissan', Tamuz: 'Tammuz', Av: 'Menachem Av' };
+      live.innerHTML = '<span class="tw-heb"><b class="tw-heb-d">&nbsp;</b><span class="tw-heb-m"></span></span><span class="tw-heb-c mono">&nbsp;</span>';
+      const d = $('.tw-heb-d', live), m = $('.tw-heb-m', live), c = $('.tw-heb-c', live);
+      let last = '';
+      return { tick(ms) {
+        const g = parts(ms, HERE_TZ, { weekday: 'short', month: 'short', day: 'numeric' });
+        const h = parts(ms, HERE_TZ, { calendar: 'hebrew', day: 'numeric', month: 'long', year: 'numeric' });
+        if (!g || !h || !h.month) return;
+        const key = g.day + g.month;
+        if (key === last) return;
+        last = key;
+        d.textContent = h.day;
+        m.textContent = `${HEB[h.month] || h.month} ${h.year}`;
+        c.textContent = `${g.weekday}, ${g.month} ${g.day}`;
+      } };
+    },
+    qr(live) {
+      const N = 13, cells = [];
+      const box = mk('span', 'tw-qr');
+      const finder = (r, c) => {
+        for (const [r0, c0] of [[0, 0], [0, N - 5], [N - 5, 0]]) {
+          const y = r - r0, x = c - c0;
+          if (y >= 0 && y < 5 && x >= 0 && x < 5) return (y === 0 || y === 4 || x === 0 || x === 4 || (y === 2 && x === 2)) ? 1 : 0;
+          if (y >= -1 && y <= 5 && x >= -1 && x <= 5) return 0; // quiet ring around each finder
+        }
+        return -1;
+      };
+      // seeded so the first frame is the same every visit
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        const f = finder(r, c), i = mk('i');
+        if (f === 1) i.className = 'is-on is-fix';
+        else if (f === -1) { if (rnd() < .46) i.className = 'is-on'; cells.push(i); }
+        box.append(i);
+      }
+      box.append(mk('span', 'tw-qr-scan'));
+      live.append(box);
+      return { slow: RM ? 3 : 1, tick() {
+        for (let k = 0; k < (RM ? 3 : 6); k++) cells[(Math.random() * cells.length) | 0].classList.toggle('is-on');
+      } };
+    },
+  };
+  function demoWidget(live, t) {
+    const lines = (t.demo || []).map((l) => String(l).split(/\s*→\s*/));
+    live.innerHTML = '<span class="tw-conv"><span class="tw-in mono"></span><span class="tw-arrow" aria-hidden="true">&rarr;</span><span class="tw-out"></span></span><span class="tw-dots"></span>';
+    const box = $('.tw-conv', live), a = $('.tw-in', live), b = $('.tw-out', live), dots = $('.tw-dots', live);
+    lines.forEach(() => dots.append(mk('i')));
+    let n = -1, swapT = 0;
+    const show = (i) => {
+      n = i % lines.length;
+      a.textContent = lines[n][0] || '';
+      b.textContent = lines[n][1] || '';
+      $$('i', dots).forEach((d, k) => d.classList.toggle('is-on', k === n));
+    };
+    show(0);
+    return { slow: 3, tick() {
+      box.classList.add('is-swap');
+      clearTimeout(swapT);
+      swapT = setTimeout(() => { show(n + 1); box.classList.remove('is-swap'); }, RM ? 450 : 320);
+    } };
+  }
+
+  const ticking = [];
+  let beat = 0;
+  function tickAll(advance) {
+    const ms = nowMs();
+    if (advance) beat++;
+    for (const w of ticking) if (w.slow ? advance && beat % w.slow === 0 : true) w.tick(ms);
+  }
+
+  function card(t, i) {
+    const a = mk('a', 'tool tool--' + t.id.replace(/[^a-z0-9-]/gi, ''));
+    a.href = t.path;
+    a.dataset.cursor = 'Open';
+    a.style.setProperty('--i', i);
+    a.setAttribute('aria-label', `${t.name} — ${t.blurb}`);
+    a.innerHTML = `<span class="tool__top"><span class="tool__icon">${toolIcon(t)}</span><span class="tool__path mono">${esc(t.path.replace(/\/$/, ''))}</span><span class="tool__go" aria-hidden="true">&#8599;</span></span>`
+      + '<span class="tool__live" aria-hidden="true"></span>'
+      + `<span class="tool__body"><span class="tool__name">${esc(t.name)}</span><span class="tool__blurb">${esc(t.blurb)}</span></span>`;
+    const live = $('.tool__live', a);
+    const make = WIDGETS[t.id] || (t.demo && t.demo.length ? demoWidget : null);
+    const w = make ? make(live, t) : null;
+    if (!make) { live.classList.add('is-glyph'); live.innerHTML = toolIcon(t); }
+    if (w) ticking.push(w);
+    if (FINE) {
+      a.addEventListener('pointermove', (e) => {
+        const r = a.getBoundingClientRect();
+        a.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+        a.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+      }, { passive: true });
+    }
+    return a;
+  }
+
+  function render() {
+    const live = liveTools(), soon = soonTools();
+    const grid = $('[data-tools-grid]');
+    if (grid) {
+      grid.dataset.n = live.length; // CSS picks the bento layout by count
+      live.forEach((t, i) => grid.append(card(t, i)));
+    }
+    const count = $('[data-tools-count]');
+    if (count) count.textContent = `${String(live.length).padStart(2, '0')} live${soon.length ? ` · ${String(soon.length).padStart(2, '0')} on the bench` : ''}`;
+    const sw = $('[data-tools-soon]'), sl = $('[data-tools-soon-list]');
+    if (sw && sl && soon.length) {
+      sw.hidden = false;
+      soon.forEach((t) => {
+        const li = mk('li', 'tools__soon-item');
+        li.innerHTML = `<span class="tools__soon-i">${toolIcon(t)}</span><span class="tools__soon-n">${esc(t.name)}</span><em class="mono">soon</em>`;
+        li.title = t.blurb;
+        sl.append(li);
+      });
+    }
+    const menu = $('[data-tools-menu]');
+    if (menu) live.forEach((t) => {
+      const a = mk('a', 'menu__tool');
+      a.href = t.path;
+      a.dataset.menu = '';
+      a.innerHTML = `<span class="menu__tool-i">${toolIcon(t)}</span><span>${esc(t.name)}</span>`;
+      menu.append(a);
+    });
+    const foot = $('[data-tools-foot]');
+    if (foot) {
+      foot.append(mk('span', 'foot__tools-k', '~/tools'));
+      live.forEach((t) => { const a = mk('a', '', t.id); a.href = t.path; foot.append(a); });
+    }
+
+    // tick only while the section is (nearly) on screen and the tab is visible
+    const sec = $('#tools');
+    if (!sec || !ticking.length) return;
+    let inView = false, on = false, iv = 0, at = 0;
+    const run = () => {
+      const want = inView && !document.hidden;
+      sec.classList.toggle('is-off', !want);
+      if (want === on) return;
+      on = want;
+      clearTimeout(at); clearInterval(iv);
+      if (!want) return;
+      tickAll();
+      // land each tick just after the (corrected) second boundary
+      at = setTimeout(() => { tickAll(true); iv = setInterval(() => tickAll(true), 1000); }, 1000 - (nowMs() % 1000) + 8);
+    };
+    realign = () => { if (on) { on = false; run(); } };
+    tickAll();
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver((ents) => { inView = ents[ents.length - 1].isIntersecting; run(); }, { rootMargin: '120px 0px' }).observe(sec);
+      // start the clock sync a little before the section arrives
+      const pre = new IntersectionObserver((ents) => { if (ents.some((e) => e.isIntersecting)) { sync(); pre.disconnect(); } }, { rootMargin: '1200px 0px' });
+      pre.observe(sec);
+    } else { inView = true; sync(); run(); }
+    document.addEventListener('visibilitychange', run);
+  }
+
+  function reveal() {
+    if (!gsap || !ScrollTrigger) return;
+    const cards = $$('.tool');
+    if (cards.length) {
+      gsap.from(cards, {
+        y: RM ? 14 : 48, opacity: 0, scale: RM ? 1 : .96, duration: RM ? 1.1 : 1.1, ease: 'expo.out', stagger: RM ? .06 : .08, clearProps: 'transform,opacity',
+        scrollTrigger: { trigger: '.tools__grid', start: 'top 90%', once: true },
+      });
+    }
+    const soon = $$('.tools__soon-label, .tools__soon-item');
+    if (soon.length) gsap.from(soon, { y: RM ? 6 : 16, opacity: 0, duration: .9, ease: 'expo.out', stagger: .05, scrollTrigger: { trigger: '.tools__soon', start: 'top 95%', once: true } });
+  }
+
+  return { render, reveal };
+})();
+
+/* -------------------------------------------------------------------------- */
 /* Mobile nav: burger -> full-screen overlay menu                              */
 /* -------------------------------------------------------------------------- */
 function initNav() {
@@ -2116,6 +2404,7 @@ function consoleHello() {
 async function boot() {
   consoleHello();
   initClock();
+  ToolsUI.render(); // before initNav / [data-goto] binding: menu chips are links too
 
   if (!gsap || !ScrollTrigger) {
     root.classList.add('no-gsap');

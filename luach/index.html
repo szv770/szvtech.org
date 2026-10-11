@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Luach · SZVTECH</title>
+<meta name="description" content="Hebrew calendar, Shabbos times, daily Chabad study and a date converter.">
+<meta name="theme-color" content="#05050a">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Luach">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Crect x='13' y='16' width='38' height='34' rx='8' fill='none' stroke='url(%23g)' stroke-width='4.5'/%3E%3Cpath d='M13 27h38M24 11v9M40 11v9' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round'/%3E%3Ccircle cx='38' cy='38' r='4.5' fill='%23f3f1ff'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/luach/luach.css?v=927832cd7e">
+<link rel="modulepreload" href="/luach/logic.js?v=c065cd15ad">
+<link rel="modulepreload" href="/luach/data.js?v=ec428d70ab">
+<link rel="modulepreload" href="/time/cities.js?v=8a8909ac4d">
+<!-- @hebcal/core (GPL-2.0-or-later), pinned + SRI. Holidays, parsha, omer, molad. -->
+<script src="https://cdn.jsdelivr.net/npm/@hebcal/core@6.9.3/dist/bundle.min.js" integrity="sha384-CLejfy0WBVtU+rGYBTQKCQyP5+UcvZx/TZ9g0JLIJe0GstvDyITP9pZUYLOjBLoK" crossorigin="anonymous" defer id="hebcalJs"></script>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="top">
+    <a class="home" href="/">&larr; SZVTECH</a>
+    <nav class="jump" aria-label="Sections">
+      <a href="#today">Today</a><a href="#month">Month</a><a href="#convert">Convert</a>
+    </nav>
+    <button class="loc" id="locBtn" type="button" aria-haspopup="dialog" aria-controls="locSheet" title="Change location">
+      <i aria-hidden="true"></i><span id="locName">New York</span><svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4"/></svg>
+    </button>
+  </header>
+
+  <main class="layout">
+    <!-- ============ TODAY ============ -->
+    <section class="today" id="today" aria-labelledby="tHeb">
+      <div class="hero">
+        <p class="eyebrow" id="tGreg">&nbsp;</p>
+        <h1 class="hdate" id="tHeb"><span class="dnum">&nbsp;</span></h1>
+        <p class="he" id="tHe" lang="he" dir="rtl">&nbsp;</p>
+        <p class="roll" id="tRoll"></p>
+        <ul class="tags" id="tTags"></ul>
+      </div>
+
+      <div class="cards">
+        <button class="card shabbos" id="cShabbos" type="button" hidden></button>
+        <article class="card omer" id="cOmer" hidden aria-labelledby="omerTitle">
+          <div class="c-head">
+            <span class="c-kicker">Sefiras HaOmer</span>
+            <span class="c-big" id="omerTitle"></span>
+          </div>
+          <p class="omer-line" id="omerLine"></p>
+          <p class="omer-sefira" id="omerSefira"></p>
+          <div class="omer-bracha" id="omerBracha" hidden lang="he" dir="rtl"></div>
+          <div class="c-actions">
+            <button type="button" class="pill" id="omerBrachaBtn" aria-pressed="false">Bracha</button>
+            <button type="button" class="pill" id="omerRemindBtn" aria-pressed="false">Remind me</button>
+            <button type="button" class="pill" id="omerDoneBtn" aria-pressed="false" hidden>Counted</button>
+          </div>
+          <small class="c-note" id="omerNote"></small>
+        </article>
+        <article class="card next" aria-labelledby="nextTitle">
+          <div class="c-head"><span class="c-kicker" id="nextTitle">Coming up</span></div>
+          <ol class="next-list" id="nextList"></ol>
+        </article>
+      </div>
+
+      <section class="study" aria-labelledby="studyTitle">
+        <div class="s-head">
+          <h2 id="studyTitle">Daily study</h2>
+          <span class="streak" id="streak" title="Days in a row with every item checked"></span>
+        </div>
+        <ul class="s-grid" id="studyGrid"></ul>
+        <div class="s-foot">
+          <div class="chips" role="group" aria-label="Rambam track">
+            <button type="button" data-ram="3" aria-pressed="true">Rambam 3 ch.</button>
+            <button type="button" data-ram="1" aria-pressed="false">1 ch. + Sefer HaMitzvos</button>
+          </div>
+          <small>Links open Chabad.org’s daily study for today. Checkmarks stay on this device.</small>
+        </div>
+      </section>
+    </section>
+
+    <!-- ============ MONTH ============ -->
+    <section class="month" id="month" aria-labelledby="mTitle">
+      <div class="m-head">
+        <button class="nav-btn" id="prevM" type="button" aria-label="Previous month"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button>
+        <div class="m-title">
+          <h2 id="mTitle">&nbsp;</h2>
+          <p id="mSub">&nbsp;</p>
+        </div>
+        <button class="nav-btn" id="nextM" type="button" aria-label="Next month"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+      </div>
+      <div class="m-tools">
+        <div class="seg" role="group" aria-label="Month type">
+          <button type="button" data-mode="heb" aria-pressed="true">Hebrew</button>
+          <button type="button" data-mode="greg" aria-pressed="false">Gregorian</button>
+        </div>
+        <button type="button" class="pill" id="todayBtn">Today</button>
+        <button type="button" class="pill ghost" id="optBtn" aria-expanded="false" aria-controls="opts">Options</button>
+      </div>
+      <div class="opts" id="opts" hidden>
+        <div class="seg" role="group" aria-label="Location rules">
+          <button type="button" data-il="0" aria-pressed="true">Diaspora</button>
+          <button type="button" data-il="1" aria-pressed="false">Israel</button>
+        </div>
+        <button type="button" class="pill" id="optChabad" aria-pressed="true">Chabad dates</button>
+        <button type="button" class="pill" id="optDaf" aria-pressed="false">Daf Yomi</button>
+      </div>
+
+      <div class="gridwrap" id="gridwrap">
+        <div class="wk" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span class="sh">Shabbos</span></div>
+        <div class="grid" id="grid" role="grid" aria-labelledby="mTitle"></div>
+      </div>
+      <p class="legend" aria-hidden="true">
+        <span><i class="d chag"></i>Yom Tov</span><span><i class="d rc"></i>Rosh Chodesh</span><span><i class="d minor"></i>Holiday</span><span><i class="d fast"></i>Fast</span><span><i class="d chabad"></i>Chabad</span>
+      </p>
+      <ol class="agenda" id="agenda" aria-label="This month"></ol>
+      <p class="kbd-hint"><kbd>&larr;</kbd><kbd>&rarr;</kbd> month &middot; <kbd>Home</kbd> today &middot; <kbd>Esc</kbd> close</p>
+    </section>
+
+    <!-- ============ CONVERT ============ -->
+    <section class="convert" id="convert" aria-labelledby="cvTitle">
+      <h2 id="cvTitle">Convert</h2>
+      <div class="seg wide" role="tablist" aria-label="Converter">
+        <button type="button" role="tab" data-cv="g2h" aria-selected="true">To Hebrew</button>
+        <button type="button" role="tab" data-cv="h2g" aria-selected="false">To civil date</button>
+        <button type="button" role="tab" data-cv="ann" aria-selected="false">Yahrzeit · Birthday</button>
+      </div>
+
+      <div class="cv-pane" data-pane="g2h">
+        <div class="row">
+          <label class="fld"><span>Date</span><input type="date" id="gIn" min="1000-01-01" max="2999-12-31"></label>
+          <button type="button" class="pill toggle" id="gSunset" aria-pressed="false" title="The Hebrew day begins at sunset">After sunset</button>
+        </div>
+        <div class="result" id="gOut" aria-live="polite"></div>
+      </div>
+
+      <div class="cv-pane" data-pane="h2g" hidden>
+        <div class="row">
+          <label class="fld sm"><span>Day</span><select id="hD"></select></label>
+          <label class="fld"><span>Month</span><select id="hM"></select></label>
+          <label class="fld sm"><span>Year</span><input id="hY" inputmode="numeric" pattern="[0-9]*" maxlength="4"></label>
+        </div>
+        <div class="result" id="hOut" aria-live="polite"></div>
+      </div>
+
+      <div class="cv-pane" data-pane="ann" hidden>
+        <div class="row">
+          <div class="seg" role="group" aria-label="Kind">
+            <button type="button" data-kind="birthday" aria-pressed="true">Birthday</button>
+            <button type="button" data-kind="yahrzeit" aria-pressed="false">Yahrzeit</button>
+          </div>
+          <div class="seg" role="group" aria-label="Enter as">
+            <button type="button" data-src="greg" aria-pressed="true">Civil date</button>
+            <button type="button" data-src="heb" aria-pressed="false">Hebrew date</button>
+          </div>
+        </div>
+        <div class="row" id="aGreg">
+          <label class="fld"><span id="aGLabel">Date of birth</span><input type="date" id="aGIn" min="1000-01-01" max="2999-12-31"></label>
+          <button type="button" class="pill toggle" id="aSunset" aria-pressed="false">After sunset</button>
+        </div>
+        <div class="row" id="aHeb" hidden>
+          <label class="fld sm"><span>Day</span><select id="aD"></select></label>
+          <label class="fld"><span>Month</span><select id="aM"></select></label>
+          <label class="fld sm"><span>Year</span><input id="aY" inputmode="numeric" pattern="[0-9]*" maxlength="4"></label>
+        </div>
+        <div class="row">
+          <label class="fld sm"><span>Years</span><select id="aN"><option>5</option><option selected>10</option><option>20</option><option>30</option></select></label>
+        </div>
+        <div class="result" id="aOut" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span data-szv-theme-dots></span>
+    <p id="credit">Calendar: <a href="https://github.com/hebcal/hebcal-es6" target="_blank" rel="noopener noreferrer">Hebcal</a> (GPL) · Zmanim: <a href="https://www.chabad.org/calendar/zmanim.htm" target="_blank" rel="noopener noreferrer">Chabad.org</a> · Study: <a href="https://www.chabad.org/dailystudy/" target="_blank" rel="noopener noreferrer">Chabad.org</a></p>
+  </footer>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="scrim" aria-hidden="true"></div>
+
+  <section class="sheet" id="daySheet" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div class="sheet-head">
+      <span class="grab" aria-hidden="true"></span>
+      <div class="sh-row">
+        <button class="x" type="button" id="dPrev" aria-label="Previous day"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button>
+        <div class="d-title">
+          <h2 id="dTitle">&nbsp;</h2>
+          <p id="dSub"></p>
+        </div>
+        <button class="x" type="button" id="dNext" aria-label="Next day"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
+        <button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button>
+      </div>
+    </div>
+    <div class="sheet-body" id="dBody"></div>
+  </section>
+
+  <section class="sheet" id="locSheet" role="dialog" aria-modal="true" aria-labelledby="locTitle">
+    <div class="sheet-head">
+      <span class="grab" aria-hidden="true"></span>
+      <div class="sh-row">
+        <div class="d-title"><h2 id="locTitle">Location</h2><p>Shared with /time</p></div>
+        <button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button>
+      </div>
+      <label class="search">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+        <input id="q" type="search" placeholder="Search cities" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="Search cities">
+      </label>
+    </div>
+    <div class="sheet-body">
+      <div class="quick">
+        <button class="qbtn" id="geoBtn" type="button">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15"/></svg>
+          <span><b>Use my location</b><small id="geoStatus">Stays on this device</small></span>
+        </button>
+        <form class="zip" id="zipForm" autocomplete="off">
+          <label class="fld"><span>US ZIP</span><input id="zipIn" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="11213" aria-label="US ZIP code"></label>
+          <button type="submit" class="pill">Set</button>
+          <small id="zipStatus">Zmanim from Chabad.org</small>
+        </form>
+      </div>
+      <div id="cityList" role="listbox" aria-label="Cities"></div>
+      <p class="empty" id="cityEmpty" hidden>No matching city. Try a US ZIP code.</p>
+    </div>
+  </section>
+
+<script type="module" src="/luach/ui.js?v=5f06d4a2cf"></script>
+</body>
+</html>
