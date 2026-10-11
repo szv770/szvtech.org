@@ -1,6 +1,7 @@
 // /time — full-screen clock for any location, with zmanim, live sky, sun arc,
 // Hebrew date, favorites and a bedside mode. The big digits stay the point.
 import { CITIES, cityById, DEFAULT_CITY_ID, REGIONS, zipToTz, US_ZONES } from '/time/cities.js?v=8a8909ac4d';
+import { deviceTz, validTz, canonTz, offsetMin, fmtOffset, genericName, shortGeneric, abbr, prettyTz, regionOf, zones as allZones } from '/time/tz.js?v=75921ea087';
 
 /* ======================================================================
    small helpers
@@ -15,8 +16,6 @@ const lsJSON = (k, fb) => { try { const v = JSON.parse(lsGet(k)); return v == nu
 const lsSetJSON = (k, v) => lsSet(k, v == null ? null : JSON.stringify(v));
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const deviceTz = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; } })();
-const validTz = (tz) => { try { new Intl.DateTimeFormat('en', { timeZone: tz }); return true; } catch (e) { return false; } };
 
 const KEY = {
   h24: 'szv-time-24h', loc: 'szv-time-loc', favs: 'szv-time-favs', night: 'szv-time-night',
@@ -84,8 +83,8 @@ const greg = $('#greg'), heb = $('#heb'), dateEl = $('#date'), merEl = $('#mer')
 const fill = $('.sweep .fill'), pulse = $('.pulse');
 const dots = $$('.col i');
 const cells = $$('.h .d, .m .d, .s .d'); // H1 H2 M1 M2 S1 S2
-const cname = $('#cname'), cityBtn = $('#cityBtn'), favdotsEl = $('#favdots');
-const zline = $('#zline'), zlabel = $('#zlabel'), zcount = $('#zcount');
+const cname = $('#cname'), cityBtn = $('#cityBtn'), favdotsEl = $('#favdots'), infoBtn = $('#infoBtn');
+const zline = $('#zline'), zlabel = $('#zlabel'), zcount = $('#zcount'), zforEl = $('#zfor');
 const arcBig = $('#arcBig'), arcMini = $('#arcMini'), riseT = $('#riseT'), setT = $('#setT');
 const sky = $('#sky'), toastEl = $('#toast'), scrim = $('#scrim'), top = $('#top'), foot = $('#foot');
 const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -109,9 +108,46 @@ if (state.night) html.classList.add('night');
 const MY_NAME = 'My location';
 function tzCity(tz) { return (tz.split('/').pop() || tz).replace(/_/g, ' '); }
 function fromCity(cty) { return { ...cty, kind: 'city' }; }
+// Zone-only selection ("Eastern Time"): the clock follows a time zone, and the
+// zmanim use the zone's representative city (its best-known one, preferring a
+// Chabad.org ZIP / city id). The representative's lat/lon/zip are stored too,
+// so older readers of 'szv-time-loc' (/luach, /zmanim) keep working unchanged.
+const REP_PREF = { 'America/Los_Angeles': 'los-angeles' };
+let repMap = null;
+function repFor(tz) {
+  if (!repMap) {
+    repMap = new Map();
+    const good = (c) => !!(c.zip || c.chabadCityId);
+    for (const c of CITIES) {
+      const k = canonTz(c.tz), cur = repMap.get(k);
+      const curPref = cur && REP_PREF[cur.tz] === cur.id;
+      if (REP_PREF[c.tz] === c.id || !cur || (!curPref && !good(cur) && good(c))) repMap.set(k, c);
+    }
+  }
+  return repMap.get(canonTz(tz)) || null;
+}
+function zoneLoc(tz, auto) {
+  const rep = repFor(tz);
+  const o = { kind: 'zone', id: auto ? 'zone:auto' : 'zone:' + tz, tz, auto: !!auto, rep: rep ? rep.id : null,
+    name: rep ? rep.name : prettyTz(tz), country: rep ? rep.country : genericName(tz) };
+  if (rep) {
+    o.lat = rep.lat; o.lon = rep.lon;
+    if (rep.zip) o.zip = rep.zip;
+    if (rep.chabadCityId) o.chabadCityId = rep.chabadCityId;
+    if (rep.candleMinutes) o.candleMinutes = rep.candleMinutes;
+  }
+  return o;
+}
+const isZone = (l) => !!l && l.kind === 'zone';
+const repCity = (l) => (isZone(l) && l.rep ? cityById(l.rep) : null);
 function slim(loc) { // what we persist / share for a location
   if (!loc) return null;
   if (loc.kind === 'city') return { kind: 'city', id: loc.id };
+  if (loc.kind === 'zone') {
+    const z = { kind: 'zone', id: loc.id, tz: loc.tz, auto: !!loc.auto, rep: loc.rep || null, name: loc.name, country: loc.country };
+    for (const k of ['lat', 'lon', 'zip', 'chabadCityId', 'candleMinutes']) if (loc[k] != null) z[k] = loc[k];
+    return z;
+  }
   const o = { kind: loc.kind, id: loc.id, name: loc.name, country: loc.country, tz: loc.tz };
   if (loc.lat != null) { o.lat = loc.lat; o.lon = loc.lon; }
   if (loc.zip) { o.zip = loc.zip; o.tzAuto = !!loc.tzAuto; }
@@ -120,6 +156,7 @@ function slim(loc) { // what we persist / share for a location
 function revive(o) {
   if (!o || typeof o !== 'object') return null;
   if (o.kind === 'city' || (!o.kind && o.id)) { const c = cityById(o.id); return c ? fromCity(c) : null; }
+  if (o.kind === 'zone') { if (o.auto) return zoneLoc(deviceTz, true); return validTz(o.tz) ? zoneLoc(o.tz, false) : null; }
   if (!o.tz || !validTz(o.tz)) return null;
   if (o.kind === 'zip' && !/^\d{5}$/.test(o.zip || '')) return null;
   if ((o.kind === 'here' || o.kind === 'custom') && !(isFinite(o.lat) && isFinite(o.lon))) return null;
@@ -146,6 +183,8 @@ function locFromURL() {
     const nm = (q.get('name') || '').slice(0, 40).trim();
     return { kind: 'custom', id: 'custom', name: nm || tzCity(tz), country: `${lat.toFixed(2)}, ${lon.toFixed(2)}`, tz, lat, lon };
   }
+  const tz = q.get('tz');
+  if (tz && validTz(tz)) return zoneLoc(tz, false); // ?tz=America/New_York: time-zone mode
   return null;
 }
 function writeURL(loc) {
@@ -155,6 +194,7 @@ function writeURL(loc) {
     if (loc.kind === 'city') u.searchParams.set('city', loc.id);
     else if (loc.kind === 'zip') { u.searchParams.set('zip', loc.zip); if (!loc.tzAuto) u.searchParams.set('tz', loc.tz); }
     else if (loc.kind === 'custom') { u.searchParams.set('lat', loc.lat); u.searchParams.set('lon', loc.lon); u.searchParams.set('tz', loc.tz); }
+    else if (loc.kind === 'zone' && !loc.auto) u.searchParams.set('tz', loc.tz);
     // 'here' (device geolocation) is never written to the URL: coordinates stay on the device.
     history.replaceState(null, '', u.pathname + u.search + u.hash);
   } catch (e) {}
@@ -393,12 +433,13 @@ function render(now, mode) {
   cells.forEach((c, i) => setCell(c, chars[i], animate, mode === 'intro' ? 90 * i : 0));
   cells[0].classList.toggle('off', !state.h24 && hs[0] === '0');
 
-  const gText = `${t.weekday} · ${t.month} ${t.day} · ${t.zone}`;
+  const gText = `${t.weekday} · ${t.month} ${t.day}`; // the zone + offset live in the label now
   if (greg.textContent !== gText) { greg.textContent = gText; layoutHeader(); }
   merEl.innerHTML = state.h24 ? '24H' : `<b>${t.H < 12 ? 'AM' : 'PM'}</b>`;
   const minuteChanged = !last || last.M !== t.M || last.H !== t.H || mode;
   if (minuteChanged) {
-    srEl.textContent = `${hDisp}:${ms}${state.h24 ? '' : (t.H < 12 ? ' AM' : ' PM')} in ${state.loc.name}`;
+    srEl.textContent = `${hDisp}:${ms}${state.h24 ? '' : (t.H < 12 ? ' AM' : ' PM')} in ${displayName(state.loc)}`;
+    refreshLabel(now);
     onMinute(now);
   }
   if (animate && !calm() && pulse.animate) {
@@ -486,7 +527,19 @@ function fit() {
     // (a running slide only translates the clock, so its measured size is unaffected)
     const avail = zAvailable();
     let pick = null;
-    if (!avail) {
+    zforEl.hidden = true; zforEl.textContent = '';
+    zline.classList.toggle('prompt', !avail && zPrompt());
+    if (!avail && zPrompt()) {
+      // a time zone with no city to compute zmanim for: a quiet "set your city" — only where it costs nothing
+      zlabel.textContent = 'Zmanim · set your city'; zcount.textContent = '';
+      zline.setAttribute('aria-label', 'Zmanim need a city. Choose your city.');
+      document.body.dataset.zm = 'inline';
+      const side = Math.max(foot.querySelector('.home').scrollWidth, merEl.scrollWidth + 30);
+      const ok = zline.scrollWidth - 24 + 2 * side + 24 <= foot.clientWidth;
+      document.body.dataset.zm = ok ? 'inline' : 'none';
+      pick = bestLayout();
+      lastTargetKey = '';
+    } else if (!avail) {
       document.body.dataset.zm = 'none';
       pick = bestLayout();
     } else {
@@ -506,17 +559,77 @@ function fit() {
       clock.className = pick.L + (clock.dataset.ready ? ' ready' : '');
       clock.style.fontSize = pick.size + 'px';
     }
+    // zone mode: say whose zmanim these are ("· for New York"), only if the line has room as it is
+    const rc = avail && repCity(state.loc);
+    if (rc) {
+      zforEl.textContent = rc.name;
+      zforEl.hidden = false;
+      const zm = document.body.dataset.zm;
+      const fits = zm === 'stacked' ? zline.scrollWidth - 24 <= foot.clientWidth : inlineFits();
+      if (!fits) zforEl.hidden = true;
+    }
     layoutHeader();
     drawArcs(nowDate());
     placeSync();
+    // the "· New York" note gives way to the sync status rather than crowd it
+    if (!zforEl.hidden && syncEl.dataset.where) {
+      const a = syncEl.getBoundingClientRect(), b = $('#ztext').getBoundingClientRect();
+      if (a.width && a.right - 6 + 14 > b.left && a.left < b.right && Math.abs(a.top - b.top) < 12) { zforEl.hidden = true; placeSync(); }
+    }
   });
 }
-// Hebrew date: on the same line as the date when it fits, otherwise it gently alternates.
+// The label: the longest wording that fits beside the date ("Eastern Time ·
+// UTC−04:00 · EDT" → … → "UTC−4"). Then the Hebrew date sits on the same line
+// as the civil date when it fits, otherwise the two gently alternate.
+function setLabel(t) {
+  const k = t[0] + '|' + t[1];
+  if (cname.dataset.k === k) return;
+  cname.dataset.k = k;
+  cname.innerHTML = `<span class="cn-a">${esc(t[0])}</span>${t[1] ? `<span class="cn-b">${esc(t[1])}</span>` : ''}`;
+}
+function sideW(el) {
+  if (!el || el.offsetParent === null) return 0;
+  const cs = getComputedStyle(el);
+  return el.getBoundingClientRect().width + parseFloat(cs.marginLeft) + parseFloat(cs.marginRight) + 12;
+}
 function layoutHeader() {
-  if (!heb.textContent) { dateEl.className = 'joined'; return; }
+  const tiers = state.tiers || [[displayName(state.loc), '']];
+  const hasHeb = !!heb.textContent;
+  // the date's natural width when the civil and Hebrew dates alternate (their spans ellipsize, so measure the text)
+  dateEl.className = hasHeb ? 'alt' : 'joined';
+  const dateMin = Math.max(greg.scrollWidth, hasHeb ? heb.scrollWidth : 0) + 12;
+  const fixed = sideW(infoBtn) + (favdotsEl.offsetWidth ? favdotsEl.offsetWidth + 12 : 0) + 12;
+  // natural width of the label button (its max-width would otherwise hide the overflow)
+  const labelW = () => cityBtn.offsetWidth - cname.clientWidth + cname.scrollWidth;
+  let pick = tiers[tiers.length - 1];
+  for (const t of tiers) {
+    setLabel(t);
+    if (labelW() + fixed + dateMin <= top.clientWidth) { pick = t; break; }
+  }
+  setLabel(pick);
+  if (!hasHeb) return;
   dateEl.className = 'joined';
-  const need = cityBtn.scrollWidth + favdotsEl.offsetWidth + dateEl.scrollWidth + 24;
+  const need = labelW() + fixed + greg.scrollWidth + heb.scrollWidth + 14; // heb carries its "·" when joined; + padding
   dateEl.className = need <= top.clientWidth ? 'joined' : 'alt' + (flip ? ' flip' : '');
+}
+function labelTiers(loc, ms) {
+  const tz = loc.tz, off = offsetMin(tz, ms);
+  const L = fmtOffset(off), S = fmtOffset(off, true), g = genericName(tz, ms), sg = shortGeneric(tz, ms), ab = abbr(tz, ms);
+  if (isZone(loc)) {
+    if (sg === 'UTC') return [[g, ' · UTC'], ['UTC', '']];
+    return [[g, ` · ${L}${ab ? ' · ' + ab : ''}`], [g, ` · ${L}`], [sg, ` · ${L}`], [sg, ` · ${S}`], [S, '']].filter((t, i) => i || ab);
+  }
+  const nm = displayName(loc);
+  const same = norm(nm) === norm(sg) || sg === 'UTC';
+  return [[nm, `${same ? '' : ' · ' + sg} · ${L}`], [nm, ` · ${L}`], [nm, ` · ${S}`], [nm, '']];
+}
+// Re-derive the label (offset / DST can change at any minute boundary).
+function refreshLabel(now = nowDate()) {
+  const tiers = labelTiers(state.loc, +now);
+  const k = JSON.stringify(tiers);
+  if (k === state.tiersKey) return;
+  state.tiers = tiers; state.tiersKey = k;
+  layoutHeader();
 }
 let flip = false;
 setInterval(() => {
@@ -690,7 +803,9 @@ function longestLabel() {
 }
 
 let target = null, lastTargetKey = '';
+const zPrompt = () => isZone(state.loc) && !hasCoords(state.loc);
 function onSecond(now) {
+  if (zPrompt()) return;
   if (!state.sched) { if (document.body.dataset.zm !== 'none' && document.body.dataset.zm) fit(); return; }
   if (ymdStr(ymdIn(now, state.loc.tz)) !== state.sched.forDate) { state.sched = null; loadSchedule(); return; }
   if (!target || +target.at <= +now) target = computeTarget(now);
@@ -881,13 +996,22 @@ function onMinute(now) {
 /* ======================================================================
    location switching
    ====================================================================== */
-function showName() {
+function displayName(loc) {
   // ZIP locations read "Brooklyn, NY 11213" from Chabad.org; the header keeps it short
-  cname.textContent = state.loc.kind === 'zip' ? state.loc.name.split(',')[0] : state.loc.name;
-  cityBtn.title = state.loc.name;
-  cityBtn.setAttribute('aria-label', `Location: ${state.loc.name}. Change location`);
-  clock.setAttribute('aria-label', `Current time in ${state.loc.name}. Tap to switch 12/24 hour. Long-press for bedside mode.`);
-  document.title = state.loc.id === DEFAULT_CITY_ID ? 'NYC Time · SZVTECH' : `${state.loc.name} Time · SZVTECH`;
+  if (isZone(loc)) return genericName(loc.tz, now());
+  return loc.kind === 'zip' ? loc.name.split(',')[0] : loc.name;
+}
+function showName() {
+  const nm = displayName(state.loc);
+  const n = now(), off = fmtOffset(offsetMin(state.loc.tz, n));
+  const full = isZone(state.loc) ? `${nm}, ${off}` : `${state.loc.name} (${genericName(state.loc.tz, n)}, ${off})`;
+  state.tiersKey = '';
+  refreshLabel(new Date(n));
+  cityBtn.title = full;
+  cityBtn.setAttribute('aria-label', `Location: ${full}. Change location`);
+  clock.setAttribute('aria-label', `Current time in ${nm}. Tap to switch 12/24 hour. Long-press for bedside mode.`);
+  document.title = state.loc.id === DEFAULT_CITY_ID ? 'NYC Time · SZVTECH'
+    : isZone(state.loc) ? `${shortGeneric(state.loc.tz, n)} Time · SZVTECH` : `${state.loc.name} Time · SZVTECH`;
 }
 function saveLoc() { lsSetJSON(KEY.loc, slim(state.loc)); }
 function setLocation(loc, opts = {}) {
@@ -946,8 +1070,9 @@ function toggleFav(loc) {
 }
 function renderFavDots() {
   const favs = favLocs();
-  if (favs.length < 2) { favdotsEl.innerHTML = ''; return; }
-  favdotsEl.innerHTML = favs.slice(0, 9).map((f) => `<b class="${sameLoc(f, state.loc) ? 'on' : ''}"></b>`).join('');
+  if (favs.length < 2) favdotsEl.innerHTML = '';
+  else favdotsEl.innerHTML = favs.slice(0, 9).map((f) => `<b class="${sameLoc(f, state.loc) ? 'on' : ''}"></b>`).join('');
+  layoutHeader();
 }
 function canCycle() {
   const favs = favLocs();
@@ -1058,12 +1183,12 @@ document.addEventListener('keydown', (e) => {
 /* ======================================================================
    sheets
    ====================================================================== */
-const citySheet = $('#citySheet'), zSheet = $('#zSheet');
+const citySheet = $('#citySheet'), zSheet = $('#zSheet'), tSheet = $('#tSheet');
 let openSheet = null, lastFocus = null;
 function showSheet(el) {
-  if (openSheet && openSheet !== el) closeSheet(true);
+  if (openSheet && openSheet !== el) { const keep = lastFocus; closeSheet(true); lastFocus = keep; } // sheet → sheet: return focus to the original opener
+  else lastFocus = document.activeElement;
   openSheet = el;
-  lastFocus = document.activeElement;
   el.classList.add('open');
   scrim.classList.add('open');
   el.setAttribute('aria-hidden', 'false');
@@ -1073,13 +1198,14 @@ function closeSheet(quick) {
   if (!el) return;
   openSheet = null;
   el.classList.remove('open', 'dragging');
-  el.style.transform = '';
+  el.style.removeProperty('--drag');
+  if (el === tSheet) stopExplain();
   el.setAttribute('aria-hidden', 'true');
   if (!quick) scrim.classList.remove('open');
   if (document.activeElement && el.contains(document.activeElement)) document.activeElement.blur();
   if (!quick && lastFocus && lastFocus.focus) try { lastFocus.focus({ preventScroll: true }); } catch (e) {}
 }
-[citySheet, zSheet].forEach((el) => {
+[citySheet, zSheet, tSheet].forEach((el) => {
   el.setAttribute('aria-hidden', 'true');
   el.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeSheet(); });
   // swipe down on the header to dismiss
@@ -1094,13 +1220,13 @@ function closeSheet(quick) {
   head.addEventListener('pointermove', (e) => {
     if (!d || e.pointerId !== d.id) return;
     d.dy = Math.max(0, e.clientY - d.y);
-    if (!reduce) el.style.transform = `translate(-50%, ${d.dy}px)`;
+    if (!reduce) el.style.setProperty('--drag', d.dy + 'px');
   });
   const end = (e) => {
     if (!d || e.pointerId !== d.id) return;
     const v = d.dy / Math.max(1, performance.now() - d.t);
     el.classList.remove('dragging');
-    el.style.transform = '';
+    el.style.removeProperty('--drag');
     if (d.dy > 90 || (d.dy > 30 && v > .5)) closeSheet();
     d = null;
   };
@@ -1119,29 +1245,154 @@ document.addEventListener('keydown', (e) => {
 });
 const coarse = matchMedia('(pointer: coarse)').matches;
 
+/* ---------- ⓘ "How time works" sheet ---------- */
+// Long and scrollable, so it also closes with a pull-down from the top of its
+// content (touch only; the inner world strip keeps its own sideways scroll).
+const tBody = $('#tBody');
+(() => {
+  let d = null;
+  tBody.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1 || tBody.scrollTop > 0 || e.target.closest('.tx-strip')) { d = null; return; }
+    const t = e.touches[0];
+    d = { x: t.clientX, y: t.clientY, t: performance.now(), dy: 0, on: false, dead: false };
+  }, { passive: true });
+  tBody.addEventListener('touchmove', (e) => {
+    if (!d || d.dead) return;
+    const t = e.touches[0], dx = t.clientX - d.x, dy = t.clientY - d.y;
+    if (!d.on) {
+      if (Math.hypot(dx, dy) < 10) return;
+      if (dy <= 0 || Math.abs(dx) > dy || tBody.scrollTop > 0) { d.dead = true; return; }
+      d.on = true; tSheet.classList.add('dragging');
+    }
+    if (e.cancelable) e.preventDefault();
+    d.dy = Math.max(0, dy);
+    if (!reduce) tSheet.style.setProperty('--drag', d.dy + 'px');
+  }, { passive: false });
+  const end = (cancel) => {
+    if (!d) return;
+    const g = d; d = null;
+    if (!g.on) return;
+    tSheet.classList.remove('dragging');
+    tSheet.style.removeProperty('--drag');
+    const v = g.dy / Math.max(1, performance.now() - g.t);
+    if (!cancel && (g.dy > 110 || (g.dy > 40 && v > .5))) closeSheet();
+  };
+  tBody.addEventListener('touchend', () => end(false));
+  tBody.addEventListener('touchcancel', () => end(true));
+})();
+let explain = null, explainT = 0;
+const explainReady = () => explain ? Promise.resolve(explain) :
+  import('/time/explain.js?v=eb4b8160a4').then((m) => (explain = m.mountExplain(tBody, explainCtx))).catch(() => null);
+const explainCtx = {
+  now, deviceTz, reduce: () => reduce || state.night,
+  h24: () => state.h24,
+  loc: () => state.loc,
+  hm: (d, tz, opt) => hm(d, tz, state.h24, opt),
+  sync: () => ({ ok: sync.ok, offset: sync.to, err: sync.err, busy: sync.busy, fails: sync.fails, n: sync.n || 0 }),
+  resync: () => syncNow('tap').then((ok) => { setSyncStatus(); return ok; }),
+  Z: () => Z,
+  sun: () => {
+    const n = nowDate(), loc = state.loc, sd = sunDay(n), day = todayDay(n);
+    return {
+      loc, rep: repCity(loc), coords: hasCoords(loc) || !!apiQuery(loc), sd,
+      items: day ? day.items : [], source: state.sched ? state.sched.source : null,
+      where: state.sched && state.sched.source === 'chabad' && state.sched.location ? state.sched.location : loc.name,
+    };
+  },
+  hebrew: () => {
+    const n = nowDate(), h = hebrewDate(n), ss = sunsetToday(n);
+    const f = fmtFor(state.loc.tz, 'heb', { locale: 'en-u-ca-hebrew', day: 'numeric', month: 'long', year: 'numeric' });
+    let next = null;
+    try { next = f.format(new Date(+n + (h.after ? 2 : 1) * DAY)); } catch (e) {}
+    return { text: h.text, after: h.after, sunset: ss, next };
+  },
+  openPicker: (tab) => { openCitySheet(); if (tab) setPickTab(tab); },
+};
+function stopExplain() { clearInterval(explainT); explainT = 0; }
+async function openExplain() {
+  showSheet(tSheet);
+  $('#tSub').textContent = `${genericName(state.loc.tz, now())} · ${fmtOffset(offsetMin(state.loc.tz, now()))}`;
+  tBody.scrollTop = 0;
+  requestAnimationFrame(() => { try { tSheet.querySelector('.x').focus({ preventScroll: true }); } catch (e) {} });
+  const ex = await explainReady();
+  if (!ex || openSheet !== tSheet) return;
+  ex.render();
+  stopExplain();
+  explainT = setInterval(() => { if (openSheet === tSheet && !document.hidden) ex.tick(); }, 1000);
+}
+infoBtn.addEventListener('click', openExplain);
+
 /* ---------- location sheet ---------- */
 const listEl = $('#list'), qEl = $('#q'), emptyEl = $('#empty');
 const STAR = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.2l2.35 4.9 5.35.68-3.93 3.7.98 5.3L10 14.2l-4.75 2.58.98-5.3L2.3 7.78l5.35-.68z"/></svg>';
 function rowHTML(loc, now) {
   const time = hm(now, loc.tz, state.h24);
-  const sub = loc.kind === 'city' ? loc.country : loc.kind === 'zip' ? `ZIP ${loc.zip} · ${tzCity(loc.tz)}` : loc.country || tzCity(loc.tz);
   const fav = isFav(loc);
+  let name = loc.name, sub, tm = time;
+  if (isZone(loc)) {
+    const off = fmtOffset(offsetMin(loc.tz, +now), true);
+    name = loc.auto ? 'My time zone' : prettyTz(loc.tz);
+    sub = `${genericName(loc.tz, +now)}${loc.rep && loc.name !== name ? ' · zmanim: ' + loc.name : ''}`;
+    tm = `${time}<small>${off}</small>`;
+  } else sub = loc.kind === 'city' ? loc.country : loc.kind === 'zip' ? `ZIP ${loc.zip} · ${tzCity(loc.tz)}` : loc.country || tzCity(loc.tz);
+  const star = loc.auto ? '<span class="star-pad"></span>' :
+    `<button class="star" type="button" aria-pressed="${fav}" aria-label="${fav ? 'Remove' : 'Add'} ${esc(name)} ${fav ? 'from' : 'to'} favorites">${STAR}</button>`;
   return `<div class="row${sameLoc(loc, state.loc) ? ' cur' : ''}" data-id="${esc(loc.id)}">` +
-    `<button class="pick" type="button" role="option" aria-selected="${sameLoc(loc, state.loc)}"><span class="nm"><b>${esc(loc.name)}</b><small>${esc(sub)}</small></span><span class="tm">${time}</span></button>` +
-    `<button class="star" type="button" aria-pressed="${fav}" aria-label="${fav ? 'Remove' : 'Add'} ${esc(loc.name)} ${fav ? 'from' : 'to'} favorites">${STAR}</button></div>`;
+    `<button class="pick" type="button" role="option" aria-selected="${sameLoc(loc, state.loc)}"><span class="nm"><b>${esc(name)}</b><small>${esc(sub)}</small></span><span class="tm">${tm}</span></button>` +
+    star + `</div>`;
 }
+/* time zones: every IANA zone the browser knows, grouped by region, with search by name or offset */
+const ZONE_REGIONS = ['America', 'Europe', 'Asia', 'Africa', 'Australia', 'Pacific', 'Atlantic', 'Indian', 'Antarctica', 'Other'];
+let zoneIdx = null;
+function zoneIndex(n) {
+  if (zoneIdx && n - zoneIdx.at < 10 * MIN) return zoneIdx.list;
+  const list = allZones().map((tz) => {
+    const off = offsetMin(tz, n);
+    const g = genericName(tz, n);
+    return { tz, off, region: regionOf(tz), hay: norm(`${tz} ${prettyTz(tz)} ${g} ${abbr(tz, n)}`) };
+  });
+  list.sort((x, y) => x.off - y.off || x.tz.localeCompare(y.tz));
+  zoneIdx = { at: n, list };
+  return list;
+}
+// "+5:30", "utc-4", "GMT −3:30", "-04:00" → minutes, else null
+function parseOffsetQuery(raw) {
+  const m = /^\s*(?:utc|gmt)?\s*([+\-−])\s*(\d{1,2})(?::?(\d{2}))?\s*$/i.exec(raw);
+  if (!m) return /^\s*(utc|gmt)\s*$/i.test(raw) ? 0 : null;
+  const v = +m[2] * 60 + (m[3] ? +m[3] : 0);
+  return v > 14 * 60 ? null : (m[1] === '+' ? v : -v);
+}
+let pickTab = 'cities';
 let rowIndex = new Map();
 function renderList() {
-  const now = nowDate();
-  const q = norm(qEl.value).trim();
+  const now = nowDate(), n = +now;
+  const raw = qEl.value, q = norm(raw).trim();
   rowIndex = new Map();
-  let out = '', n = 0;
-  const add = (loc) => { rowIndex.set(loc.id, loc); n++; return rowHTML(loc, now); };
-  if (!q) {
+  let out = '', count = 0;
+  const add = (loc) => { rowIndex.set(loc.id, loc); count++; return rowHTML(loc, now); };
+  const zoneRows = (items) => items.map((z) => add(zoneLoc(z.tz, false))).join('');
+  const offQ = parseOffsetQuery(raw);
+  const zoneMatches = () => {
+    const idx = zoneIndex(n);
+    if (offQ != null) return idx.filter((z) => z.off === offQ);
+    const words = q.split(/\s+/);
+    return idx.filter((z) => words.every((w) => z.hay.includes(w)));
+  };
+  if (pickTab === 'zones') {
+    if (!q && offQ == null) {
+      const favs = favLocs().filter(isZone);
+      if (favs.length) out += `<div class="grp-h">Favorites</div>` + favs.map(add).join('');
+      const idx = zoneIndex(n);
+      for (const r of ZONE_REGIONS) {
+        const zs = idx.filter((z) => z.region === r);
+        if (zs.length) out += `<div class="grp-h">${esc(r)}</div>` + zoneRows(zs);
+      }
+    } else out = zoneRows(zoneMatches());
+  } else if (!q) {
     const favs = favLocs();
     const cur = state.loc;
     if (favs.length) out += `<div class="grp-h">Favorites</div>` + favs.map(add).join('');
-    if (cur.kind !== 'city' && !favs.some((f) => sameLoc(f, cur))) out += `<div class="grp-h">Current</div>` + add(cur);
+    if (cur.kind !== 'city' && !cur.auto && !favs.some((f) => sameLoc(f, cur))) out += `<div class="grp-h">Current</div>` + add(cur);
     for (const r of REGIONS) {
       const cs = CITIES.filter((c) => c.region === r);
       if (cs.length) out += `<div class="grp-h">${esc(r)}</div>` + cs.map((c) => add(fromCity(c))).join('');
@@ -1149,7 +1400,7 @@ function renderList() {
   } else {
     const words = q.split(/\s+/);
     const scored = [];
-    for (const c of CITIES) {
+    if (offQ == null) for (const c of CITIES) {
       const hay = norm(`${c.name} ${c.country} ${c.region} ${c.alt || ''} ${c.zip || ''}`);
       if (!words.every((w) => hay.includes(w))) continue;
       const nm = norm(c.name);
@@ -1157,10 +1408,37 @@ function renderList() {
     }
     scored.sort((a, b) => a[0] - b[0] || a[1].name.localeCompare(b[1].name));
     out = scored.map(([, c]) => add(fromCity(c))).join('');
+    // time zones that match, too ("eastern", "+5:30", "kathmandu")
+    const zs = zoneMatches().slice(0, 12);
+    if (zs.length) out += `<div class="grp-h">Time zones</div>` + zoneRows(zs);
   }
   listEl.innerHTML = out;
-  emptyEl.hidden = n > 0;
+  emptyEl.hidden = count > 0;
+  emptyEl.textContent = pickTab === 'zones' ? 'No matching time zone. Try a city name or an offset like +5:30.' : 'No matching city. Try a US ZIP code above.';
 }
+const ptabs = $('#ptabs'), autoBtn = $('#autoBtn'), autoStatus = $('#autoStatus');
+function setPickTab(t) {
+  pickTab = t;
+  citySheet.dataset.tab = t;
+  ptabs.querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  qEl.placeholder = t === 'zones' ? 'Search zones · e.g. Tokyo, +5:30' : 'Search cities or zones';
+  qEl.setAttribute('aria-label', qEl.placeholder);
+  renderList();
+  $('#cityBody').scrollTop = 0;
+}
+ptabs.addEventListener('click', (e) => { const b = e.target.closest('button[data-tab]'); if (b) setPickTab(b.dataset.tab); });
+function syncAutoBtn() {
+  const n = now();
+  autoStatus.textContent = `${genericName(deviceTz, n)} · ${fmtOffset(offsetMin(deviceTz, n))} · from this device`;
+  const on = !!state.loc.auto;
+  autoBtn.classList.toggle('on', on);
+  autoBtn.setAttribute('aria-pressed', String(on));
+}
+autoBtn.addEventListener('click', () => {
+  closeSheet();
+  const loc = zoneLoc(deviceTz, true);
+  if (sameLoc(loc, state.loc)) setLocation(loc, { url: true }); else switchTo(loc, 1);
+});
 listEl.addEventListener('click', (e) => {
   const row = e.target.closest('.row');
   if (!row) return;
@@ -1184,13 +1462,14 @@ qEl.addEventListener('keydown', (e) => {
 });
 function openCitySheet() {
   qEl.value = '';
-  renderList();
+  syncAutoBtn();
+  setPickTab(isZone(state.loc) && !state.loc.auto ? 'zones' : 'cities');
   syncZipForm();
   const body = $('#cityBody');
   body.scrollTop = 0;
   showSheet(citySheet);
   const cur = listEl.querySelector('.row.cur');
-  if (cur && state.loc.kind === 'city') requestAnimationFrame(() => { body.scrollTop = Math.max(0, cur.offsetTop - body.clientHeight / 2); });
+  if (cur && (state.loc.kind === 'city' || pickTab === 'zones')) requestAnimationFrame(() => { body.scrollTop = Math.max(0, cur.offsetTop - body.clientHeight / 2); });
   if (!coarse) setTimeout(() => qEl.focus({ preventScroll: true }), 60);
 }
 cityBtn.addEventListener('click', openCitySheet);
@@ -1266,7 +1545,8 @@ zipForm.addEventListener('submit', async (e) => {
 
 /* ---------- zmanim sheet ---------- */
 const zList = $('#zList'), zDay = $('#zDay'), zWhere = $('#zWhere'), zNote = $('#zNote'), zDays = $('#zDays');
-const candleChips = $('#candleChips'), endChips = $('#endChips');
+const candleChips = $('#candleChips'), endChips = $('#endChips'), zCity = $('#zCity');
+zCity.addEventListener('click', () => openCitySheet());
 let zDayIdx = 0;
 function renderZSheet() {
   const s = state.sched;
@@ -1274,6 +1554,9 @@ function renderZSheet() {
   const now = nowDate(), tz = state.loc.tz;
   const day = s.days[zDayIdx] || s.days[0];
   zWhere.textContent = s.source === 'chabad' && s.location ? s.location : state.loc.name + (state.loc.kind === 'city' ? ', ' + state.loc.country : '');
+  const rc = repCity(state.loc);
+  zCity.hidden = !rc;
+  if (rc) zCity.querySelector('small').textContent = `${rc.name} stands in for ${genericName(tz, +now)}. Sunrise and sunset shift with every mile, so pick your city for exact times.`;
   $$('#zDays button').forEach((b) => b.setAttribute('aria-selected', String(+b.dataset.day === zDayIdx)));
   const dname = fmtFor(tz, 'dlong', { weekday: 'short', month: 'short', day: 'numeric' }).format(zonedTime(day.ymd, 720, tz));
   const hd = fmtFor(tz, 'heb', { locale: 'en-u-ca-hebrew', day: 'numeric', month: 'long', year: 'numeric' }).format(zonedTime(day.ymd, 720, tz));
@@ -1336,6 +1619,7 @@ endChips.addEventListener('click', (e) => {
 });
 async function reloadZ() { await loadSchedule(); renderZSheet(); }
 zline.addEventListener('click', () => {
+  if (zPrompt()) { openCitySheet(); return; }
   if (!state.sched) return;
   const now = nowDate();
   const i = state.sched.days.indexOf(todayDay(now));
@@ -1377,7 +1661,8 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
 /* ======================================================================
    go
    ====================================================================== */
-const initial = locFromURL() || revive(lsJSON(KEY.loc, null)) || fromCity(cityById(DEFAULT_CITY_ID));
+// First visit (nothing saved, nothing in the URL): follow the device's time zone.
+const initial = locFromURL() || revive(lsJSON(KEY.loc, null)) || zoneLoc(deviceTz, true);
 document.body.dataset.zm = 'none';
 zline.classList.add('wait');
 setLocation(initial, { persist: !!locFromURL() || !!lsGet(KEY.loc) });
