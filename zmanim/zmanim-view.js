@@ -3,7 +3,7 @@
 //   sun  — a sky arc with the sun (or moon) at its real place in the day
 //   week — 7 days × every zman, Shabbos column accented
 //
-//   import { mount, unmount, setActive } from '/zmanim/zmanim-view.js';
+//   import { mount, unmount, setActive } from "zmanim-view.js" (served at /zmanim/zmanim-view.js)
 //   mount(el, { now?: () => ms, location?, compact?: boolean, home?: boolean, urlSync?: boolean });
 //   setActive(false)   // pause timers while hidden (e.g. another mode inside /time)
 //   unmount()
@@ -14,8 +14,9 @@ import {
   MIN, DAY, KEY, lsGet, lsSet, partsIn, ymdStr, parseYMD, addDaysStr, todayIn, hm, hmText, countdown, relWords,
   normalizeLoc, locFromParams, savedLoc, defaultLoc, saveLoc, zipLoc, fromCity,
   CITIES, h24Pref, getDays, pruneCache, nextItem, phaseAt, definition, SHORT, ORDER, LABELS,
-} from '/zmanim/data.js';
-import { createClock } from '/zmanim/sync.js';
+} from '/zmanim/data.js?v=41d2c1bfa5';
+import { createClock } from '/zmanim/sync.js?v=0af1f5a734';
+import { sunPosition, skyAt, moonPosition, moonIllumination, moonPath } from '/zmanim/sky.js?v=34dd6de417';
 
 const LOOKS = ['day', 'sun', 'week'];
 const LOOK_NAMES = { day: 'Day', sun: 'Sun', week: 'Week' };
@@ -78,6 +79,7 @@ export function setActive(on) {
   S.active = on;
   S.root.classList.toggle('zv-paused', !on);
   if (on) {
+    S.h24 = h24Pref(); // the host (/time) may have flipped 12/24 while this was hidden
     if (S.clock) S.clock.start();
     startTick();
     if (todayIn(S.now(), S.loc.tz) !== S.today) { S.today = todayIn(S.now(), S.loc.tz); load(); } else { layoutAll(); tick(); }
@@ -136,7 +138,7 @@ function build() {
     <div class="zv-track">
       <section class="zv-pane zv-pane-day" data-look="day" aria-label="Day timeline"><div class="zv-scroll zv-dayscroll"><div class="zv-tl"></div></div></section>
       <section class="zv-pane zv-pane-sun" data-look="sun" aria-label="Sun arc">
-        <div class="zv-sky" aria-hidden="true"><i data-ph="night"></i><i data-ph="dawn"></i><i data-ph="day"></i><i data-ph="dusk"></i></div>
+        <div class="zv-sky" aria-hidden="true"><i class="zv-stars"></i><i class="zv-stars zv-stars2"></i></div>
         <div class="zv-arcbox"><svg class="zv-arc" aria-hidden="false"></svg></div>
         <div class="zv-info" aria-live="polite"></div>
       </section>
@@ -755,16 +757,19 @@ function renderSun() {
   const M = arcModel(day);
   if (!M) { svg.innerHTML = ''; S.info.innerHTML = '<p class="zv-info-none">The sun does not rise and set here today.</p>'; return; }
   const narrow = W < 520;
-  const below = tall ? 0.5 : 0.36;          // how much of the lower circle shows (fraction of R)
+  const tNow = S.now();
+  // at night the sun travels the lower half: frame it so that whole path shows
+  const night = selDate() === S.today && (tNow < M.r || tNow > M.s);
+  const below = night ? (tall ? 1 : 0.8) : tall ? 0.5 : 0.36; // how much of the lower circle shows (fraction of R)
   const R = Math.max(60, Math.min(W / 2 - (narrow ? 16 : 70), (H - 30) / (1 + below + 0.06)));
   const small = narrow || R < 210;
   const cx = W / 2;
   const used = R * (1 + below) + 40;
   const hy = Math.round(Math.max(18 + R + 6, (H - used) / 2 + R + 20));
   const P = (a, rr = R) => [cx + rr * Math.cos(a * Math.PI / 180), hy - rr * Math.sin(a * Math.PI / 180)];
-  const minA = -Math.asin(Math.min(0.99, (H - hy - 6) / R)) * 180 / Math.PI;
+  const minA = -Math.asin(Math.min(1, (H - hy - 6) / R)) * 180 / Math.PI;
   const lowA = Math.max(minA, -below * 90);
-  S.sunG = { W, H, R, cx, hy, P, M, day, lowA };
+  S.sunG = { W, H, R, cx, hy, P, M, day, lowA, night };
   const fmtA = (a, rr = R) => P(a, rr).map((v) => v.toFixed(1)).join(',');
   const arcPath = (a0, a1, rr = R) => {
     // sweep from a0 to a1 (degrees, decreasing = clockwise on screen)
@@ -774,18 +779,22 @@ function renderSun() {
   };
   let b = `<defs>
     <linearGradient id="zvArcG" x1="0" x2="1"><stop offset="0" style="stop-color:var(--a1)"/><stop offset=".55" style="stop-color:var(--a3)"/><stop offset="1" style="stop-color:var(--a2)"/></linearGradient>
-    <radialGradient id="zvHalo"><stop offset="0" stop-color="#fff7d6" stop-opacity=".95"/><stop offset=".3" style="stop-color:var(--a3)" stop-opacity=".5"/><stop offset="1" style="stop-color:var(--a3)" stop-opacity="0"/></radialGradient>
-    <linearGradient id="zvGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05050a" stop-opacity="0"/><stop offset="1" stop-color="#05050a" stop-opacity=".85"/></linearGradient>
-    <linearGradient id="zvHz" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-    <mask id="zvMoonM"><circle r="${narrow ? 8 : 10}" fill="#fff"/><circle cx="${narrow ? 4.5 : 5.6}" cy="${narrow ? -3 : -3.6}" r="${narrow ? 7 : 8.6}" fill="#000"/></mask>
+    <radialGradient id="zvHalo"><stop offset="0" stop-color="#fff3c4" stop-opacity=".9"/><stop offset=".28" stop-color="#ffd27a" stop-opacity=".55"/><stop offset=".6" stop-color="#ffb04a" stop-opacity=".18"/><stop offset="1" stop-color="#ff9a3c" stop-opacity="0"/></radialGradient>
+    <radialGradient id="zvSunG" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#fffbe8"/><stop offset=".45" stop-color="#ffe08a"/><stop offset="1" stop-color="#ffaa35"/></radialGradient>
+    <radialGradient id="zvMoonH"><stop offset="0" stop-color="#fffbe9" stop-opacity=".32"/><stop offset="1" stop-color="#fffbe9" stop-opacity="0"/></radialGradient>
+    <linearGradient id="zvHz" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
     <filter id="zvGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
   </defs>`;
-  b += `<rect class="zv-ground" x="0" y="${hy}" width="${W}" height="${H - hy}" fill="url(#zvGround)"/>`;
   b += `<path class="zv-arc-night" d="${arcPath(180 - lowA, 180)}"/><path class="zv-arc-night" d="${arcPath(0, lowA)}"/>`;
   b += `<path class="zv-arc-track" d="${arcPath(180, 0)}"/>`;
+  b += `<path class="zv-arc-ndone" d=""/>`;
   b += `<path class="zv-arc-done" stroke="url(#zvArcG)" d=""/>`;
   b += `<path class="zv-arc-glow" stroke="url(#zvArcG)" filter="url(#zvGlow)" d=""/>`;
   b += `<line class="zv-hz" x1="0" y1="${hy}" x2="${W}" y2="${hy}" stroke="url(#zvHz)"/>`;
+  // the moon, at its real place in the sky (drawn behind the zmanim)
+  const mr = narrow ? 9 : 11;
+  b += `<g class="zv-moonb" style="display:none"><circle class="zv-moon-halo" r="${mr * 3}" fill="url(#zvMoonH)"/><circle class="zv-moon-dark" r="${mr}"/><path class="zv-moon-lit" d=""/><title></title></g>`;
+  S.moonR = mr;
   // ticks + labels
   const lab = [];
   const placed = [];
@@ -861,17 +870,99 @@ function renderSun() {
     </g>`;
   });
   lab.forEach((l) => {
-    const cls = ['zv-lbl', l.it.accent ? 'zv-accent' : '', l.it === nx ? 'zv-next' : '', l.it.at <= nowT ? 'zv-past' : ''].filter(Boolean).join(' ');
+    const cls = ['zv-lbl', l.it.accent ? 'zv-accent' : '', l.it === nx ? 'zv-next' : '', l.it.at <= nowT ? 'zv-past' : '', l.r.y + l.r.h / 2 > hy ? 'zv-lbl-low' : ''].filter(Boolean).join(' ');
     const anchorX = l.r.x + l.r.w / 2;
     b += `<g class="${cls}" data-i="${l.i}"><rect class="zv-hit" x="${l.r.x.toFixed(1)}" y="${l.r.y.toFixed(1)}" width="${l.r.w.toFixed(1)}" height="${l.r.h.toFixed(1)}" rx="6"/>
       <text x="${anchorX.toFixed(1)}" y="${(l.r.y + lineH - 2).toFixed(1)}" text-anchor="middle" class="zv-lbl-n" style="font-size:${small ? 11.5 : 13}px">${esc(l.name)}</text>
       <text x="${anchorX.toFixed(1)}" y="${(l.r.y + lineH * 2 - 3).toFixed(1)}" text-anchor="middle" class="zv-lbl-t" style="font-size:${small ? 10.5 : 11.5}px">${esc(l.time)}</text></g>`;
   });
-  b += `<g class="zv-body"><circle class="zv-halo" r="${narrow ? 22 : 30}" fill="url(#zvHalo)"/><circle class="zv-sun" r="${narrow ? 7 : 9}"/>
-    <g class="zv-moon"><circle class="zv-moon-halo" r="${narrow ? 18 : 24}"/><circle r="${narrow ? 8 : 10}" mask="url(#zvMoonM)"/></g></g>`;
+  const sr = narrow ? 9 : 11;
+  const rays = Array.from({ length: 12 }, (_, i) => {
+    const a = i * Math.PI / 6, r0 = sr + 4, r1 = sr + (i % 2 ? 8 : 11);
+    return `<line x1="${(r0 * Math.cos(a)).toFixed(1)}" y1="${(r0 * Math.sin(a)).toFixed(1)}" x2="${(r1 * Math.cos(a)).toFixed(1)}" y2="${(r1 * Math.sin(a)).toFixed(1)}"/>`;
+  }).join('');
+  b += `<g class="zv-body"><circle class="zv-halo" r="${sr * 3.6}" fill="url(#zvHalo)"/><g class="zv-rays">${rays}</g><circle class="zv-sun" r="${sr}" fill="url(#zvSunG)"/>
+    <g class="zv-under"><circle class="zv-under-glow" r="${sr + 6}"/><circle class="zv-under-ring" r="${sr - 3}"/><circle class="zv-under-dot" r="2.6"/></g></g>`;
   // rise / set labels at the horizon ends
   svg.innerHTML = b;
   updateSun(true);
+}
+// The real sky behind the Sun look: colours from the sun's true altitude now,
+// stars at night, the moon where it really is, in its real phase.
+function skyCoords() {
+  const l = S.loc;
+  if (l && l.lat != null && isFinite(l.lat) && isFinite(l.lon)) return { lat: +l.lat, lon: +l.lon };
+  // a ZIP without coordinates: its time zone's best-known city is close enough for the sky
+  const c = l && (CITIES.find((x) => x.tz === l.tz && x.zip) || CITIES.find((x) => x.tz === l.tz));
+  return c ? { lat: c.lat, lon: c.lon } : null;
+}
+function altProxy(day, t) {
+  const g = (k) => { const i = day && day.items.find((x) => x.key === k); return i ? i.at : null; };
+  const rise = g('sunrise'), set = g('sunset');
+  if (rise == null || set == null) return null;
+  const alos = g('alos') ?? rise - 72 * MIN, tz = g('tzeis') ?? set + 40 * MIN;
+  if (t < alos) return -24;
+  if (t < rise) return -16 + 16 * (t - alos) / (rise - alos);
+  if (t < set) return 48 * Math.sin(Math.PI * (t - rise) / (set - rise));
+  if (t < tz) return -8 * (t - set) / (tz - set);
+  return Math.max(-24, -8 - 16 * (t - tz) / (90 * MIN));
+}
+function paintSky(t, isToday) {
+  const G = S.sunG;
+  const pane = S.root.querySelector('.zv-pane-sun');
+  const sky = pane.querySelector('.zv-sky');
+  const co = skyCoords();
+  let alt = null;
+  if (co) { try { alt = sunPosition(new Date(t), co).altitude; } catch (e) { alt = null; } }
+  if (alt == null || !isFinite(alt)) alt = altProxy(curDay() || G.day, t);
+  if (alt == null) alt = -30;
+  const c = skyAt(alt);
+  // where things sit inside the pane (the sky spans the whole pane)
+  const pr = pane.getBoundingClientRect(), br = S.svg.getBoundingClientRect();
+  const ox = br.left - pr.left, oy = br.top - pr.top, PH = pr.height || 1, PW = pr.width || 1;
+  const hzy = clamp((oy + G.hy) / PH * 100, 5, 98);
+  let sx = 50, sy = hzy;
+  const body = S.svg.querySelector('.zv-body');
+  const m = body && /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(body.style.transform || '');
+  if (m && isToday) { sx = (ox + +m[1]) / PW * 100; sy = Math.min(hzy, (oy + +m[2]) / PH * 100); }
+  const key = [c.top, c.mid, c.hz, c.glow, c.gnd, c.stars.toFixed(2), hzy.toFixed(1), sx.toFixed(1), sy.toFixed(1)].join('|');
+  if (sky.dataset.k !== key) {
+    sky.dataset.k = key;
+    const st = sky.style;
+    st.setProperty('--zv-s1', c.top); st.setProperty('--zv-s2', c.mid); st.setProperty('--zv-s3', c.hz);
+    st.setProperty('--zv-sglow', c.glow); st.setProperty('--zv-gnd', c.gnd);
+    st.setProperty('--zv-stars', c.stars.toFixed(2));
+    st.setProperty('--zv-hzy', hzy.toFixed(2) + '%');
+    st.setProperty('--zv-sx', sx.toFixed(2) + '%'); st.setProperty('--zv-sy', sy.toFixed(2) + '%');
+  }
+  pane.toggleAttribute('data-light', c.light);
+  pane.dataset.alt = alt.toFixed(1);
+  // the moon: real altitude/azimuth, seen facing the equator (east left, west right),
+  // kept inside the sun's path so it never sits on a zman
+  const mg = S.svg.querySelector('.zv-moonb');
+  if (!mg) return;
+  let show = false;
+  if (co) {
+    const mp = moonPosition(t, co.lat, co.lon);
+    if (mp.altitude > -0.3) {
+      const north = co.lat >= 0;
+      const az = mp.azimuth * Math.PI / 180; // from south, + west: east stays on the left like the sunrise
+      const al = Math.max(0, mp.altitude) * Math.PI / 180;
+      const rr = G.R * 0.8;
+      const x = G.cx + rr * Math.cos(al) * Math.sin(az), y = G.hy - S.moonR - 2 - (rr - S.moonR) * Math.sin(al);
+      const il = moonIllumination(t);
+      // southern hemisphere: the lit side is mirrored
+      const waxing = north ? il.waxing : !il.waxing;
+      mg.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+      const lit = mg.querySelector('.zv-moon-lit');
+      const d = moonPath(S.moonR, il.fraction, waxing);
+      if (lit.getAttribute('d') !== d) lit.setAttribute('d', d);
+      mg.querySelector('title').textContent = `Moon · ${il.name} · ${Math.round(il.fraction * 100)}% lit`;
+      mg.classList.toggle('zv-day', c.light);
+      show = il.fraction > 0.04; // a new moon is invisible: don't draw a ghost
+    }
+  }
+  mg.style.display = show ? '' : 'none';
 }
 function updateSun(fresh) {
   const G = S.sunG;
@@ -891,18 +982,25 @@ function updateSun(fresh) {
   if (isToday) {
     ph = phaseAt(day, t);
     const day_ = t >= M.r && t <= M.s;
+    if (G.night === day_) { renderSun(); return; } // sunrise / sunset: reframe
     let x, y;
+    const nd = S.svg.querySelector('.zv-arc-ndone');
     if (day_) {
       const a = M.ang(t);
       [x, y] = P(a);
       const [sx, sy] = P(180);
       const d = `M${sx.toFixed(1)},${sy.toFixed(1)} A${R},${R} 0 0 1 ${x.toFixed(1)},${y.toFixed(1)}`;
       done.setAttribute('d', d); glow.setAttribute('d', d);
+      nd.setAttribute('d', '');
     } else {
-      // night: the moon crosses the sky from sunset to the next sunrise
-      const prevSet = t < M.r ? M.s - DAY : M.s, nextRise = t < M.r ? M.r : M.r + DAY;
-      const f = clamp((t - prevSet) / (nextRise - prevSet), 0, 1);
-      [x, y] = P(180 - 180 * f, R);
+      // night: the sun keeps its true place below the horizon, on the lower (dashed) circle
+      let a = M.ang(t);
+      if (a > 180) a -= 360;           // before sunrise: -90 … -180 on the left
+      a = Math.max(a, -180);
+      [x, y] = P(a);
+      const [sx, sy] = P(0);
+      const large = Math.abs(a) > 180 ? 1 : 0;
+      nd.setAttribute('d', `M${sx.toFixed(1)},${sy.toFixed(1)} A${R},${R} 0 ${large} 1 ${x.toFixed(1)},${y.toFixed(1)}`);
       done.setAttribute('d', ''); glow.setAttribute('d', '');
     }
     body.style.display = '';
@@ -920,6 +1018,7 @@ function updateSun(fresh) {
   });
   const sky = S.root.querySelector('.zv-sky');
   if (sky.dataset.ph !== ph) sky.dataset.ph = ph;
+  paintSky(t, isToday);
   // info panel
   if (S.sunSel != null && performance.now() - (S.sunSelAt || 0) > 45000) S.sunSel = null;
   const idx = S.sunSel != null ? S.sunSel : nxI != null ? nxI : null;

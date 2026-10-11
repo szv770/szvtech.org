@@ -460,26 +460,54 @@
   gap: 6px;
   padding-bottom: 6px;
 }
-.zv-sky { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
-.zv-sky i { position: absolute; inset: 0; opacity: 0; transition: opacity 3s ease; }
-.zv-sky i[data-ph="night"] { background: radial-gradient(90% 60% at 50% 62%, color-mix(in srgb, var(--zv-a1lo) 26%, transparent), transparent 72%); }
-.zv-sky i[data-ph="dawn"] {
+/* the real sky: colours follow the sun's true altitude (zmanim/sky.js), set as
+   registered colours so a phase change is a slow crossfade, never a jump */
+@property --zv-s1 { syntax: '<color>'; inherits: false; initial-value: #05070f; }
+@property --zv-s2 { syntax: '<color>'; inherits: false; initial-value: #070a1c; }
+@property --zv-s3 { syntax: '<color>'; inherits: false; initial-value: #0e1430; }
+@property --zv-sglow { syntax: '<color>'; inherits: false; initial-value: rgba(0, 0, 0, 0); }
+@property --zv-gnd { syntax: '<color>'; inherits: false; initial-value: #04050b; }
+.zv-sky {
+  position: absolute; inset: 0; pointer-events: none; z-index: -1;
+  border-radius: 22px;
+  overflow: hidden;
+  --zv-hzy: 62%;
   background:
-    radial-gradient(60% 40% at 18% 60%, color-mix(in srgb, var(--zv-a3) 30%, transparent), transparent 72%),
-    radial-gradient(90% 60% at 50% 30%, color-mix(in srgb, var(--zv-a1) 16%, transparent), transparent 75%);
+    linear-gradient(180deg, transparent calc(var(--zv-hzy) - .01%), var(--zv-gnd) var(--zv-hzy), color-mix(in srgb, var(--zv-gnd) 40%, #05050a) 100%),
+    radial-gradient(70% 34% at var(--zv-sx, 50%) var(--zv-sy, 62%), var(--zv-sglow), transparent 72%),
+    linear-gradient(180deg, var(--zv-s1) 0%, var(--zv-s2) calc(var(--zv-hzy) * .62), var(--zv-s3) var(--zv-hzy));
+  transition: --zv-s1 4s ease, --zv-s2 4s ease, --zv-s3 4s ease, --zv-sglow 4s ease, --zv-gnd 4s ease;
 }
-.zv-sky i[data-ph="day"] {
-  background:
-    radial-gradient(90% 70% at 50% 20%, color-mix(in srgb, var(--zv-a2) 17%, transparent), transparent 72%),
-    radial-gradient(70% 45% at 50% 60%, color-mix(in srgb, var(--zv-a1) 10%, transparent), transparent 75%);
+/* stars: two static fields, above the horizon only */
+.zv-sky .zv-stars {
+  position: absolute; inset: 0;
+  opacity: var(--zv-stars, 0);
+  transition: opacity 4s ease;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 calc(var(--zv-hzy) - 14%), transparent var(--zv-hzy));
+  mask-image: linear-gradient(180deg, #000 0%, #000 calc(var(--zv-hzy) - 14%), transparent var(--zv-hzy));
+  background-image:
+    radial-gradient(1.1px 1.1px at 12% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 33% 7%, rgba(255,255,255,.85), transparent),
+    radial-gradient(1.3px 1.3px at 57% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 78% 12%, rgba(255,255,255,.8), transparent),
+    radial-gradient(1px 1px at 91% 31%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1.2px 1.2px at 24% 41%, rgba(255,255,255,.75), transparent),
+    radial-gradient(1px 1px at 69% 44%, rgba(255,255,255,.6), transparent),
+    radial-gradient(1px 1px at 44% 33%, rgba(255,255,255,.7), transparent);
+  background-size: 240px 220px;
 }
-.zv-sky i[data-ph="dusk"] {
-  background:
-    radial-gradient(60% 40% at 82% 60%, color-mix(in srgb, var(--zv-a3) 32%, transparent), transparent 72%),
-    radial-gradient(90% 60% at 50% 30%, color-mix(in srgb, var(--zv-a1) 18%, transparent), transparent 75%);
+.zv-sky .zv-stars2 {
+  background-image:
+    radial-gradient(1px 1px at 8% 30%, rgba(220,230,255,.75), transparent),
+    radial-gradient(1.4px 1.4px at 46% 14%, rgba(255,250,235,.95), transparent),
+    radial-gradient(1px 1px at 63% 36%, rgba(220,230,255,.6), transparent),
+    radial-gradient(1px 1px at 86% 8%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1px 1px at 29% 26%, rgba(255,255,255,.55), transparent);
+  background-size: 330px 290px;
+  background-position: 60px 30px;
+  animation: zv-twinkle 6s ease-in-out infinite alternate;
 }
-.zv-sky[data-ph="night"] i[data-ph="night"], .zv-sky[data-ph="dawn"] i[data-ph="dawn"],
-.zv-sky[data-ph="day"] i[data-ph="day"], .zv-sky[data-ph="dusk"] i[data-ph="dusk"] { opacity: 1; }
+@keyframes zv-twinkle { from { opacity: calc(var(--zv-stars, 0) * .45); } to { opacity: var(--zv-stars, 0); } }
 .zv-arcbox { position: relative; min-height: 0; align-self: stretch; }
 .zv-arc { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .zv-arc-track { fill: none; stroke: rgba(255, 255, 255, .16); stroke-width: 1.4; }
@@ -507,12 +535,44 @@
 .zv-lbl.zv-sel .zv-lbl-n { fill: color-mix(in srgb, var(--zv-a3) 40%, #fff); }
 .zv-body { transition: transform 1s linear; }
 .zv-body.zv-notrans { transition: none; }
-.zv-sun { fill: #fff8de; filter: drop-shadow(0 0 6px #fff1b8); }
-.zv-moon { display: none; }
-.zv-moon circle { fill: #ece9ff; }
-.zv-moon .zv-moon-halo { fill: rgba(210, 205, 255, .1); }
-.zv-isnight .zv-sun, .zv-isnight .zv-halo { display: none; }
-.zv-isnight .zv-moon { display: inline; }
+.zv-sun { filter: drop-shadow(0 0 6px rgba(255, 196, 92, .9)) drop-shadow(0 0 16px rgba(255, 170, 60, .45)); }
+.zv-rays line { stroke: #ffd77e; stroke-width: 1.6; stroke-linecap: round; opacity: .7; }
+.zv-rays { animation: zv-rays 60s linear infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes zv-rays { to { transform: rotate(360deg); } }
+.zv-under { display: none; }
+.zv-isnight .zv-sun, .zv-isnight .zv-halo, .zv-isnight .zv-rays { display: none; }
+.zv-isnight .zv-under { display: inline; }
+/* the sun below the horizon: a quiet ember on the night path */
+.zv-under-glow { fill: rgba(255, 170, 80, .1); }
+.zv-under-ring { fill: none; stroke: rgba(255, 196, 120, .55); stroke-width: 1.4; stroke-dasharray: 2 2.6; }
+.zv-under-dot { fill: rgba(255, 206, 140, .85); }
+.zv-arc-ndone { fill: none; stroke: rgba(255, 196, 120, .38); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 2 5; }
+/* the moon: real phase, real place */
+.zv-moon-dark { fill: rgba(200, 205, 230, .1); stroke: rgba(230, 232, 255, .16); stroke-width: .8; }
+.zv-moon-lit { fill: #f5f1e2; filter: drop-shadow(0 0 5px rgba(255, 250, 225, .45)); }
+.zv-moonb.zv-day .zv-moon-lit { fill: rgba(255, 255, 255, .78); filter: none; }
+.zv-moonb.zv-day .zv-moon-dark { fill: rgba(255, 255, 255, .08); stroke: rgba(255, 255, 255, .2); }
+.zv-moonb.zv-day .zv-moon-halo { display: none; }
+
+/* bright daytime sky: dark labels on a light halo so every zman stays readable */
+.zv-pane-sun[data-light] .zv-arc-track { stroke: rgba(8, 22, 54, .32); }
+.zv-pane-sun[data-light] .zv-arc-night { stroke: rgba(255, 255, 255, .22); }
+.zv-pane-sun[data-light] .zv-tick line { stroke: rgba(8, 22, 54, .55); }
+.zv-pane-sun[data-light] .zv-tick .zv-tdot { fill: #0b1a3a; filter: none; }
+.zv-pane-sun[data-light] .zv-tick.zv-below .zv-tdot { fill: color-mix(in srgb, var(--zv-a1) 60%, #fff); }
+.zv-pane-sun[data-light] .zv-tick.zv-next .zv-tdot { fill: #fff; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--zv-a1) 80%, #000)); }
+/* labels in the bright sky sit on soft frosted chips; the ones below the horizon keep the night style */
+.zv-pane-sun[data-light] .zv-lbl:not(.zv-lbl-low) .zv-hit { fill: rgba(240, 247, 255, .5); stroke: rgba(255, 255, 255, .6); stroke-width: .8; }
+.zv-pane-sun[data-light] .zv-lbl:not(.zv-lbl-low) .zv-lbl-n { fill: #0a1630; stroke: none; }
+.zv-pane-sun[data-light] .zv-lbl:not(.zv-lbl-low) .zv-lbl-t { fill: #233a66; stroke: none; }
+.zv-pane-sun[data-light] .zv-lbl.zv-accent:not(.zv-lbl-low) .zv-lbl-n { fill: color-mix(in srgb, var(--zv-a1) 70%, #0a1030); }
+.zv-pane-sun[data-light] .zv-lbl.zv-next:not(.zv-lbl-low) .zv-hit { fill: rgba(255, 255, 255, .82); stroke: color-mix(in srgb, var(--zv-a1) 55%, #fff); stroke-width: 1.2; }
+.zv-pane-sun[data-light] .zv-lbl.zv-next:not(.zv-lbl-low) .zv-lbl-n { fill: #050c20; }
+.zv-pane-sun[data-light] .zv-lbl.zv-next:not(.zv-lbl-low) .zv-lbl-t { fill: color-mix(in srgb, var(--zv-a1) 80%, #0a1030); }
+.zv-pane-sun[data-light] .zv-lbl.zv-past:not(.zv-lbl-low) { opacity: .62; }
+.zv-pane-sun[data-light] .zv-lbl.zv-sel:not(.zv-lbl-low) .zv-lbl-n { fill: color-mix(in srgb, var(--zv-a3) 60%, #0a1030); }
+.zv-pane-sun[data-light] .zv-arc-glow { opacity: .3; }
+.zv-pane-sun[data-light] .zv-arc-done { filter: drop-shadow(0 0 1px rgba(8, 22, 54, .5)); }
 
 .zv-info { display: grid; gap: 8px; justify-items: center; align-content: end; position: relative; z-index: 1; }
 .zv-info-main {
@@ -825,9 +885,15 @@
 .zv-reduce .zv-card, .zv-reduce .zv-sheet { transition: opacity .16s ease; }
 .zv-reduce .zv-card, .zv-reduce .zv-card.zv-open { transform: translate(-50%, 0); }
 .zv-reduce .zv-sheet, .zv-reduce .zv-sheet.zv-open { transform: translate(-50%, 0); }
-.zv-reduce .zv-sky i { transition-duration: .6s; }
+.zv-reduce .zv-sky { transition-duration: 1.2s; }
+.zv-reduce .zv-sky .zv-stars { transition-duration: 1.2s; }
+.zv-reduce .zv-sky .zv-stars2, .zv-reduce .zv-rays, .zv-paused .zv-sky .zv-stars2 { animation: none; }
 .zv-reduce .zv-row.zv-flash .zv-lab { animation-duration: 2.2s; }
 @container zv (min-width: 700px) {
   .zv-reduce .zv-sheet, .zv-reduce .zv-sheet.zv-open { transform: translate(-50%, -50%); }
 }
 .zv-paused * { animation-play-state: paused !important; }
+
+/* the next-zman card over a bright sky (wide screens put it beside the arc): deeper glass */
+.zv-pane-sun[data-light] .zv-info-main { background: linear-gradient(180deg, rgba(10, 16, 36, .72), rgba(6, 10, 24, .82)); box-shadow: 0 0 0 1px rgba(255, 255, 255, .14) inset, 0 20px 50px -24px rgba(0, 20, 60, .6); }
+.zv-pane-sun[data-light] .zv-info-mini { padding: 8px 16px; border-radius: 14px; background: rgba(6, 10, 24, .55); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }

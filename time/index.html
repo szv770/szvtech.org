@@ -287,7 +287,11 @@ body::after {
   body::after { animation: none; }
 }
 </style>
-<link rel="stylesheet" href="/time/time.css?v=9da2e16eaa">
+<link rel="stylesheet" href="/time/time.css?v=b1b32af2ff">
+<!-- the hub's modes: fetched quietly (media=print never blocks first paint), switched on when a mode first opens -->
+<link rel="stylesheet" href="/timer/timer.css?v=8681576e9f" media="print" data-mode-css="timer">
+<link rel="stylesheet" href="/world/world.css?v=ac2b70fc61" media="print" data-mode-css="world">
+<link rel="stylesheet" href="/zmanim/zmanim-view.css?v=2e1c1cae4f" media="print" data-mode-css="zmanim">
 </head>
 <body>
   <div id="sky" aria-hidden="true"></div>
@@ -319,7 +323,20 @@ body::after {
     <div id="arcwrap" aria-hidden="true"><span class="edge" id="riseT"></span><svg id="arcBig" class="arc"></svg><span class="edge" id="setT"></span></div>
     <button id="zline" type="button" aria-haspopup="dialog" aria-controls="zSheet"><svg id="arcMini" class="arc mini" aria-hidden="true"></svg><span id="ztext"><span id="zlabel"></span><span class="zin"> in </span><span id="zcount"></span><span class="zfor" id="zfor" hidden></span></span></button>
     <span id="mer">&nbsp;</span>
+    <button id="mini" class="hub-off" type="button" aria-label="Back to the clock" inert><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><path d="M8 4.6V8l2.4 1.6"/></svg><span id="miniT"></span></button>
   </footer>
+
+  <section class="pane hub-off" id="pane-timer" data-pane="timer" aria-label="Stopwatch and timer"></section>
+  <section class="pane hub-off" id="pane-world" data-pane="world" aria-label="World clock"></section>
+  <section class="pane hub-off" id="pane-zmanim" data-pane="zmanim" aria-label="Zmanim"></section>
+
+  <nav id="rail" role="tablist" aria-label="Mode" aria-orientation="vertical">
+    <button type="button" role="tab" data-mode="clock" aria-selected="true" aria-keyshortcuts="1"><i aria-hidden="true"></i><span class="lb"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><path d="M8 4.6V8l2.4 1.6"/></svg>Clock</span></button>
+    <button type="button" role="tab" data-mode="timer" aria-selected="false" aria-keyshortcuts="2" tabindex="-1"><i aria-hidden="true"></i><span class="lb"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="9.2" r="5.4"/><path d="M8 9.2V6.4M6.3 1.6h3.4M12.2 4.6l1-1"/></svg>Timer</span></button>
+    <button type="button" role="tab" data-mode="world" aria-selected="false" aria-keyshortcuts="3" tabindex="-1"><i aria-hidden="true"></i><span class="lb"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><path d="M1.7 8h12.6M8 1.7c-2.1 2.3-2.1 10.3 0 12.6M8 1.7c2.1 2.3 2.1 10.3 0 12.6"/></svg>World</span></button>
+    <button type="button" role="tab" data-mode="zmanim" aria-selected="false" aria-keyshortcuts="4" tabindex="-1"><i aria-hidden="true"></i><span class="lb"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 11.5a4.8 4.8 0 0 1 9.6 0M1 11.5h14M8 2.6v1.6M3.3 4.6l1.1 1.1M12.7 4.6l-1.1 1.1"/></svg>Zmanim</span></button>
+  </nav>
+  <span class="sr" id="hubsr" aria-live="polite"></span>
 
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="scrim" aria-hidden="true"></div>
@@ -396,6 +413,6 @@ body::after {
     <div class="sheet-body" id="tBody"><p class="tx-wait">Loading…</p></div>
   </section>
 
-<script type="module" src="/time/ui.js?v=d6d34b3124"></script>
+<script type="module" src="/time/ui.js?v=d39432434e"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
    SZVTECH Timer — stopwatch, countdown timers, focus (pomodoro).
    /timer/timer.js — an embeddable ES module.
 
-     import { mount } from '/timer/timer.js';
+     import { mount } from "timer.js" (served at /timer/timer.js)
      const t = mount(el, {
        standalone: false,   // true on /timer/: footer, document title, favicon, --app-h, ?t= params
        compact: false,      // smaller chrome for embedding (no typed-time box, no key hints, no fullscreen)
