@@ -1591,6 +1591,10 @@ const Term = (() => {
       print(`<span class="c3">&#9670;</span> booting training terminal&hellip; <span class="dim">${free ? 'free play, no missions' : '15 spells, missions, xp'}</span>`);
       return portal(LEARN_URL + (free ? '#free' : ''));
     } },
+    time: { d: 'the clock — exact time, zmanim', fn: () => portal('/time/') },
+    timer: { d: 'stopwatch, timers & focus sessions', fn: () => portal('/timer/') },
+    world: { d: 'world clock & meeting planner', fn: () => portal('/world/') },
+    qr: { d: 'make & scan QR codes, on your device', fn: () => portal('/qr/') },
     exit: { d: 'close the terminal', fn: () => hide() },
   };
 
