@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>QR · SZVTECH</title>
+<meta name="description" content="Make and scan QR codes — Wi-Fi, contacts, links and more. Made on your device, no ads.">
+<meta name="theme-color" content="#05050a">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Cpath d='M13 13h15v15H13zM36 13h15v15H36zM13 36h15v15H13z' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linejoin='round'/%3E%3Cpath d='M38 38h5v5h-5zM46 46h5v5h-5zM46 36h5v5h-5zM36 46h5v5h-5z' fill='%23f3f1ff'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/qr/qr.css?v=3d4537b2ca">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
+<script type="module" src="/qr/qr.js?v=651c2f6430"></script>
+</head>
+<body data-view="make">
+<div class="bgfx" aria-hidden="true"></div>
+
+<header class="top" id="top">
+  <a class="home" href="/">&larr; SZVTECH</a>
+  <nav class="tabs" role="tablist" aria-label="Mode">
+    <button type="button" role="tab" id="tabMake" data-view="make" aria-selected="true" aria-controls="make">Make<kbd>M</kbd></button>
+    <button type="button" role="tab" id="tabScan" data-view="scan" aria-selected="false" aria-controls="scan">Scan<kbd>S</kbd></button>
+    <span class="tab-ink" aria-hidden="true"></span>
+  </nav>
+  <button type="button" class="icon-btn" id="histBtn" aria-haspopup="dialog" aria-controls="histSheet" title="History (H)">
+    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6"/><path d="M3 3.2v3.3h3.3"/><path d="M10 6.5V10l2.5 1.6"/></svg>
+    <span class="sr">History</span>
+  </button>
+</header>
+
+<!-- ============================== MAKE ============================== -->
+<main class="view make" id="make" role="tabpanel" aria-labelledby="tabMake">
+  <section class="pv-col" aria-label="Preview">
+    <div class="card" id="card">
+      <div class="qr-wrap">
+        <div class="qr-box" id="qrBox" role="img" aria-label="QR code preview"></div>
+        <div class="qr-empty" id="qrEmpty">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 16V6h10M32 6h10v10M42 32v10H32M16 42H6V32"/></svg>
+          <span id="emptyMsg">Type something to make a code</span>
+        </div>
+      </div>
+      <div class="meta">
+        <span id="info" class="info">&nbsp;</span>
+        <span class="local"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.2" y="5.2" width="7.6" height="5.3" rx="1.3"/><path d="M4 5.2V3.9a2 2 0 0 1 4 0v1.3"/></svg>made on your device</span>
+      </div>
+    </div>
+    <div class="actions" id="actions">
+      <button type="button" class="thumb" id="thumb" aria-label="Scroll to preview" tabindex="-1"></button>
+      <button type="button" class="act primary" id="dlPng" title="Download PNG (D)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M5.5 8.5 10 13l4.5-4.5M4 16.5h12"/></svg>
+        <span>PNG <small id="pngSizeLbl">1024</small></span>
+      </button>
+      <button type="button" class="act" id="dlSvg" title="Download SVG (V)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5 3 10l4 5M13 5l4 5-4 5M11.2 3.5 8.8 16.5"/></svg>
+        <span>SVG</span>
+      </button>
+      <button type="button" class="act" id="copyImg" title="Copy image (C)" hidden>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.2"/><path d="M13 7V5.2A2.2 2.2 0 0 0 10.8 3H5.2A2.2 2.2 0 0 0 3 5.2v5.6A2.2 2.2 0 0 0 5.2 13H7"/></svg>
+        <span>Copy</span>
+      </button>
+      <button type="button" class="act" id="shareBtn" title="Share" hidden>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 12.5V3M6.5 6.5 10 3l3.5 3.5M6 9.5H5a1.5 1.5 0 0 0-1.5 1.5v5A1.5 1.5 0 0 0 5 17.5h10a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 15 9.5h-1"/></svg>
+        <span>Share</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="ed-col" aria-label="Editor">
+    <div class="types" id="types" role="tablist" aria-label="What to encode">
+      <button type="button" role="tab" data-type="text"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8.5 11.5a3.5 3.5 0 0 0 5 0l2.5-2.5a3.5 3.5 0 0 0-5-5l-1 1M11.5 8.5a3.5 3.5 0 0 0-5 0L4 11a3.5 3.5 0 0 0 5 5l1-1"/></svg>Text / URL</button>
+      <button type="button" role="tab" data-type="wifi"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 7.5a11 11 0 0 1 15 0M5 10.5a7.3 7.3 0 0 1 10 0M7.6 13.4a3.5 3.5 0 0 1 4.8 0"/><circle cx="10" cy="16" r=".9"/></svg>Wi-Fi</button>
+      <button type="button" role="tab" data-type="contact"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="7" r="3.2"/><path d="M3.8 17a6.2 6.2 0 0 1 12.4 0"/></svg>Contact</button>
+      <button type="button" role="tab" data-type="email"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.8" y="4.5" width="14.4" height="11" rx="2"/><path d="m3.5 5.5 6.5 5 6.5-5"/></svg>Email</button>
+      <button type="button" role="tab" data-type="sms"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 4h11A1.5 1.5 0 0 1 17 5.5v7a1.5 1.5 0 0 1-1.5 1.5H9l-4 3v-3h-.5A1.5 1.5 0 0 1 3 12.5v-7A1.5 1.5 0 0 1 4.5 4z"/></svg>SMS</button>
+      <button type="button" role="tab" data-type="phone"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.6 3.2 8.4 7 6.9 8.3a9 9 0 0 0 4.8 4.8L13 11.6l3.8 1.8-.6 2.7a1.6 1.6 0 0 1-1.7 1.2A13 13 0 0 1 2.7 5.5a1.6 1.6 0 0 1 1.2-1.7z"/></svg>Phone</button>
+      <button type="button" role="tab" data-type="geo"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17.5s5.5-5 5.5-9.2a5.5 5.5 0 0 0-11 0c0 4.2 5.5 9.2 5.5 9.2z"/><circle cx="10" cy="8.3" r="2"/></svg>Location</button>
+    </div>
+
+    <form class="fields" id="fields" autocomplete="off" novalidate>
+      <fieldset data-panel="text">
+        <label class="fld"><span class="lbl">Text or link</span>
+          <textarea name="text" rows="3" placeholder="https://szvtech.org" spellcheck="false" autocapitalize="off" enterkeyhint="done"></textarea>
+        </label>
+        <p class="hint" id="textHint">Links, notes, anything. Up to about 2,900 characters.</p>
+      </fieldset>
+
+      <fieldset data-panel="wifi" hidden>
+        <label class="fld"><span class="lbl">Network name (SSID)</span>
+          <input name="ssid" type="text" placeholder="Home Wi-Fi" autocapitalize="off" autocorrect="off" spellcheck="false">
+        </label>
+        <div class="fld">
+          <label class="lbl" for="wpass">Password</label>
+          <div class="pw">
+            <input id="wpass" name="pass" type="password" placeholder="••••••••" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off">
+            <button type="button" class="eye" id="eyeBtn" aria-label="Show password" aria-pressed="false">
+              <svg class="open" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 10s3-5.5 8-5.5S18 10 18 10s-3 5.5-8 5.5S2 10 2 10z"/><circle cx="10" cy="10" r="2.4"/></svg>
+              <svg class="shut" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3l14 14M8.3 5A8 8 0 0 1 10 4.5c5 0 8 5.5 8 5.5a14 14 0 0 1-2.4 3M12 15.2a7.6 7.6 0 0 1-2 .3c-5 0-8-5.5-8-5.5a14 14 0 0 1 3-3.6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="fld"><span class="lbl">Security</span>
+          <div class="seg" id="secSeg" role="radiogroup" aria-label="Security">
+            <button type="button" role="radio" data-sec="WPA">WPA/WPA2/3</button><button type="button" role="radio" data-sec="WEP">WEP</button><button type="button" role="radio" data-sec="nopass">None</button>
+          </div>
+        </div>
+        <label class="switch"><input type="checkbox" name="hidden"><span class="track" aria-hidden="true"></span><span>Hidden network</span></label>
+      </fieldset>
+
+      <fieldset data-panel="contact" hidden>
+        <div class="row2">
+          <label class="fld"><span class="lbl">First name</span><input name="first" type="text" autocomplete="off" autocapitalize="words"></label>
+          <label class="fld"><span class="lbl">Last name</span><input name="last" type="text" autocomplete="off" autocapitalize="words"></label>
+        </div>
+        <label class="fld"><span class="lbl">Phone</span><input name="tel" type="tel" inputmode="tel" placeholder="+1 555 123 4567"></label>
+        <label class="fld"><span class="lbl">Email</span><input name="email" type="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="name@example.com"></label>
+        <label class="fld"><span class="lbl">Organization</span><input name="org" type="text" autocapitalize="words"></label>
+        <div class="row2">
+          <label class="fld"><span class="lbl">Title <i>optional</i></span><input name="title" type="text" autocapitalize="words"></label>
+          <label class="fld"><span class="lbl">Website <i>optional</i></span><input name="url" type="url" inputmode="url" autocapitalize="off" spellcheck="false"></label>
+        </div>
+      </fieldset>
+
+      <fieldset data-panel="email" hidden>
+        <label class="fld"><span class="lbl">To</span><input name="to" type="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="name@example.com"></label>
+        <label class="fld"><span class="lbl">Subject</span><input name="subject" type="text"></label>
+        <label class="fld"><span class="lbl">Message</span><textarea name="body" rows="3"></textarea></label>
+      </fieldset>
+
+      <fieldset data-panel="sms" hidden>
+        <label class="fld"><span class="lbl">Phone number</span><input name="num" type="tel" inputmode="tel" placeholder="+1 555 123 4567"></label>
+        <label class="fld"><span class="lbl">Message</span><textarea name="msg" rows="3"></textarea></label>
+      </fieldset>
+
+      <fieldset data-panel="phone" hidden>
+        <label class="fld"><span class="lbl">Phone number</span><input name="num" type="tel" inputmode="tel" placeholder="+1 555 123 4567"></label>
+        <p class="hint">Scanning it offers to call this number.</p>
+      </fieldset>
+
+      <fieldset data-panel="geo" hidden>
+        <div class="row2">
+          <label class="fld"><span class="lbl">Latitude</span><input name="lat" type="text" inputmode="decimal" placeholder="40.6694"></label>
+          <label class="fld"><span class="lbl">Longitude</span><input name="lon" type="text" inputmode="decimal" placeholder="-73.9422"></label>
+        </div>
+        <button type="button" class="ghost" id="geoBtn">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3"/><path d="M10 2v3M10 15v3M2 10h3M15 10h3"/></svg>
+          <span id="geoLbl">Use my location</span>
+        </button>
+        <p class="hint">Or paste “40.6694, -73.9422” into either box.</p>
+      </fieldset>
+
+      <details class="raw" id="rawBox">
+        <summary><span>Encoded data</span><span class="rawinfo" id="rawInfo"></span></summary>
+        <pre id="raw"></pre>
+      </details>
+    </form>
+
+    <section class="opts" aria-labelledby="optsTitle">
+      <h2 id="optsTitle">Style</h2>
+      <div class="opt">
+        <div class="seg style" id="styleSeg" role="radiogroup" aria-label="Style">
+          <button type="button" role="radio" data-style="classic"><i class="sw sw-classic" aria-hidden="true"></i>Classic</button>
+          <button type="button" role="radio" data-style="rounded"><i class="sw sw-rounded" aria-hidden="true"></i>Rounded</button>
+          <button type="button" role="radio" data-style="themed"><i class="sw sw-themed" aria-hidden="true"></i>Themed</button>
+        </div>
+      </div>
+      <label class="switch"><input type="checkbox" id="logoChk"><span class="track" aria-hidden="true"></span><span>Center “S” mark</span></label>
+      <p class="note" id="styleNote" hidden></p>
+
+      <div class="opt">
+        <div class="opt-h"><span class="lbl">Error correction</span><span class="val" id="eclVal">M · 15%</span></div>
+        <div class="seg" id="eclSeg" role="radiogroup" aria-label="Error correction">
+          <button type="button" role="radio" data-ecl="L">L</button><button type="button" role="radio" data-ecl="M">M</button><button type="button" role="radio" data-ecl="Q">Q</button><button type="button" role="radio" data-ecl="H">H</button>
+        </div>
+      </div>
+      <div class="opt">
+        <div class="opt-h"><label class="lbl" for="quiet">Quiet zone</label><span class="val" id="quietVal">4 modules</span></div>
+        <input type="range" id="quiet" min="0" max="8" step="1" value="4">
+      </div>
+      <div class="opt">
+        <div class="opt-h"><span class="lbl">PNG size</span><span class="val">pixels</span></div>
+        <div class="seg" id="sizeSeg" role="radiogroup" aria-label="PNG size">
+          <button type="button" role="radio" data-size="512">512</button><button type="button" role="radio" data-size="1024">1024</button><button type="button" role="radio" data-size="2048">2048</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span class="themes"><span class="lbl">Theme</span><span data-szv-theme-dots></span></span>
+      <span class="keys"><kbd>D</kbd> PNG <kbd>V</kbd> SVG <kbd>C</kbd> copy <kbd>H</kbd> history</span>
+    </footer>
+  </section>
+</main>
+
+<!-- ============================== SCAN ============================== -->
+<section class="view scan" id="scan" role="tabpanel" aria-labelledby="tabScan" hidden>
+  <div class="scanner" id="scanner">
+    <video id="video" playsinline muted autoplay disablepictureinpicture aria-hidden="true"></video>
+    <div class="vf" id="vf" aria-hidden="true">
+      <div class="frame"><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><span class="line"></span></div>
+    </div>
+    <div class="idle" id="idle">
+      <button type="button" class="start" id="startCam">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.3-2h6.4l1.3 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.6" r="3.4"/></svg>
+        <span>Start camera</span>
+      </button>
+      <p class="idle-sub" id="idleSub">Uses your camera only while this is open. Nothing is uploaded.</p>
+    </div>
+    <p class="status" id="scanStatus" role="status" aria-live="polite"></p>
+    <div class="sc-ctrls">
+      <label class="round" id="imgBtn" title="Scan from image">
+        <input type="file" id="fileIn" accept="image/*" hidden>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.8" y="3.8" width="14.4" height="12.4" rx="2"/><circle cx="7.2" cy="8" r="1.4"/><path d="m3.5 14.5 4-4 3 3 2-2 4 4"/></svg>
+        <span>Image</span>
+      </label>
+      <button type="button" class="round big" id="camToggle" aria-label="Start camera">
+        <i aria-hidden="true"></i>
+      </button>
+      <button type="button" class="round" id="torchBtn" aria-pressed="false" disabled title="Flashlight">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 2.5h6l-1 4.5H8zM8 7h4v9.5a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z"/><path d="M10 10.5v2"/></svg>
+        <span>Light</span>
+      </button>
+    </div>
+    <div class="drop" id="drop" aria-hidden="true"><span>Drop an image to scan</span></div>
+  </div>
+  <p class="scan-help">Paste an image (<kbd>Ctrl</kbd>+<kbd>V</kbd>), drop one here, or pick a file. <kbd>Space</kbd> starts the camera.</p>
+</section>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="scrim" aria-hidden="true"></div>
+
+<section class="sheet" id="resSheet" role="dialog" aria-modal="true" aria-labelledby="resTitle">
+  <div class="sheet-head">
+    <span class="grab" aria-hidden="true"></span>
+    <div class="sh-row">
+      <div class="sh-t"><small id="resKind">Scanned</small><h2 id="resTitle">Result</h2></div>
+      <button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button>
+    </div>
+  </div>
+  <div class="sheet-body" id="resBody"></div>
+  <div class="sheet-foot" id="resFoot"></div>
+</section>
+
+<section class="sheet" id="histSheet" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+  <div class="sheet-head">
+    <span class="grab" aria-hidden="true"></span>
+    <div class="sh-row">
+      <div class="sh-t"><small>Only on this device</small><h2 id="histTitle">History</h2></div>
+      <div class="sh-btns">
+        <button class="clear" type="button" id="histClear">Clear</button>
+        <button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <div class="sheet-body">
+    <ol class="hist" id="histList"></ol>
+    <p class="hist-empty" id="histEmpty">Codes you download, copy, share or scan show up here — the last 20.</p>
+  </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,58 @@
+/* /timer standalone page frame. The component itself is styled by /timer/timer.css (scoped to .tmr). */
+:root {
+  --bg: #05050a;
+  --a1: #8b5cf6; --a2: #22d3ee; --a3: #e879f9; /* no-JS fallbacks; theme.js paints the real ones */
+  --mx: 14px;
+  --my: 12px;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: var(--bg); }
+body {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-h, 100dvh);
+  padding:
+    max(var(--my), env(safe-area-inset-top))
+    max(var(--mx), env(safe-area-inset-right))
+    max(var(--my), env(safe-area-inset-bottom))
+    max(var(--mx), env(safe-area-inset-left));
+  color: #f3f1ff;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  background:
+    radial-gradient(70% 55% at 12% 0%, color-mix(in srgb, var(--a1) 15%, transparent), transparent 70%),
+    radial-gradient(60% 50% at 100% 100%, color-mix(in srgb, var(--a2) 10%, transparent), transparent 70%),
+    radial-gradient(50% 40% at 85% 10%, color-mix(in srgb, var(--a3) 7%, transparent), transparent 70%),
+    var(--bg);
+}
+/* film grain */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  pointer-events: none;
+  z-index: 70;
+  opacity: .065;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 1s steps(6) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -4%); }
+  60% { transform: translate(-4%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+.app { height: 100%; width: 100%; }
+.nojs { font: 15px/1.5 sans-serif; color: #aaa; text-align: center; margin-top: 30vh; }
+@media (prefers-reduced-motion: reduce) { body::after { animation: none; } }
