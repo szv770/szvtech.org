@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>NYC Time · SZVTECH</title>
-<meta name="description" content="What time is it in New York, right now, as big as your screen allows.">
+<title>Time · SZVTECH</title>
+<meta name="description" content="What time it is where you are, right now, as big as your screen allows — and how time zones work.">
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="NYC Time">
+<meta name="apple-mobile-web-app-title" content="Time">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='url(%23g)' stroke-width='4.5'/%3E%3Cpath d='M32 19v13l9 6' fill='none' stroke='%23f3f1ff' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="/assets/theme.js?v=8c7e276563"></script>
@@ -287,15 +287,16 @@ body::after {
   body::after { animation: none; }
 }
 </style>
-<link rel="stylesheet" href="/time/time.css?v=57a4f60f01">
+<link rel="stylesheet" href="/time/time.css?v=9da2e16eaa">
 </head>
 <body>
   <div id="sky" aria-hidden="true"></div>
 
   <header class="bar top" id="top">
     <button class="city" id="cityBtn" type="button" aria-haspopup="dialog" aria-controls="citySheet" title="Change location">
-      <i aria-hidden="true"></i><span class="cname" id="cname">New York</span><svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4"/></svg>
+      <i aria-hidden="true"></i><span class="cname" id="cname">&nbsp;</span><svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4"/></svg>
     </button>
+    <button class="info" id="infoBtn" type="button" aria-haspopup="dialog" aria-controls="tSheet" aria-label="How time zones work" title="How time works"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6"/><path d="M8 7.3v4.1"/><circle class="dot" cx="8" cy="4.9" r=".95"/></svg></button>
     <span class="favdots" id="favdots" aria-hidden="true"></span>
     <span id="date" class="alt"><span class="greg" id="greg">&nbsp;</span><span class="heb" id="heb" title="Hebrew date — begins at nightfall"></span></span>
   </header>
@@ -316,7 +317,7 @@ body::after {
     <a class="home" href="/">&larr; SZVTECH</a>
     <button id="sync" type="button" data-where="" aria-label="Time sync">syncing…</button>
     <div id="arcwrap" aria-hidden="true"><span class="edge" id="riseT"></span><svg id="arcBig" class="arc"></svg><span class="edge" id="setT"></span></div>
-    <button id="zline" type="button" aria-haspopup="dialog" aria-controls="zSheet"><svg id="arcMini" class="arc mini" aria-hidden="true"></svg><span id="ztext"><span id="zlabel"></span><span class="zin"> in </span><span id="zcount"></span></span></button>
+    <button id="zline" type="button" aria-haspopup="dialog" aria-controls="zSheet"><svg id="arcMini" class="arc mini" aria-hidden="true"></svg><span id="ztext"><span id="zlabel"></span><span class="zin"> in </span><span id="zcount"></span><span class="zfor" id="zfor" hidden></span></span></button>
     <span id="mer">&nbsp;</span>
   </footer>
 
@@ -330,13 +331,20 @@ body::after {
         <h2 id="cityTitle">Location</h2>
         <button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button>
       </div>
+      <div class="seg ptabs" id="ptabs" role="tablist" aria-label="Choose by">
+        <button type="button" role="tab" data-tab="cities" aria-selected="true">Cities</button><button type="button" role="tab" data-tab="zones" aria-selected="false">Time zones</button>
+      </div>
       <label class="search">
         <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
-        <input id="q" type="search" placeholder="Search cities" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="Search cities">
+        <input id="q" type="search" placeholder="Search cities or zones" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="Search cities or zones">
       </label>
     </div>
     <div class="sheet-body" id="cityBody">
       <div class="quick" id="quick">
+        <button class="qbtn auto" id="autoBtn" type="button" aria-pressed="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c-2.2 2.4-2.2 10.6 0 13M8 1.5c2.2 2.4 2.2 10.6 0 13"/></svg>
+          <span><b>Use my time zone</b><small id="autoStatus">From this device</small></span>
+        </button>
         <button class="qbtn" id="geoBtn" type="button">
           <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15"/></svg>
           <span><b>Use my location</b><small id="geoStatus">Stays on this device</small></span>
@@ -367,6 +375,7 @@ body::after {
       <p class="zday" id="zDay"></p>
     </div>
     <div class="sheet-body">
+      <button class="zcity" id="zCity" type="button" hidden><span><b>Zmanim for your time zone’s main city</b><small></small></span><em>Set your city</em></button>
       <ol class="zlist" id="zList"></ol>
       <div class="zset">
         <div class="opt"><span>Candle lighting<small>minutes before sunset</small></span><div class="chips" id="candleChips"></div></div>
@@ -376,6 +385,17 @@ body::after {
     </div>
   </section>
 
-<script type="module" src="/time/ui.js?v=3ecff3be44"></script>
+  <section class="sheet tsheet" id="tSheet" role="dialog" aria-modal="true" aria-labelledby="tTitle">
+    <div class="sheet-head">
+      <span class="grab" aria-hidden="true"></span>
+      <div class="sh-row">
+        <div class="zt"><h2 id="tTitle">How time works</h2><small id="tSub"></small></div>
+        <button class="x" type="button" data-close aria-label="Close"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg></button>
+      </div>
+    </div>
+    <div class="sheet-body" id="tBody"><p class="tx-wait">Loading…</p></div>
+  </section>
+
+<script type="module" src="/time/ui.js?v=d6d34b3124"></script>
 </body>
 </html>
