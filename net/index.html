@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Net Lab · SZVTECH</title>
+<meta name="description" content="Your IP, live latency, DNS lookups and everything your device reports — one lab bench.">
+<meta name="theme-color" content="#05050a">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Cpath d='M13 42a19 19 0 0 1 38 0' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round'/%3E%3Cpath d='M32 42l10-13' stroke='%23f3f1ff' stroke-width='4.5' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='42' r='4' fill='%23f3f1ff'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/net/net.css?v=e4cdaace67">
+<script type="module" src="/net/net.js?v=320839804d"></script>
+</head>
+<body>
+<div class="bgfx" aria-hidden="true"><div class="gridfx"></div></div>
+
+<header class="top">
+  <a class="home" href="/">&larr; SZVTECH</a>
+  <div class="brand" aria-hidden="true"><span class="brand-dot" id="liveDot"></span>NET<span class="brand-sep">/</span>LAB</div>
+</header>
+
+<div class="hero">
+  <h1>Network <em>lab</em></h1>
+  <p>Your connection, your device and the internet&rsquo;s phone book &mdash; measured live, right here.</p>
+</div>
+
+<main class="board">
+
+  <!-- ============================ LATENCY ============================ -->
+  <section class="card lat" id="lat" aria-labelledby="latH">
+    <div class="card-head">
+      <span class="tag">01</span>
+      <h2 id="latH">Latency</h2>
+      <button type="button" class="pill-btn" id="pingToggle" aria-pressed="false">
+        <span class="pb-dot" aria-hidden="true"></span><span id="pingToggleTxt">live</span><kbd class="kb">P</kbd>
+      </button>
+    </div>
+    <p class="lat-sub">How long a round trip to this site&rsquo;s server takes, measured every second while this page is open.</p>
+    <div class="lat-top">
+      <div class="lat-now"><span class="big" id="pNow">&mdash;</span><span class="u">ms</span><span class="lat-q" id="pQual"></span></div>
+      <dl class="lat-stats">
+        <div><dt>min</dt><dd id="pMin">&mdash;</dd></div>
+        <div><dt>avg</dt><dd id="pAvg">&mdash;</dd></div>
+        <div><dt>jitter</dt><dd id="pJit">&mdash;</dd></div>
+        <div><dt>loss</dt><dd id="pLoss">&mdash;</dd></div>
+      </dl>
+    </div>
+    <div class="chart c-spark">
+      <div class="chart-lbl"><span>round trip to /api/now · 1/s</span><span id="pCount">0 samples</span></div>
+      <canvas id="spark" aria-hidden="true"></canvas>
+    </div>
+    <div class="chart c-histo">
+      <div class="chart-lbl"><span>distribution</span><span id="pRange"></span></div>
+      <canvas id="histo" aria-hidden="true"></canvas>
+    </div>
+    <div class="clock">
+      <div><span class="micro">server</span><span class="c-t" id="cServer">--:--:--.-</span></div>
+      <div><span class="micro">your clock</span><span class="c-t" id="cLocal">--:--:--.-</span></div>
+      <p class="c-off" id="cOff">syncing&hellip;</p>
+    </div>
+  </section>
+
+  <!-- ============================ YOU ============================ -->
+  <section class="card you" id="you" aria-labelledby="youH">
+    <div class="card-head">
+      <span class="tag">02</span>
+      <h2 id="youH">You, from here</h2>
+      <button type="button" class="icon-btn" id="ipHide" aria-pressed="false" title="Hide my IP (for screenshots)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M1.8 10S5 4.5 10 4.5 18.2 10 18.2 10 15 15.5 10 15.5 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.6"/></svg>
+        <span class="sr">Hide IP</span>
+      </button>
+      <button type="button" class="icon-btn" id="ipCopy" title="Copy IP">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6.5" y="6.5" width="10" height="10" rx="2"/><path d="M13.5 6.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v7A1.5 1.5 0 0 0 5 13.5h1.5"/></svg>
+        <span class="sr">Copy IP</span>
+      </button>
+    </div>
+    <div class="ip-line">
+      <span class="ip" id="ipVal">&hellip;</span>
+      <span class="chip" id="ipVer" hidden></span>
+    </div>
+    <dl class="kv" id="youKv"></dl>
+    <div class="plain" id="plain">
+      <span class="micro">what any website can see</span>
+      <p id="plainTxt">&hellip;</p>
+    </div>
+  </section>
+
+  <!-- ============================ DNS ============================ -->
+  <section class="card dns" id="dns" aria-labelledby="dnsH">
+    <div class="card-head">
+      <span class="tag">03</span>
+      <h2 id="dnsH">DNS lookup</h2>
+      <div class="seg small" role="radiogroup" aria-label="Resolver" id="resSeg">
+        <button type="button" role="radio" data-res="cloudflare" aria-checked="true">1.1.1.1</button>
+        <button type="button" role="radio" data-res="google" aria-checked="false">8.8.8.8</button>
+      </div>
+    </div>
+    <form class="dns-form" id="dnsForm" autocomplete="off">
+      <label class="sr" for="dnsIn">Domain</label>
+      <input id="dnsIn" name="d" type="text" inputmode="url" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="example.com" maxlength="260" enterkeyhint="search">
+      <button type="submit" class="btn-grad" id="dnsGo">Look up <kbd class="kb">/</kbd></button>
+    </form>
+    <div class="chips" id="typeChips" role="radiogroup" aria-label="Record type"></div>
+    <p class="dns-sum" id="dnsSum" aria-live="polite"></p>
+    <div class="dns-out" id="dnsOut"></div>
+    <div class="recent" id="dnsRecent" hidden>
+      <div class="hist-head"><span class="micro">recent</span><button type="button" class="link-btn" id="dnsClear">clear</button></div>
+      <div class="chips" id="dnsHist"></div>
+    </div>
+  </section>
+
+  <!-- ============================ DEVICE ============================ -->
+  <section class="card dev" id="dev" aria-labelledby="devH">
+    <div class="card-head">
+      <span class="tag">04</span>
+      <h2 id="devH">Your device</h2>
+      <button type="button" class="pill-btn" id="devCopy"><span id="devCopyTxt">copy all</span><kbd class="kb">C</kbd></button>
+    </div>
+    <div class="dev-grid" id="devGrid"></div>
+    <div class="caps" id="caps"></div>
+    <div class="sensors" id="sensors">
+      <div class="hist-head"><span class="micro">live sensors</span><button type="button" class="pill-btn" id="sensBtn"><span class="pb-dot" aria-hidden="true"></span><span id="sensBtnTxt">start</span></button></div>
+      <div class="sens-body">
+        <div class="level" aria-hidden="true"><div class="level-ring"></div><div class="level-cross"></div><div class="bubble" id="bubble"></div></div>
+        <dl class="sens-kv" id="sensKv">
+          <div><dt>tilt β</dt><dd id="sB">&mdash;</dd></div>
+          <div><dt>tilt γ</dt><dd id="sG">&mdash;</dd></div>
+          <div><dt>heading α</dt><dd id="sA">&mdash;</dd></div>
+          <div><dt>accel</dt><dd id="sAcc">&mdash;</dd></div>
+          <div><dt>rotation</dt><dd id="sRot">&mdash;</dd></div>
+          <div><dt>rate</dt><dd id="sHz">&mdash;</dd></div>
+        </dl>
+      </div>
+      <p class="sens-msg" id="sensMsg">Tilt, compass and motion from your phone&rsquo;s sensors. Nothing is sent anywhere.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span class="dots" data-szv-theme-dots></span>
+  <span>Nothing here is stored on a server. Your DNS history stays on this device.</span>
+  <span class="keys"><kbd>P</kbd> ping <kbd>/</kbd> dns <kbd>C</kbd> copy</span>
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
