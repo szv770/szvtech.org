@@ -24,6 +24,7 @@ export const TOOLS = [
   { id: 'time',    path: '/time/',    name: 'Time',    blurb: 'Exact clock, zmanim, bedside mode', icon: 'clock', live: true },
   { id: 'zmanim',  path: '/zmanim/',  name: 'Zmanim',  blurb: 'Today’s zmanim: timeline, sun arc & week (Chabad.org)', icon: 'sun', live: true },
   { id: 'luach',   path: '/luach/',   name: 'Luach',   blurb: 'Hebrew calendar, Shabbos times, daily study, date converter', icon: 'calendar', live: true },
+  { id: 'weather', path: '/weather/', name: 'Weather', blurb: 'Now, hourly and 7 days for your saved city', icon: 'cloud', live: true },
   { id: 'timer',   path: '/timer/',   name: 'Timer',   blurb: 'Stopwatch, countdowns, focus', icon: 'timer', live: true },
   { id: 'world',   path: '/world/',   name: 'World',   blurb: 'World clock & meeting planner', icon: 'globe', live: true },
   { id: 'qr',      path: '/qr/',      name: 'QR',      blurb: 'Make & scan, on your device', icon: 'qr', live: true },
@@ -31,7 +32,7 @@ export const TOOLS = [
     demo: ['5 ft 11 in → 180.3 cm', '72 °F → 22.2 °C', '1 cup → 236.6 ml', '26.2 mi → 42.16 km', '150 lb → 68.04 kg'] },
   { id: 'dev',     path: '/dev/',     name: 'Dev',     blurb: 'Encoders, hashes, little dev helpers', icon: 'code', live: false },
   { id: 'net',     path: '/net/',     name: 'Net Lab', blurb: 'Your IP, live ping, DNS, device info', icon: 'wifi', live: true },
-  { id: 'sky',     path: '/sky/',     name: 'Sky',     blurb: 'The ISS live, passes, Moon & planets', icon: 'orbit', live: false },
+  { id: 'sky',     path: '/sky/',     name: 'Sky',     blurb: 'The ISS live, passes, Moon & planets', icon: 'orbit', live: true },
 ];
 
 export const liveTools = () => TOOLS.filter((t) => t.live);
