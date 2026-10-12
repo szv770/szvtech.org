@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Weather · SZVTECH</title>
+<meta name="description" content="Weather for your saved city: now, hourly, 7 days.">
+<meta name="theme-color" content="#05050a">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Cpath d='M20 44h26a10 10 0 0 0 1.5-19.9A14 14 0 0 0 21 27.5 8.4 8.4 0 0 0 20 44z' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="/assets/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/weather/weather.css">
+</head>
+<body>
+<div id="sky" aria-hidden="true"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<header class="top">
+  <a class="back" href="/">&larr; SZVTECH</a>
+  <div class="top-r">
+    <button class="chip" id="units" type="button" aria-label="Switch units">°F</button>
+    <button class="chip icon" id="refresh" type="button" aria-label="Refresh">&#x21bb;</button>
+  </div>
+</header>
+
+<main id="app" aria-live="polite">
+  <section class="hero">
+    <button class="place" id="place" type="button" aria-label="Change city"><span id="placeName">&nbsp;</span><i aria-hidden="true">&#x25BE;</i></button>
+    <div class="hero-icon" id="heroIcon" aria-hidden="true"></div>
+    <div class="temp"><span id="temp">--</span><sup id="deg">°</sup></div>
+    <div class="cond" id="cond">Loading…</div>
+    <div class="sub" id="sub"></div>
+  </section>
+  <div id="body"></div>
+  <footer class="foot">
+    <div id="stamp"></div>
+    <div>Weather data by <span class="nowrap">Open-Meteo.com</span></div>
+  </footer>
+</main>
+
+<div class="sheet-back" id="sheetBack" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Choose city" hidden>
+  <div class="grab" aria-hidden="true"></div>
+  <input id="q" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="City or 5-digit ZIP" aria-label="Search city or ZIP">
+  <button class="row here" id="here" type="button">Use my location</button>
+  <div id="results" class="results"></div>
+  <p class="hint">Shared with /time and /zmanim: pick once, it sticks.</p>
+</section>
+
+<noscript><p class="ns">Weather needs JavaScript.</p></noscript>
+<script type="module" src="/weather/weather.js"></script>
+</body>
+</html>

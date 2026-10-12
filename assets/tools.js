@@ -24,6 +24,7 @@ export const TOOLS = [
   { id: 'time',    path: '/time/',    name: 'Time',    blurb: 'Exact clock, zmanim, bedside mode', icon: 'clock', live: true },
   { id: 'zmanim',  path: '/zmanim/',  name: 'Zmanim',  blurb: 'Today’s zmanim: timeline, sun arc & week (Chabad.org)', icon: 'sun', live: true },
   { id: 'luach',   path: '/luach/',   name: 'Luach',   blurb: 'Hebrew calendar, Shabbos times, daily study, date converter', icon: 'calendar', live: true },
+  { id: 'weather', path: '/weather/', name: 'Weather', blurb: 'Now, hourly and 7 days for your saved city', icon: 'cloud', live: true },
   { id: 'timer',   path: '/timer/',   name: 'Timer',   blurb: 'Stopwatch, countdowns, focus', icon: 'timer', live: true },
   { id: 'world',   path: '/world/',   name: 'World',   blurb: 'World clock & meeting planner', icon: 'globe', live: true },
   { id: 'qr',      path: '/qr/',      name: 'QR',      blurb: 'Make & scan, on your device', icon: 'qr', live: true },
