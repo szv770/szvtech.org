@@ -59,6 +59,10 @@ Hidden pages (`hack`, `more`, `contact`, `sys`) are **never linked visibly**;
 discovery is part of the fun. New tool pages may be in the open (nav/menu) or
 hidden — ask the owner which. Public tools are one line in `assets/tools.js` (`live: true` puts them on the homepage).
 
+- **Unfinished pages** are parked in `.wip/<name>/` (not deployed via
+  `.vercelignore`, skipped by smoke test + cache-bust). Resume with
+  `git mv .wip/<name> <name>`. See `.wip/README.md`.
+
 ## 4. Stack & conventions
 
 - **Static files on Vercel, no build step.** HTML/CSS/JS served as-is.
@@ -114,9 +118,15 @@ When building a new page, do all of this:
    (`navigator.vibrate`, skipped under reduced motion), clipboard, share, etc.
    Wrap in try/catch; the page must work without them.
 8. **`← SZVTECH` link home** (`<a href="/">&larr; SZVTECH</a>`, subtle, top corner).
-9. **Discovery path:** add a terminal command in `assets/main.js` (in `PUBLIC`
-   with a `help` line, or in `SECRET` via `portal('/name/')`), and nav/menu/footer
-   entries if the owner wants it visible.
+9. **Discovery path:** for a public tool, add **one line** to `TOOLS` in
+   `assets/tools.js` (id, path, name, blurb, icon from its `ICONS`, or add a
+   new 24×24 stroke icon there). That alone puts it on the homepage Tools grid,
+   the menu chips, the footer and the terminal (`<id>` command + `help`).
+   Start with `live: false` ("soon" chip) and flip to `live: true` when it
+   ships. Hidden pages instead go in `SECRET` in `assets/main.js` via
+   `portal('/name/')`. If the page is also useful inside `/time` (like
+   timer/world/zmanim), export `mount(el, {compact, now})`, `setActive`,
+   `unmount` so the hub can embed it.
 10. **Escape user input**; persist prefs in `localStorage` with try/catch.
 11. **Run `python3 tools/cache-bust.py`** after the last CSS/JS edit — required
     (see §10). Then run the smoke test (§8).
