@@ -3,7 +3,7 @@
 // answer is cached in localStorage so the page opens instantly and still shows
 // something offline.
 
-import { savedLoc, defaultLoc, saveLoc, fromCity, zipLoc, locFromParams, hasCoords, CITIES, deviceTz, lsGet, lsSet } from '/zmanim/data.js';
+import { savedLoc, defaultLoc, saveLoc, fromCity, zipLoc, locFromParams, hasCoords, CITIES, deviceTz, lsGet, lsSet } from '/zmanim/data.js?v=41d2c1bfa5';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

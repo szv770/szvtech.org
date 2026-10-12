@@ -19,11 +19,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/sky/sky.css?v=0b84634b5f">
+<link rel="stylesheet" href="/sky/sky.css?v=0af0b50900">
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" } }
 </script>
-<link rel="modulepreload" href="/sky/sky.js">
+<link rel="modulepreload" href="/sky/sky.js?v=1ce3f4aba6">
 <link rel="modulepreload" href="/sky/astro.js?v=941f310d1e">
 <link rel="modulepreload" href="/sky/globe.js?v=029a735013">
 <script defer src="https://cdn.jsdelivr.net/npm/satellite.js@6.0.2/dist/satellite.min.js" crossorigin="anonymous"></script>
@@ -111,7 +111,6 @@
             </div>
           </div>
           <dl class="grid2" id="moonGrid"></dl>
-          <p class="rc" id="rcNote" hidden></p>
         </article>
 
         <article class="card" id="cDome" aria-labelledby="hDome">
@@ -125,7 +124,7 @@
             </label>
             <button type="button" class="chip" id="compassBtn" aria-pressed="false" hidden>Compass</button>
           </div>
-          <p class="fine">Top-down compass view: centre is straight up, the rim is the horizon. Turn so the direction you face is on top<span id="compassFine"></span>.</p>
+          <p class="fine">Sky chart as seen looking up: the centre is straight overhead, the rim is the horizon. Turn the chart so the direction you face is on top<span id="compassFine"></span>.</p>
         </article>
       </div>
     </div>
@@ -163,6 +162,6 @@
     </div>
   </section>
 
-<script type="module" src="/sky/sky.js"></script>
+<script type="module" src="/sky/sky.js?v=1ce3f4aba6"></script>
 </body>
 </html>
