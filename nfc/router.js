@@ -1,5 +1,5 @@
 // /nfc — tab router. #read #write #card #tags #tools
-import { $, $$, store } from '/nfc/ui.js';
+import { $, $$, store } from '/nfc/ui.js?v=8974ba5dc3';
 
 export const TABS = ['read', 'write', 'card', 'tags', 'tools'];
 const subs = [];

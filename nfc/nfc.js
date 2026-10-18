@@ -1,11 +1,11 @@
 // /nfc — NFC Station. Bootstrap: tabs, capability pill, "How NFC works", wiring.
-import { $, esc, store } from '/nfc/ui.js';
-import { initRouter, goTab } from '/nfc/router.js';
-import { showSheet, sheet } from '/nfc/ops.js';
-import { initRead } from '/nfc/read.js';
-import { initWrite } from '/nfc/write.js';
-import { initCard } from '/nfc/cardtab.js';
-import { initLib, capSummary } from '/nfc/libtab.js';
+import { $, esc, store } from '/nfc/ui.js?v=8974ba5dc3';
+import { initRouter, goTab } from '/nfc/router.js?v=f3a68c5008';
+import { showSheet, sheet } from '/nfc/ops.js?v=0d6918b052';
+import { initRead } from '/nfc/read.js?v=d1c3211290';
+import { initWrite } from '/nfc/write.js?v=9554f90a03';
+import { initCard } from '/nfc/cardtab.js?v=6b927b92ed';
+import { initLib, capSummary } from '/nfc/libtab.js?v=ed4b3b356a';
 
 function capPill() {
   const s = capSummary();

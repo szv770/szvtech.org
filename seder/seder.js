@@ -1,7 +1,7 @@
 // seder/seder.js — learning timer, log and insights. Pure maths is in logic.js.
-import * as Q from '/seder/logic.js';
-import { guessDay, effectiveDay } from '/tehillim/today.js';
-import * as TL from '/tehillim/logic.js';
+import * as Q from '/seder/logic.js?v=ff56013e90';
+import { guessDay, effectiveDay } from '/tehillim/today.js?v=931afbade0';
+import * as TL from '/tehillim/logic.js?v=5e5c47449c';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

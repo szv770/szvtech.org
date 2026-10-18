@@ -1,5 +1,5 @@
-import { OPINIONS, ROWS, SOURCES, TIMES, NOTES, cell, row } from '/shiurim/data.js';
-import { unitsFor, unitById, fromBase, toBase, fmt, fraction, howMany, parseNum } from '/shiurim/logic.js';
+import { OPINIONS, ROWS, SOURCES, TIMES, NOTES, cell, row } from '/shiurim/data.js?v=7750d3606e';
+import { unitsFor, unitById, fromBase, toBase, fmt, fraction, howMany, parseNum } from '/shiurim/logic.js?v=46f4ab415f';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = (s, r = document) => r.querySelector(s);

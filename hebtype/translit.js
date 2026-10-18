@@ -1,7 +1,7 @@
 /* Transliteration, deterministic and documented (see the ⓘ sheet in /hebtype/).
    English -> Hebrew letters: a dictionary of common Chabad words first, then phonetic rules.
    Hebrew -> English: Ashkenazi / Chabad flavoured (kamatz = o, tav without dagesh = s, ch = ח). */
-import { fixFinals, stripNikud, hasNikud } from './text.js';
+import { fixFinals, stripNikud, hasNikud } from './text.js?v=078aeda6eb';
 
 /* [Hebrew, ...latin spellings] — the FIRST latin spelling is what Hebrew→English prints. */
 const D = [

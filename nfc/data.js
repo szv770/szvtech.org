@@ -1,6 +1,6 @@
 // /nfc — everything saved in this browser: library, recent writes, scan history, cards.
-import { store, uid } from '/nfc/ui.js';
-import { itemRecords, summarize, decodeRecord, messageSize } from '/nfc/ndef.js';
+import { store, uid } from '/nfc/ui.js?v=8974ba5dc3';
+import { itemRecords, summarize, decodeRecord, messageSize } from '/nfc/ndef.js?v=da5a737810';
 
 const cap = (arr, n) => arr.slice(0, n);
 

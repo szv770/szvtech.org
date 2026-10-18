@@ -1,6 +1,6 @@
 // /nfc/c/ — shows a card that lives in the link. Works on any phone (iPhone included).
-import { decodeCard, cardToVcard, cleanTel, normalize } from '/nfc/card.js';
-import { renderCard, themeVars, qrSvg, whenQr, esc, ci, themeOf } from '/nfc/card-render.js';
+import { decodeCard, cardToVcard, cleanTel, normalize } from '/nfc/card.js?v=e246964108';
+import { renderCard, themeVars, qrSvg, whenQr, esc, ci, themeOf } from '/nfc/card-render.js?v=6d402cffd4';
 
 const $ = (s) => document.querySelector(s);
 const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);

@@ -4,8 +4,8 @@
 // /luach/logic.js, and the saved location + sunset from /zmanim/data.js (the
 // same `szv-time-loc` /time uses). After sunset the Hebrew day has already
 // rolled over, so the effective date is tomorrow's.
-import * as L from '/luach/logic.js';
-import { savedLoc, defaultLoc, partsIn, todayIn, getDays, hmText, deviceTz } from '/zmanim/data.js';
+import * as L from '/luach/logic.js?v=c065cd15ad';
+import { savedLoc, defaultLoc, partsIn, todayIn, getDays, hmText, deviceTz } from '/zmanim/data.js?v=41d2c1bfa5';
 
 export { L };
 

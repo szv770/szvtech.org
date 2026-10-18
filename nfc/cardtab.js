@@ -1,11 +1,11 @@
 // /nfc — Card tab: build a digital business card that lives inside a link.
-import { $, esc, icon, store, toast, copy, download, buzz, uid, reduced, slug } from '/nfc/ui.js';
-import { THEMES, SOCIAL_KINDS, emptyCard, normalize, isBlank, encodeCard, cardUrl, cardToVcard, hasCompression } from '/nfc/card.js';
-import { messageSize, CAPACITIES, fits } from '/nfc/ndef.js';
-import { renderCard, qrSvg, whenQr } from '/nfc/card-render.js';
-import { writeNow } from '/nfc/write.js';
-import { confirmSheet } from '/nfc/ops.js';
-import { onTab } from '/nfc/router.js';
+import { $, esc, icon, store, toast, copy, download, buzz, uid, reduced, slug } from '/nfc/ui.js?v=8974ba5dc3';
+import { THEMES, SOCIAL_KINDS, emptyCard, normalize, isBlank, encodeCard, cardUrl, cardToVcard, hasCompression } from '/nfc/card.js?v=e246964108';
+import { messageSize, CAPACITIES, fits } from '/nfc/ndef.js?v=da5a737810';
+import { renderCard, qrSvg, whenQr } from '/nfc/card-render.js?v=6d402cffd4';
+import { writeNow } from '/nfc/write.js?v=9554f90a03';
+import { confirmSheet } from '/nfc/ops.js?v=0d6918b052';
+import { onTab } from '/nfc/router.js?v=f3a68c5008';
 
 let S = { cur: '', list: [] };
 let compact = false;

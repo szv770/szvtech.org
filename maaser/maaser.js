@@ -1,7 +1,7 @@
 import {
   CATS, CURRENCIES, PRESETS, DEFAULTS, todayYMD, validYMD, uid, parseCents, centsToInput, pctOf, counted, totals,
   filterEntries, groupByMonth, civilYears, periodSeries, civilBucket, toCSV, sanitize,
-} from '/maaser/logic.js';
+} from '/maaser/logic.js?v=33efed113f';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = (s, r = document) => r.querySelector(s);
@@ -20,7 +20,7 @@ const U = { type: 'all', cat: 'all', q: '', mode: 'civil', period: null, sel: -1
 
 /* Hebrew calendar helpers come from /luach/ (imported, not re-implemented). Optional. */
 let H = null;
-import('/luach/logic.js').then((m) => { H = m; render(); }).catch(() => { /* Hebrew grouping simply stays hidden */ });
+import('/luach/logic.js?v=c065cd15ad').then((m) => { H = m; render(); }).catch(() => { /* Hebrew grouping simply stays hidden */ });
 const hebBucket = (ymd) => {
   const [y, m, d] = ymd.split('-').map(Number);
   const h = H.absToHebrew(H.gregToAbs(y, m, d));

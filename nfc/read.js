@@ -1,12 +1,12 @@
 // /nfc — Read tab: scan a tag, decode every record, offer actions, keep history.
-import { $, esc, icon, store, toast, copy, download, buzz, ago, slug, reduced } from '/nfc/ui.js';
-import { hasNFC, isSecure, errText, isAbort, fmtSerial } from '/nfc/nfcio.js';
-import { decodeRecord, webToRawItem, itemRecords, messageSize, summarize, fromUtf8, bytesOf } from '/nfc/ndef.js';
-import { history, lib } from '/nfc/data.js';
-import { goTab } from '/nfc/router.js';
-import { onBeforeOp, savePresetSheet, unsupportedReason, showUnsupported } from '/nfc/ops.js';
-import { loadIntoWrite, writeNow } from '/nfc/write.js';
-import { parseVcard } from '/qr/encode.js';
+import { $, esc, icon, store, toast, copy, download, buzz, ago, slug, reduced } from '/nfc/ui.js?v=8974ba5dc3';
+import { hasNFC, isSecure, errText, isAbort, fmtSerial } from '/nfc/nfcio.js?v=fffda67052';
+import { decodeRecord, webToRawItem, itemRecords, messageSize, summarize, fromUtf8, bytesOf } from '/nfc/ndef.js?v=da5a737810';
+import { history, lib } from '/nfc/data.js?v=586e1a8229';
+import { goTab } from '/nfc/router.js?v=f3a68c5008';
+import { onBeforeOp, savePresetSheet, unsupportedReason, showUnsupported } from '/nfc/ops.js?v=0d6918b052';
+import { loadIntoWrite, writeNow } from '/nfc/write.js?v=9554f90a03';
+import { parseVcard } from '/qr/encode.js?v=604205b2fc';
 
 const KIND_ICON = { url: 'link', phone: 'phone', sms: 'sms', email: 'mail', geo: 'pin', text: 'text', contact: 'user', wifi: 'wifi', app: 'app', poster: 'link', mime: 'data', unknown: 'data', external: 'data', empty: 'nfc' };
 const SAFE_HREF = /^(https?:|tel:|sms:|smsto:|mailto:)/i;

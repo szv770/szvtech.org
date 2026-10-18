@@ -1,8 +1,8 @@
 // /hebtype — Hebrew keyboard, transliteration, Rashi script and text tools.
 // Pure text logic lives in text.js / translit.js (unit-tested); the keyboard in keyboard.js (shared with /gematria/).
-import { stripNikud, stripTrope, fixFinals, unFinal, reverseVisual, countText, hasNikud } from './text.js';
-import { latinToHebrew, hebrewToLatin, DICTIONARY_SIZE } from './translit.js';
-import { mountKeyboard } from './keyboard.js';
+import { stripNikud, stripTrope, fixFinals, unFinal, reverseVisual, countText, hasNikud } from './text.js?v=078aeda6eb';
+import { latinToHebrew, hebrewToLatin, DICTIONARY_SIZE } from './translit.js?v=32b9a369cc';
+import { mountKeyboard } from './keyboard.js?v=4ecc3f1bd9';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

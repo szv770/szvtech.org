@@ -1,12 +1,12 @@
 // /nfc — Tags tab (library, recent writes, backup) and Tools tab (lock, erase, clone, test, health).
-import { $, esc, icon, toast, copy, download, buzz, ago, reduced } from '/nfc/ui.js';
-import { hasNFC, canLock, isSecure, isAndroid, isIOS, scanOnce, writeRecords, lockTag, fmtSerial } from '/nfc/nfcio.js';
-import { webToRawItem, serialize, decodeRecord, CAPACITIES, fits, tlvOverhead, utf8, fromUtf8, bytesOf, summarize } from '/nfc/ndef.js';
-import { hasCompression } from '/nfc/card.js';
-import { lib, recent, labelFor, bytesFor, kindsFor, exportAll, importAll } from '/nfc/data.js';
-import { goTab, onTab } from '/nfc/router.js';
-import { runOp, confirmSheet, holdButton, showSheet, sheet, afterSheet, showUnsupported } from '/nfc/ops.js';
-import { loadIntoWrite, writeNow, onRecentChange } from '/nfc/write.js';
+import { $, esc, icon, toast, copy, download, buzz, ago, reduced } from '/nfc/ui.js?v=8974ba5dc3';
+import { hasNFC, canLock, isSecure, isAndroid, isIOS, scanOnce, writeRecords, lockTag, fmtSerial } from '/nfc/nfcio.js?v=fffda67052';
+import { webToRawItem, serialize, decodeRecord, CAPACITIES, fits, tlvOverhead, utf8, fromUtf8, bytesOf, summarize } from '/nfc/ndef.js?v=da5a737810';
+import { hasCompression } from '/nfc/card.js?v=e246964108';
+import { lib, recent, labelFor, bytesFor, kindsFor, exportAll, importAll } from '/nfc/data.js?v=586e1a8229';
+import { goTab, onTab } from '/nfc/router.js?v=f3a68c5008';
+import { runOp, confirmSheet, holdButton, showSheet, sheet, afterSheet, showUnsupported } from '/nfc/ops.js?v=0d6918b052';
+import { loadIntoWrite, writeNow, onRecentChange } from '/nfc/write.js?v=9554f90a03';
 
 const KIND_ICON = { url: 'link', phone: 'phone', sms: 'sms', email: 'mail', geo: 'pin', text: 'text', contact: 'user', wifi: 'wifi', app: 'app', poster: 'link', mime: 'data', unknown: 'data', external: 'data', empty: 'nfc' };
 

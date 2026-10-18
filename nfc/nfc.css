@@ -143,9 +143,9 @@ button, a, summary { -webkit-touch-callout: none; }
 .stage { text-align: center; padding: 14px 0 6px; }
 .ring { --d: min(64vw, 248px); position: relative; width: var(--d); height: var(--d); margin: 8px auto 6px; border: 0; padding: 0; background: none; cursor: pointer; display: grid; place-items: center; user-select: none; border-radius: 50%; }
 .ring:active .ring-core { transform: scale(.95); }
-.ring-r { position: absolute; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--a1) 34%, transparent); pointer-events: none; transition: border-color .5s var(--ease), opacity .5s; }
+.ring-r { position: absolute; border-radius: 50%; aspect-ratio: 1; border: 1.5px solid color-mix(in srgb, var(--a1) 34%, transparent); pointer-events: none; transition: border-color .5s var(--ease), opacity .5s; }
 .r1 { inset: 0; } .r2 { inset: 11%; opacity: .75; } .r3 { inset: 22%; opacity: .55; border-color: color-mix(in srgb, var(--a2) 34%, transparent); }
-.ring-core { position: relative; width: 46%; height: 46%; border-radius: 50%; display: grid; place-items: center; color: #fff;
+.ring-core { position: relative; width: calc(var(--d) * .46); height: calc(var(--d) * .46); flex: none; border-radius: 50%; display: grid; place-items: center; color: #fff;
   background: radial-gradient(circle at 30% 24%, color-mix(in srgb, var(--a3) 55%, #1a1030), color-mix(in srgb, var(--a1) 40%, #0c0a1c) 72%);
   border: 1px solid var(--line2); box-shadow: 0 0 60px color-mix(in srgb, var(--a1) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, .25); transition: transform .35s var(--ease), box-shadow .5s; }
 .ring-core .ic { width: 46%; height: 46%; stroke-width: 1.5; }

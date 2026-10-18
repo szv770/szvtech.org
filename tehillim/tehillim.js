@@ -1,7 +1,7 @@
 // tehillim/tehillim.js — the /tehillim page. Pure logic lives in logic.js; the
 // Hebrew day + sunset come from today.js (which reuses /luach and /zmanim).
-import * as T from '/tehillim/logic.js';
-import { effectiveDay, guessDay } from '/tehillim/today.js';
+import * as T from '/tehillim/logic.js?v=5e5c47449c';
+import { effectiveDay, guessDay } from '/tehillim/today.js?v=931afbade0';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

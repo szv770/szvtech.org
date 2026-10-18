@@ -1,11 +1,11 @@
 // /gematria — value of any Hebrew word, 8 methods, matching words, numbers <-> letters.
 // Logic in logic.js (unit-tested); the keyboard and transliteration are shared with /hebtype/;
 // the Hebrew year comes from the calendar code in /luach/.
-import { METHODS, methodById, compute, equation, breakdownText, numToHeb, hebToNum } from '/gematria/logic.js';
-import { WORDS } from '/gematria/words.js';
-import { latinToHebrew, hasLatin } from '/hebtype/translit.js';
-import { mountKeyboard } from '/hebtype/keyboard.js';
-import { absToHebrew, gregToAbs, hebrewDateHe } from '/luach/logic.js';
+import { METHODS, methodById, compute, equation, breakdownText, numToHeb, hebToNum } from '/gematria/logic.js?v=7854692512';
+import { WORDS } from '/gematria/words.js?v=8c4e29b0af';
+import { latinToHebrew, hasLatin } from '/hebtype/translit.js?v=32b9a369cc';
+import { mountKeyboard } from '/hebtype/keyboard.js?v=4ecc3f1bd9';
+import { absToHebrew, gregToAbs, hebrewDateHe } from '/luach/logic.js?v=c065cd15ad';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

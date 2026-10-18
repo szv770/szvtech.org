@@ -1,14 +1,13 @@
 /* On-screen Hebrew keyboard (docked to the bottom) that types into a real <textarea>/<input>.
    Used by /hebtype/ and by /gematria/.
 
-     import { mountKeyboard } from '/hebtype/keyboard.js';
      const kb = mountKeyboard(hostEl, { target: textarea, onChange });
      kb.show() / hide() / toggle() / isOpen() / setAutoFinal(bool) / destroy()
 
    Letters, nikud, trope and punctuation layers; long-press a letter for its vowel variants;
    hold backspace to repeat; optional automatic final letters (ך ם ן ף ץ). The textarea should be
    inputmode="none" while the keyboard is open (the page decides). Everything is feature-detected. */
-import { FINAL_OF, BASE_OF, MARK_RE } from './text.js';
+import { FINAL_OF, BASE_OF, MARK_RE } from './text.js?v=078aeda6eb';
 
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const buzz = (ms = 6) => { try { if (!reduced() && navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* no haptics */ } };

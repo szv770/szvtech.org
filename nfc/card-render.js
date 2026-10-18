@@ -1,6 +1,6 @@
 // /nfc — draws the digital card (used by the builder preview and the /nfc/c/ viewer) and QR codes.
-import { THEMES, SOCIAL_KINDS, normalize, cardInitials, cleanTel, socialHref, webHref } from '/nfc/card.js';
-import { makeMatrix, buildPaths } from '/qr/encode.js';
+import { THEMES, SOCIAL_KINDS, normalize, cardInitials, cleanTel, socialHref, webHref } from '/nfc/card.js?v=e246964108';
+import { makeMatrix, buildPaths } from '/qr/encode.js?v=604205b2fc';
 
 export const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 

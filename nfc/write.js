@@ -1,11 +1,11 @@
 // /nfc — Write tab: pick what the tag should do, watch the size, tap to write.
-import { $, esc, icon, store, toast, buzz, uid, reduced } from '/nfc/ui.js';
-import { hasNFC, canLock, writeRecords, lockTag, errText } from '/nfc/nfcio.js';
-import { SOCIALS, draftRecords, draftSize, CAPACITIES, fits, tlvOverhead } from '/nfc/ndef.js';
-import { cardToVcard } from '/nfc/card.js';
-import { recent, labelFor } from '/nfc/data.js';
-import { goTab, onTab } from '/nfc/router.js';
-import { runOp, confirmSheet, savePresetSheet, showUnsupported } from '/nfc/ops.js';
+import { $, esc, icon, store, toast, buzz, uid, reduced } from '/nfc/ui.js?v=8974ba5dc3';
+import { hasNFC, canLock, writeRecords, lockTag, errText } from '/nfc/nfcio.js?v=fffda67052';
+import { SOCIALS, draftRecords, draftSize, CAPACITIES, fits, tlvOverhead } from '/nfc/ndef.js?v=da5a737810';
+import { cardToVcard } from '/nfc/card.js?v=e246964108';
+import { recent, labelFor } from '/nfc/data.js?v=586e1a8229';
+import { goTab, onTab } from '/nfc/router.js?v=f3a68c5008';
+import { runOp, confirmSheet, savePresetSheet, showUnsupported } from '/nfc/ops.js?v=0d6918b052';
 
 const TYPE_UI = [
   ['url', 'Link', 'link', 'Opens a web page when tapped'],

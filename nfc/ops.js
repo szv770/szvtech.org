@@ -1,8 +1,8 @@
 // /nfc — the shared sheets: info/confirm sheet, the "tap your tag" sheet, hold-to-confirm, save-preset.
-import { $, esc, icon, makeSheet, buzz, sleep, toast } from '/nfc/ui.js';
-import { errText, isAbort, hasNFC, isSecure, isAndroid, isIOS } from '/nfc/nfcio.js';
-import { goTab } from '/nfc/router.js';
-import { lib, labelFor } from '/nfc/data.js';
+import { $, esc, icon, makeSheet, buzz, sleep, toast } from '/nfc/ui.js?v=8974ba5dc3';
+import { errText, isAbort, hasNFC, isSecure, isAndroid, isIOS } from '/nfc/nfcio.js?v=fffda67052';
+import { goTab } from '/nfc/router.js?v=f3a68c5008';
+import { lib, labelFor } from '/nfc/data.js?v=586e1a8229';
 
 export const sheet = makeSheet($('#sheet'), $('#sheetBack'));
 let cancelCurrent = null;
