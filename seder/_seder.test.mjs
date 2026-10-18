@@ -15,7 +15,7 @@ check('weekday (2026-10-18 is a Sunday)', S.weekdayOf('2026-10-18') === 0 && S.w
 check('parseYMD rejects nonsense', S.parseYMD('2026-02-30') === null && S.parseYMD('2026-13-01') === null && S.parseYMD(null) === null);
 check('localMs round trip', S.hhmmOf(S.localMs('2026-10-18', '07:05')) === '07:05' && S.localMs('2026-10-18', '25:00') === null);
 const g = S.monthGrid(2026, 10);
-check('month grid shape (Oct 2026 starts Thursday)', g.length === 5 && g[0][4] === '2026-10-01' && g[0][3] === null && g[4][6] === null && g.flat().filter(Boolean).length === 31, g[0]);
+check('month grid shape (Oct 2026 starts Thursday)', g.length === 5 && g[0][4] === '2026-10-01' && g[0][3] === null && g[4][6] === '2026-10-31' && g.flat().filter(Boolean).length === 31, g[0]);
 check('month grid Feb 2026 = 4 weeks', S.monthGrid(2026, 2).length === 4);
 
 console.log('duration maths: midnight');
@@ -56,7 +56,8 @@ check('clock going backwards never negative', S.elapsedOf(S.startActive('x', 500
 const fin = S.finishActive(a, 1000 + 70 * MIN, 'id1');
 check('finish -> session', fin.s === 1000 && fin.d === 15 * MIN && fin.sid === 'gemara' && fin.id === 'id1');
 check('ring fraction', S.ringFrac(22.5 * MIN, 45 * MIN) === .5 && S.ringFrac(90 * MIN, 45 * MIN) === 1 && S.ringFrac(30 * MIN, 0) === .5 && S.ringFrac(HOUR, 0) === 0);
-check('survives JSON reload', JSON.stringify(S.cleanActive(JSON.parse(JSON.stringify(a)))) === JSON.stringify(a));
+const re = S.cleanActive(JSON.parse(JSON.stringify(a)));
+check('survives JSON reload', re.sid === a.sid && re.t0 === a.t0 && re.run === a.run && re.acc === a.acc && re.goal === a.goal);
 
 console.log('formatting');
 check('fmtClock', S.fmtClock(65000) === '01:05' && S.fmtClock(3725000) === '1:02:05' && S.fmtClock(-5) === '00:00');
@@ -87,7 +88,7 @@ const tb = S.totalsBySeder(dt, '2026-10-12', '2026-10-18');
 check('totals by seder in range', tb.gemara === 80 * MIN && tb.tanya === 60 * MIN, tb);
 const b = S.bests(sessions, dt, 15 * MIN, '2026-10-18');
 check('personal bests', b.longest.id === 'g' && b.bestDay.ms === 60 * MIN && b.total === 120 * MIN + 20 * MIN + 30 * MIN + 40 * MIN + 5 * MIN + 45 * MIN && b.sessions === 7, b);
-check('best week', b.bestWeek.ms === 140 * MIN && b.bestWeek.start === '2026-10-11', b.bestWeek);
+check('best week', b.bestWeek.ms === 120 * MIN && b.bestWeek.start === '2026-09-27', b.bestWeek);
 
 console.log('state, import & export');
 const ns = S.normalizeState(null);

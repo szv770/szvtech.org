@@ -105,7 +105,7 @@ input { font-family: inherit; }
 .nav:disabled { opacity: .3; cursor: default; }
 .stats.y { margin-top: 10px; }
 .chart { width: 100%; height: auto; display: block; margin-top: 16px; overflow: visible; }
-.chart text { font: 600 8.5px 'JetBrains Mono', monospace; fill: var(--faint); }
+.chart text { font: 600 9.5px 'JetBrains Mono', monospace; fill: var(--faint); }
 .chart .own { fill: rgba(255, 255, 255, .1); }
 .chart .giv { fill: url(#bg2); }
 .chart .bar { cursor: pointer; outline: none; }
@@ -218,4 +218,12 @@ input { font-family: inherit; }
   #receipt th, #receipt td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #ccc; height: auto; }
   #receipt .r { text-align: right; }
   #receipt tfoot td { font-weight: 700; border-top: 2px solid #111; }
+}
+
+@media (max-width: 559px) {
+  .stats { grid-template-columns: 1fr; gap: 6px; }
+  .stats > div { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 16px; }
+  .stats .lab { margin: 0; font-size: 11px; }
+  .stats b { font-size: 17px; overflow: visible; }
+  .ringwrap { width: min(232px, 66vw); }
 }
