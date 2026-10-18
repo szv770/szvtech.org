@@ -41,6 +41,7 @@ const D = [
   ['עליכם', 'aleichem', 'aleichem', 'alaichem'], ['סלח', 'selach', 'slach'], ['בראשית', 'bereishis', 'bereshit', 'bereishit', 'breishis'], ['שמות', 'shemos', 'shemot'],
   ['ויקרא', 'vayikra'], ['במדבר', 'bamidbar'], ['דברים', 'devarim', 'devorim'], ['אדון', 'adon'], ['עולמים', 'olamim', 'oylomim'], ['בן', 'ben', 'bein'], ['בת', 'bas', 'bat'],
   ['בר', 'bar'], ['מצה', 'matzah', 'matzoh', 'matza'], ['מקווה', 'mikveh', 'mikvah', 'mikva'], ['פרשה', 'parshah', 'parsha', 'parshoh'], ['קדוש', 'kadosh'], ['קדושה', 'kedusha', 'kedushah'],
+  ['צדיק', 'tzadik', 'tzaddik', 'tzadick'], ['קול', 'kol', 'kohl'], ['קבלה', 'kabbalah', 'kabbala', 'kabolo'], ['כוונה', 'kavanah', 'kavana', 'kavono'], ['כיפה', 'kippah', 'kipa', 'kippa'], ['שלמה', 'shlomo', 'shlomoh', 'solomon'], ['נחמה', 'nechamah', 'nechama'], ['ילד', 'yeled'], ['ילדים', 'yeladim'], ['שמע', 'shema', 'shma'], ['אלף', 'aleph', 'alef'],
   ['אלול', 'elul'], ['תשרי', 'tishrei', 'tishrey'], ['ניסן', 'nissan', 'nisan'], ['אייר', 'iyar'], ['תמוז', 'tammuz', 'tamuz'], ['כסלו', 'kislev'], ['שבט', 'shevat', 'shvat'], ['אדר', 'adar'],
 ];
 const LAT2HE = new Map(), HE2LAT = new Map();
@@ -158,6 +159,7 @@ function pointedWord(word) {
     if (c === 'ה' && lastC && !dag && vow) cons = 'h';
     if (c === 'ה' && lastC && !vow && prev) cons = 'h';
     if (sheva && !vow) vow = i === 0 ? 'e' : '';
+    if (dag && i > 0 && prev && /[\u05B4-\u05BB\u05B7\u05B8\u05B5\u05B6\u05C7]/.test(prev.m) && 'בגדזטכךלמנסצקרשת'.includes(c) && c !== 'ר') cons = cons + cons;
     void rafe; void next;
     out += cons + vow;
   }
