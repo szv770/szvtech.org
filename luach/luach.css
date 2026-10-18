@@ -100,7 +100,7 @@ h2 { font: 700 22px/1.1 var(--display); letter-spacing: -.01em; }
   font: 800 clamp(40px, 12.5vw, 64px)/.98 var(--display); letter-spacing: -.035em;
   display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .22em;
 }
-.hdate .dnum { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .04em; }
+.hdate .dnum { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .04em; max-width: 100%; min-width: 0; overflow-wrap: break-word; }
 .hdate .yr { font-size: .42em; font-weight: 600; color: var(--dim); letter-spacing: 0; font-family: var(--mono); }
 .he { margin-top: 8px; font-size: 23px; line-height: 1.25; color: rgba(243, 241, 255, .82); text-align: left; }
 .hero .he { direction: rtl; text-align: left; unicode-bidi: plaintext; }
@@ -456,7 +456,8 @@ input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.85); cur
   .cards { grid-template-columns: 1fr; }
   .s-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kbd-hint { display: block; }
-  .hdate { font-size: 54px; }
+  .hdate { font-size: 38px; }  /* the wide display font: "7 Cheshvan" must fit the 400px panel on one line */
+  .hdate.long { font-size: 30px; }  /* "29 Menachem Av" and other long months */
   .m-head { grid-template-columns: 44px minmax(0, 1fr) 44px; }
   .day { min-height: 0; height: clamp(84px, calc((100dvh - 330px) / 6), 132px); padding: 9px 10px 8px; }
   .day .lbls { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; min-width: 0; }

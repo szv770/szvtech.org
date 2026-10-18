@@ -405,6 +405,7 @@ function renderToday() {
   const g = L.absToGreg(t);
   $('#tGreg').textContent = `${WD_LONG[g.wd]}${after ? ' night' : ''} · ${MON_LONG[g.m - 1]} ${g.d}, ${g.y}`;
   $('#tHeb').innerHTML = `<span class="dnum">${h.d} ${esc(L.monthName(h.m, h.y))}</span><span class="yr">${h.y}</span>`;
+  $('#tHeb').classList.toggle('long', `${h.d} ${L.monthName(h.m, h.y)}`.length > 11); // e.g. "29 Menachem Av": smaller type on desktop
   $('#tHe').textContent = L.hebrewDateHe(h);
   const ss = zItem(t, 'sunset');
   const roll = $('#tRoll');
