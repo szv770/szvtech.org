@@ -93,11 +93,11 @@ const PIN = '482913';
 
 console.log('flow: auth');
 let r = await call('/api/links');
-check('GET without pin -> 401, no-store', r.s === 401 && r.h.get('cache-control') === 'no-store' && r.j.error === 'wrong_pin', r);
+check('GET without pin -> locked probe (200, no links), no-store', r.s === 200 && r.j.locked === true && !r.j.links && r.h.get('cache-control') === 'no-store', r);
 check('no-pin attempt not recorded', fake.state.attempts.length === 0);
 check('no CORS header', !r.h.get('access-control-allow-origin'));
 r = await call('/api/links?pin=' + PIN);
-check('pin in query string is ignored', r.s === 401);
+check('pin in query string is ignored', r.j.locked === true && !r.j.links);
 r = await call('/api/links', { headers: { 'X-Szv-Pin': PIN } });
 check('GET with pin -> 200 empty list', r.s === 200 && Array.isArray(r.j.links) && r.j.links.length === 0, r);
 r = await call('/api/links', { method: 'PUT', headers: { 'X-Szv-Pin': PIN } });
@@ -181,6 +181,8 @@ r = await post({ pin: PIN });
 check('6th try locked (429) even with the RIGHT pin', r.s === 429 && r.h.get('retry-after') === '900' && !r.j.links, r);
 r = await call('/api/links', { headers: { 'X-Szv-Pin': PIN } });
 check('GET also locked', r.s === 429);
+r = await call('/api/links');
+check('probe without pin still answers while locked (nothing to guess)', r.s === 200 && r.j.locked === true);
 check('lock message does not leak pin', !JSON.stringify(r.j).includes(PIN));
 // other IP unaffected (per-IP), via x-forwarded-for
 r = await call('/api/links', { headers: { 'X-Szv-Pin': PIN, 'X-Forwarded-For': '203.0.113.9' } });

@@ -45,7 +45,7 @@ async function boot() {
   show('vLoading');
   pin = store.get();
   const r = await api('GET', '/api/links');
-  if (r.status === 200) { links = r.data.links || []; return unlocked(); }
+  if (r.status === 200 && r.data.links) { links = r.data.links; return unlocked(); }
   if (r.status === 503 && r.data && r.data.configured === false) return show('vSetup');
   store.set(''); pin = '';
   show('vGate');

@@ -186,12 +186,12 @@ function renderSet() {
     return;
   }
   const us = units(), keys = marks(), next = T.firstOpen(us, keys);
-  c.innerHTML = `<h2 class="lab mono">In this set</h2><div class="chips" id="chips">${us.map((u, i) => chip(u, T.unitKey(u) && keys.includes(T.unitKey(u)) ? 'done' : i === next ? 'cur' : '', i)).join('')}</div>`;
+  c.innerHTML = `<h2 class="lab mono">In this set</h2><div class="chips" id="chips">${us.map((u, i) => chip(u, T.unitKey(u) && keys.includes(T.unitKey(u)) ? 'said' : i === next ? 'cur' : '', i)).join('')}</div>`;
   $('chips').onclick = chipClick;
 }
 function chip(u, cls, i) {
-  return `<button class="ch ${cls}" type="button" data-i="${i}" aria-label="${esc(T.unitLabel(u))}${cls === 'done' ? ', said' : ''}">
-    <span class="ch-he" lang="he" dir="rtl">${esc(T.unitHeShort(u))}</span><span class="ch-n mono">${esc(T.unitShort(u))}</span>${cls === 'done' ? `<i class="ch-ck">${IC.check}</i>` : ''}</button>`;
+  return `<button class="ch ${cls}" type="button" data-i="${i}" aria-label="${esc(T.unitLabel(u))}${cls === 'said' ? ', said' : ''}">
+    <span class="ch-he" lang="he" dir="rtl">${esc(T.unitHeShort(u))}</span><span class="ch-n mono">${esc(T.unitShort(u))}</span>${cls === 'said' ? `<i class="ch-ck">${IC.check}</i>` : ''}</button>`;
 }
 function chipClick(e) { const b = e.target.closest('.ch'); if (b) openReader(+b.dataset.i); }
 
@@ -486,6 +486,7 @@ function writePing() {
 }
 function complete() {
   writePing();
+  $('toast').classList.remove('show');
   const st = T.streakOf(data.full, today.ymd);
   const d = $('done');
   d.hidden = false;

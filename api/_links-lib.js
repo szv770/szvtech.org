@@ -280,6 +280,7 @@ export async function handleLinks(req, res, deps = {}) {
     } else {
       const h = req.headers['x-szv-pin']; pin = Array.isArray(h) ? h[0] : h || '';
     }
+    if (method === 'GET' && !pin) return send(res, 200, { configured: true, locked: true }); // status probe, nothing to check
     await db.ensure();
     const auth = await checkPin(db, env, pin, clientIp(req), deps);
     if (!auth.ok) {
