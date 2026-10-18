@@ -251,7 +251,9 @@ export function draftSize(items) {
 }
 // Web NFC reader record -> storable raw item
 export function webToRawItem(rec) {
-  const d = bytesOf(rec.data);
+  let d = bytesOf(rec.data);
+  // always keep text as UTF-8 so a clone writes cleanly
+  if (rec.recordType === 'text' && rec.encoding && !/^utf-?8$/i.test(rec.encoding)) { try { d = utf8(new TextDecoder(rec.encoding).decode(d)); } catch (e) { /* keep bytes */ } }
   return { type: 'raw', raw: { recordType: rec.recordType, mediaType: rec.mediaType || undefined, lang: rec.lang || undefined, b64: b64(d) } };
 }
 

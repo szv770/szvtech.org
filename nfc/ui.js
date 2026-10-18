@@ -50,6 +50,7 @@ export const slug = (s, d = 'file') => String(s || d).toLowerCase().replace(/[^a
 export function makeSheet(el, back, { onClose } = {}) {
   let last = null; let hideT;
   const api = {
+    onClose,
     get isOpen() { return !el.hidden; },
     open(html) {
       clearTimeout(hideT);
@@ -66,7 +67,7 @@ export function makeSheet(el, back, { onClose } = {}) {
       el.classList.remove('on'); back.classList.remove('on');
       hideT = setTimeout(() => { el.hidden = true; back.hidden = true; if (!document.querySelector('.sheet:not([hidden])')) document.body.classList.remove('noscroll'); }, reduced() ? 160 : 400);
       if (last && last.focus && last.isConnected) last.focus({ preventScroll: true });
-      if (!silent && onClose) onClose();
+      if (!silent && api.onClose) api.onClose();
     },
   };
   back.addEventListener('click', () => api.close());
