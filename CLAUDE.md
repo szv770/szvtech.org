@@ -3,6 +3,10 @@
 Read this first. It is how the owner wants this site built, so they never have
 to re-explain it.
 
+> **Building or restyling a page, or editing the homepage?** Also read
+> [`docs/DESIGN.md`](docs/DESIGN.md): the look and feel (tokens, components, motion),
+> a copy-from starting point, and the homepage recipe.
+
 ## 1. What this is
 
 - **szvtech.org** is the owner's personal playground: a premium, motion-rich,
