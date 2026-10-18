@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-szv-more="off">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -56,5 +56,6 @@ if (Number.isFinite(at)) { const p0 = performance.now(); opts.now = () => at + (
 try { const lk = q.get('look'); if (['day', 'sun', 'week'].includes(lk)) localStorage.setItem('szv-zv-look', lk); } catch (e) {}
 mount(document.getElementById('app'), opts);
 </script>
+<script type="module" src="/assets/chrome.js"></script>
 </body>
 </html>
