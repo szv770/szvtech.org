@@ -8,7 +8,7 @@
 //   - /api/<name>  -> default export of api/<name>.js, called as (req, res).
 //     Files starting with "_" (tests) are never routed, like on Vercel.
 //     req.query is filled in; res.status()/json()/send() helpers exist.
-//   - "rewrites" from vercel.json (e.g. /admin -> /sys/index.html)
+//   - "rewrites" from vercel.json (e.g. /admin -> /sys/index.html, /url/:code([..]) -> /api/go?c=:code)
 //   - the site-wide headers from vercel.json (X-Robots-Tag: noindex)
 //   - /folder and /folder/ -> folder/index.html; unknown paths -> 404.html (status 404)
 // Everything is sent with Cache-Control: no-store so edits show up on reload.
@@ -34,7 +34,18 @@ const TYPES = {
 // vercel.json: rewrites (path-to-regexp subset: literal paths and "(.*)") and headers
 let vercel = {};
 try { vercel = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8')); } catch { /* none */ }
-const toRe = (src) => new RegExp('^' + src.split('(.*)').map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('(.*)') + '$');
+const toRe = (src) => {
+  // literal paths, "(.*)", and named params like ":code([A-Za-z0-9_-]{1,40})" (or bare ":name" = one segment)
+  const names = [];
+  let re = '', i = 0;
+  while (i < src.length) {
+    const m = /^:([A-Za-z_]\w*)(\((?:[^()\\]|\\.)*\))?/.exec(src.slice(i));
+    if (m) { names.push(m[1]); re += m[2] ? m[2] : '([^/]+)'; i += m[0].length; continue; }
+    if (src.startsWith('(.*)', i)) { re += '(.*)'; i += 4; continue; }
+    re += src[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); i++;
+  }
+  const out = new RegExp('^' + re + '$'); out.names = names; return out;
+};
 const REWRITES = (vercel.rewrites || []).map((r) => ({ re: toRe(r.source), dest: r.destination }));
 const HEADERS = (vercel.headers || []).map((h) => ({ re: toRe(h.source), headers: h.headers }));
 
@@ -80,11 +91,20 @@ function sendFile(res, file, status = 200) {
 http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://localhost');
   let pathname = u.pathname;
+  let rewriteQuery = null;
   for (const h of HEADERS) if (h.re.test(pathname)) for (const { key, value } of h.headers) res.setHeader(key, value);
   try {
     // rewrites first (Vercel applies them when no file matches; the rewritten paths here never exist as files)
-    for (const r of REWRITES) if (r.re.test(pathname) && !resolveStatic(pathname)) { pathname = r.dest; break; }
+    for (const r of REWRITES) if (r.re.test(pathname) && !resolveStatic(pathname)) {
+      const m = r.re.exec(pathname);
+      let dest = r.dest;
+      (r.re.names || []).forEach((n, i) => { dest = dest.split(':' + n).join(encodeURIComponent(m[i + 1])); });
+      const [dp, dq] = dest.split('?');
+      pathname = dp; if (dq) rewriteQuery = new URLSearchParams(dq);
+      break;
+    }
 
+    if (rewriteQuery) for (const [k, v] of rewriteQuery) u.searchParams.set(k, v);
     const api = /^\/api\/([^/]+?)(?:\.js)?\/?$/.exec(pathname);
     if (api) {
       const handler = await apiHandler(api[1]);

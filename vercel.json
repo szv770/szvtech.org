@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    { "source": "/url/:code([A-Za-z0-9_-]{1,40})", "destination": "/api/go?c=:code" },
     { "source": "/admin", "destination": "/sys/index.html" },
     { "source": "/admin/(.*)", "destination": "/sys/index.html" },
     { "source": "/administrator", "destination": "/sys/index.html" },
