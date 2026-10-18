@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>NFC · SZVTECH</title>
+<meta name="description" content="Read, write and lock NFC tags, and build a tap-to-share business card that works on any phone.">
+<meta name="theme-color" content="#05050a">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Cpath d='M22 25a10 10 0 0 1 0 14M31 19a19 19 0 0 1 0 26M40 13a28 28 0 0 1 0 38' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/nfc/nfc.css?v=7b111295ab">
+<link rel="stylesheet" href="/nfc/card-view.css?v=236fb5b634">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
+</head>
+<body data-tab="read">
+<div class="bgfx" aria-hidden="true"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-nfc" viewBox="0 0 24 24"><path d="M7 8.5a5 5 0 0 1 0 7M11 6a9 9 0 0 1 0 12M15 3.5a13 13 0 0 1 0 17"/></symbol>
+<symbol id="i-read" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9.5 10.5a3.5 3.5 0 0 1 0 3M12.5 8.5a6.5 6.5 0 0 1 0 7"/></symbol>
+<symbol id="i-write" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19zM14 7l3 3"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M6.2 16c.6-1.4 1.7-2 2.8-2s2.2.6 2.8 2M14 10h4M14 13h3"/></symbol>
+<symbol id="i-tags" viewBox="0 0 24 24"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-8.5 8.500z"/><circle cx="8" cy="8" r="1.3"/></symbol>
+<symbol id="i-tools" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.500M12 7.800v.01"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.500A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.500v6A2.5 2.5 0 0 0 6.5 15H9"/></symbol>
+<symbol id="i-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2.500v2.500H14zM19 14h1M14 19h1M17.5 17.500H20V20h-3zM17 14v2"/></symbol>
+<symbol id="i-open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.500M5 19h14"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.700l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.700l1-1"/></symbol>
+<symbol id="i-short" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.8"/><circle cx="6" cy="17" r="2.8"/><path d="M8.3 8.7 20 17M8.3 15.3 20 7"/></symbol>
+<symbol id="i-clone" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5zM3 13l9 5 9-5"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10 11v5M14 11v5"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.500l4.5 4.500L19 7.5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 3 19.500h18zM12 10v4M12 17v.01"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M6 3.500h3l1.5 4-2 1.300a11 11 0 0 0 5.2 5.200l1.3-2L20 13.500v3a2 2 0 0 1-2 2A15 15 0 0 1 4 5.500a2 2 0 0 1 2-2z"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m4 7 8 6 8-6"/></symbol>
+<symbol id="i-sms" viewBox="0 0 24 24"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-4 3v-3a2 2 0 0 1-2-2z"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24"><path d="M3 9a13 13 0 0 1 18 0M6 12.500a8.5 8.5 0 0 1 12 0M9 16a4 4 0 0 1 6 0"/><circle cx="12" cy="19" r=".8"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.700z"/><path d="M9.2 9.200c0 3 2.5 5.6 5.6 5.600l1-1.5-2-1-.8.800a4 4 0 0 1-1.8-1.800l.8-.8-1-2z"/></symbol>
+<symbol id="i-at" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M15.5 12v1.500a2.5 2.5 0 0 0 5 0V12a8.5 8.5 0 1 0-3.5 6.9"/></symbol>
+<symbol id="i-app" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></symbol>
+<symbol id="i-data" viewBox="0 0 24 24"><path d="M9 4C6 4 7 8 5 12c2 4 1 8 4 8M15 4c3 0 2 4 4 8-2 4-1 8-4 8"/></symbol>
+<symbol id="i-text" viewBox="0 0 24 24"><path d="M5 6.500V4.500h14v2M12 4.500V20M9 20h6"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4.500h4.500M12 8v4.500l3 2"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12 20 3M16 7l3 3"/></symbol>
+<symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></symbol>
+<symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 10a1.5 1.5 0 0 0 1.3 2h11.400a1.5 1.5 0 0 0 1.3-2l-5-10V3"/></symbol>
+<symbol id="i-eraser" viewBox="0 0 24 24"><path d="M20 20H9l-5.5-5.500a2 2 0 0 1 0-2.800L12 3.500a2 2 0 0 1 2.8 0l5.2 5.200a2 2 0 0 1 0 2.800L11 20.500M7 10l7 7"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3.500M7.5 8 12 3.5 16.5 8M5 12.500v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+<symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.500M5 19h14"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.800L12 16.8 6.8 19.600l1-5.800L3.5 9.700l5.9-.8z"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/></symbol>
+</defs></svg>
+
+<header class="top">
+  <a class="back" href="/">&larr; SZVTECH</a>
+  <div class="top-r">
+    <button class="cap-pill" id="capPill" type="button" aria-label="What can my phone do?"><i class="dotc" id="capDot"></i><span id="capTxt">Checking…</span></button>
+    <button class="chip icon" id="infoBtn" type="button" aria-label="How NFC works"><svg class="ic"><use href="#i-info"/></svg></button>
+    <button class="szv-sharebtn" data-szv-share aria-label="Share"></button>
+  </div>
+</header>
+
+<nav class="tabbar" id="tabbar" role="tablist" aria-label="NFC sections">
+  <button type="button" role="tab" data-tab="read" aria-selected="true" aria-controls="p-read"><svg class="ic"><use href="#i-read"/></svg><span>Read</span></button>
+  <button type="button" role="tab" data-tab="write" aria-selected="false" aria-controls="p-write"><svg class="ic"><use href="#i-write"/></svg><span>Write</span></button>
+  <button type="button" role="tab" data-tab="card" aria-selected="false" aria-controls="p-card"><svg class="ic"><use href="#i-card"/></svg><span>Card</span></button>
+  <button type="button" role="tab" data-tab="tags" aria-selected="false" aria-controls="p-tags"><svg class="ic"><use href="#i-tags"/></svg><span>Tags</span></button>
+  <button type="button" role="tab" data-tab="tools" aria-selected="false" aria-controls="p-tools"><svg class="ic"><use href="#i-tools"/></svg><span>Tools</span></button>
+</nav>
+
+<main id="app">
+
+  <!-- ============================ READ ============================ -->
+  <section class="panel" id="p-read" role="tabpanel" data-panel="read">
+    <div class="stage" id="stage" data-state="idle">
+      <button class="ring" id="scanBtn" type="button" aria-label="Start scanning for a tag">
+        <span class="ring-r r1" aria-hidden="true"></span><span class="ring-r r2" aria-hidden="true"></span><span class="ring-r r3" aria-hidden="true"></span>
+        <span class="ring-core"><svg class="ic" aria-hidden="true"><use href="#i-nfc"/></svg></span>
+      </button>
+      <h1 class="stage-t" id="scanTitle">Read a tag</h1>
+      <p class="stage-s" id="scanSub">Tap the ring, then hold the back of your phone against a tag, card or sticker.</p>
+      <button class="btn ghost small" id="scanStop" type="button" hidden>Stop</button>
+    </div>
+    <div class="note" id="support" hidden></div>
+    <div id="results" class="results" aria-live="polite"></div>
+    <section class="hist" id="histWrap" hidden>
+      <div class="lab-row"><span class="lab">Recent scans</span><button class="linkbtn" id="histClear" type="button">Clear</button></div>
+      <div id="histList" class="rows"></div>
+    </section>
+  </section>
+
+  <!-- ============================ WRITE ============================ -->
+  <section class="panel" id="p-write" role="tabpanel" data-panel="write" hidden>
+    <h2 class="ph">What should the tag do?</h2>
+    <div class="chips" id="wTypes" role="tablist" aria-label="Record type"></div>
+    <div class="card" id="wForm"></div>
+    <div class="lab-row"><span class="lab">On the tag <b id="wCount"></b></span><button class="linkbtn" id="wAdd" type="button">+ Add another</button></div>
+    <div id="wList" class="rows"></div>
+    <div class="card meter" id="wMeter"></div>
+    <div class="card opts">
+      <label class="tgl"><span><b>Replace what’s on the tag</b><small>Off = only write if the tag is empty</small></span><input type="checkbox" id="optOver" checked><i aria-hidden="true"></i></label>
+      <label class="tgl"><span><b>Make read-only afterwards</b><small>Permanent. Nobody can change it again</small></span><input type="checkbox" id="optLock"><i aria-hidden="true"></i></label>
+    </div>
+    <div class="dock" id="wDock">
+      <div class="dock-i"><b id="dockSize">0 bytes</b><span id="dockNote">Add something to write</span></div>
+      <button class="btn primary" id="wGo" type="button">Write to tag</button>
+    </div>
+    <div class="alt-row" id="wAlt"></div>
+  </section>
+
+  <!-- ============================ CARD ============================ -->
+  <section class="panel" id="p-card" role="tabpanel" data-panel="card" hidden>
+    <div class="cardsel" id="cSel" role="tablist" aria-label="Your cards"></div>
+    <div class="card-grid">
+      <div class="c-prev" id="cPrev"></div>
+      <div class="c-form" id="cForm"></div>
+      <div class="c-out" id="cOut"></div>
+    </div>
+  </section>
+
+  <!-- ============================ TAGS ============================ -->
+  <section class="panel" id="p-tags" role="tabpanel" data-panel="tags" hidden>
+    <h2 class="ph">Your tag library</h2>
+    <p class="ph-s">Save the things you write often. Write them to a new tag in two taps.</p>
+    <div class="lab-row"><span class="lab">Saved</span></div>
+    <div id="libList" class="rows"></div>
+    <div class="lab-row"><span class="lab">Recent writes</span><button class="linkbtn" id="recClear" type="button">Clear</button></div>
+    <div id="recList" class="rows"></div>
+    <div class="lab-row"><span class="lab">Backup</span></div>
+    <div class="card bk">
+      <p>Everything here lives only in this browser. Export it to keep a copy or move it to another phone.</p>
+      <div class="btn-row">
+        <button class="btn" id="bkDl" type="button"><svg class="ic"><use href="#i-save"/></svg>Download</button>
+        <button class="btn" id="bkCopy" type="button"><svg class="ic"><use href="#i-copy"/></svg>Copy</button>
+        <button class="btn" id="bkImp" type="button"><svg class="ic"><use href="#i-upload"/></svg>Import</button>
+      </div>
+      <input type="file" id="bkFile" accept="application/json,.json" hidden>
+    </div>
+  </section>
+
+  <!-- ============================ TOOLS ============================ -->
+  <section class="panel" id="p-tools" role="tabpanel" data-panel="tools" hidden>
+    <h2 class="ph">Tag tools</h2>
+    <div class="lab-row"><span class="lab">Your phone</span></div>
+    <div class="card" id="capCard"></div>
+    <div class="lab-row"><span class="lab">Do something to a tag</span></div>
+    <div class="tools" id="toolGrid"></div>
+    <div class="lab-row"><span class="lab">Good to know</span></div>
+    <div class="card know" id="know"></div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="sheet-back" id="sheetBack" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Details" hidden></section>
+<div class="sheet-back op-back" id="opBack" hidden></div>
+<section class="sheet op" id="opSheet" role="dialog" aria-modal="true" aria-label="Tap your tag" hidden></section>
+
+<div class="show" id="show" role="dialog" aria-modal="true" aria-label="Show to a friend" hidden></div>
+
+<noscript><p class="ns">The NFC station needs JavaScript.</p></noscript>
+<script type="module" src="/nfc/nfc.js?v=0aed3ebf84"></script>
+<script type="module" src="/assets/chrome.js?v=6132a769a4"></script>
+</body>
+</html>

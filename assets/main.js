@@ -3,7 +3,7 @@
    One rAF loop (GSAP ticker) drives Lenis, WebGL, cursor, marquee & FX.
    ========================================================================== */
 
-import { TOOLS, liveTools, soonTools, icon as toolIcon } from '/assets/tools.js?v=12e8be0d22';
+import { TOOLS, liveTools, soonTools, icon as toolIcon } from '/assets/tools.js?v=90e8a874a2';
 
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -2114,6 +2114,10 @@ const ToolsUI = (() => {
         c.textContent = `${g.weekday}, ${g.month} ${g.day}`;
       } };
     },
+    nfc(live) {
+      live.innerHTML = '<span class="tw-nfc"><span class="tw-nfc-arcs"><i></i><i></i><i></i></span><span class="tw-nfc-t mono"><b>Tap a tag</b>read · write · lock</span></span>';
+      return null;
+    },
     qr(live) {
       const N = 13, cells = [];
       const box = mk('span', 'tw-qr');
@@ -2183,25 +2187,38 @@ const ToolsUI = (() => {
     const w = make ? make(live, t) : null;
     if (!make) { live.classList.add('is-glyph'); live.innerHTML = toolIcon(t); }
     if (w) ticking.push(w);
-    if (FINE) {
-      a.addEventListener('pointermove', (e) => {
-        const r = a.getBoundingClientRect();
-        a.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
-        a.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
-      }, { passive: true });
-    }
+    return a;
+  }
+
+  // compact tile for the non-featured tools (no live widget)
+  function tile(t, i) {
+    const a = mk('a', 'tile');
+    a.href = t.path;
+    a.dataset.cursor = 'Open';
+    a.style.setProperty('--i', i);
+    a.setAttribute('aria-label', `${t.name} — ${t.blurb}`);
+    a.innerHTML = `<span class="tile__top"><span class="tile__icon">${toolIcon(t)}</span><span class="tool__go" aria-hidden="true">&#8599;</span></span>`
+      + `<span class="tile__name">${esc(t.name)}</span><span class="tile__blurb">${esc(t.blurb)}</span>`;
     return a;
   }
 
   function render() {
     const live = liveTools(), soon = soonTools();
+    // featured tools get the big panels; everything else is a compact tile
+    let feat = live.filter((t) => t.featured);
+    if (!feat.length) feat = live.slice(0, 3);
+    const rest = live.filter((t) => !feat.includes(t));
     const grid = $('[data-tools-grid]');
     if (grid) {
-      grid.dataset.n = live.length; // CSS picks the bento layout by count
-      live.forEach((t, i) => grid.append(card(t, i)));
+      grid.dataset.n = feat.length;
+      feat.forEach((t, i) => grid.append(card(t, i)));
     }
+    const list = $('[data-tools-list]');
+    if (list) rest.forEach((t, i) => list.append(tile(t, i)));
+    const rule = $('[data-tools-rule]');
+    if (rule && rest.length) { rule.hidden = false; $('[data-tools-rest]', rule).textContent = String(rest.length).padStart(2, '0'); }
     const count = $('[data-tools-count]');
-    if (count) count.textContent = `${String(live.length).padStart(2, '0')} live${soon.length ? ` · ${String(soon.length).padStart(2, '0')} on the bench` : ''}`;
+    if (count) count.textContent = `${String(live.length).padStart(2, '0')} tools${soon.length ? ` · ${String(soon.length).padStart(2, '0')} on the bench` : ''}`;
     const sw = $('[data-tools-soon]'), sl = $('[data-tools-soon-list]');
     if (sw && sl && soon.length) {
       sw.hidden = false;
@@ -2255,9 +2272,16 @@ const ToolsUI = (() => {
   function reveal() {
     if (!gsap || !ScrollTrigger) return;
     const cards = $$('.tool');
+    const tiles = $$('.tile');
+    if (tiles.length) {
+      gsap.from(tiles, {
+        y: RM ? 8 : 24, opacity: 0, duration: 1, ease: 'expo.out', stagger: RM ? .03 : .04, clearProps: 'transform,opacity',
+        scrollTrigger: { trigger: '.tools__list', start: 'top 92%', once: true },
+      });
+    }
     if (cards.length) {
       gsap.from(cards, {
-        y: RM ? 14 : 48, opacity: 0, scale: RM ? 1 : .96, duration: RM ? 1.1 : 1.1, ease: 'expo.out', stagger: RM ? .06 : .08, clearProps: 'transform,opacity',
+        y: RM ? 14 : 36, opacity: 0, duration: RM ? 1.1 : 1.1, ease: 'expo.out', stagger: RM ? .06 : .08, clearProps: 'transform,opacity',
         scrollTrigger: { trigger: '.tools__grid', start: 'top 90%', once: true },
       });
     }
