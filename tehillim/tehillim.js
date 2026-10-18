@@ -144,7 +144,7 @@ function renderHero() {
   const heDate = mode === 'month' ? `${T.hebNum(n)} ${today.heText.split(' ').slice(1).join(' ')}` : '';
   const lab = complete ? 'Read it again' : done ? `Continue · ${T.unitLabel(us[nextIdx])}` : `Start · ${T.unitLabel(us[0])}`;
   const pct = us.length ? Math.round((done / us.length) * 100) : 0;
-  const stepL = mode === 'month' ? (n > 1 ? 'Previous day' : 'Day 30') : 'Previous day';
+  const stepL = 'Previous day';
   hero.innerHTML = `
     <div class="eyebrow-row">
       <button class="step" id="dayPrev" type="button" aria-label="${stepL}">${IC.chev}</button>
@@ -388,7 +388,7 @@ $('rClose').onclick = () => closeReader(false);
 addEventListener('keydown', (e) => {
   if (!readerOpen || sheetOpen) return;
   if (e.key === 'Escape') closeReader(false);
-  else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' && e.altKey) go(1);
+  else if (e.key === 'ArrowRight') go(1);
   else if (e.key === 'ArrowLeft') go(-1);
 });
 
@@ -430,7 +430,7 @@ function paintText() {
   $('rText').innerHTML = vs.map((v) => `<span class="v"><b class="vn" aria-hidden="true">${T.hebNum(v.n, false)}</b>${esc(settings.trop ? v.t : T.stripTrop(v.t))} </span>`).join('');
 }
 function paintBar() {
-  const keys = reader.dataset.any ? [] : marks();
+  const keys = marks();
   const n = cur.list.length;
   const done = T.doneCount(cur.list, keys);
   const frac = mode === 'any' ? (cur.i + 1) / n : Math.max(done, 0) / n;
