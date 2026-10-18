@@ -121,7 +121,7 @@ function renderOut() {
       <button class="btn" type="button" data-o="share">${icon('share')}Share</button>
       <button class="btn" type="button" data-o="copy">${icon('copy')}Copy link</button>
       <button class="btn" type="button" data-o="vcf">${icon('save')}.vcf file</button>
-      <button class="btn" type="button" data-o="vtag">${icon('user')}Contact to tag <small style="opacity:.6;font-weight:500">${out.vcfBytes} B</small></button>
+      <button class="btn" type="button" data-o="vtag">${icon('user')}vCard to tag</button>
       <a class="btn" href="${esc(out.url)}" target="_blank" rel="noopener">${icon('open')}Open card</a>
     </div>
     ${!bigOk ? `<p class="tip"><b>Tight on space?</b> Make the link shorter with <a href="/url/?long=${encodeURIComponent(out.url)}" style="color:var(--a2)">Links</a>, then write that short link instead.</p>` : ''}

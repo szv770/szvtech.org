@@ -492,7 +492,7 @@ $('openSettings').onclick = openSettings;
 function sedarRow(x) {
   return `<li class="sr" data-id="${esc(x.id)}">
     <div class="sr-top"><button type="button" class="dotbtn" data-cyc aria-label="Change colour">${dot(x.id)}</button><input class="sr-name" type="text" maxlength="40" value="${esc(x.name)}" aria-label="Name"><button type="button" class="nm-x" data-rm aria-label="Remove ${esc(x.name)}">&#x2715;</button></div>
-    <div class="sr-nums"><label>Goal<input type="number" inputmode="numeric" min="0" max="1440" value="${x.goal}" data-f="goal" aria-label="Goal in minutes for ${esc(x.name)}"><em>min</em></label><label>Streak from<input type="number" inputmode="numeric" min="0" max="1440" value="${x.min}" data-f="min" aria-label="Streak minimum in minutes for ${esc(x.name)}"><em>min/day</em></label></div></li>`;
+    <div class="sr-nums"><label><span>Goal</span><span class="inl"><input type="number" inputmode="numeric" min="0" max="1440" value="${x.goal}" data-f="goal" aria-label="Goal in minutes for ${esc(x.name)}"><em>min</em></span></label><label><span>Streak from</span><span class="inl"><input type="number" inputmode="numeric" min="0" max="1440" value="${x.min}" data-f="min" aria-label="Streak minimum in minutes for ${esc(x.name)}"><em>min/day</em></span></label></div></li>`;
 }
 function openSettings() {
   openSheet(`<h2 class="sh-h">Seder settings</h2>
