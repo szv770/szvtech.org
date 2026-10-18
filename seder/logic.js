@@ -167,7 +167,7 @@ export function totalsBySeder(dt, from = null, to = null) {
   return out;
 }
 
-export function bests(sessions, dt, dayMinMs) {
+export function bests(sessions, dt, dayMinMs, today) {
   let longest = null;
   for (const x of sessions) if (!longest || x.d > longest.d) longest = x;
   let bestDay = null, total = 0;
@@ -176,7 +176,7 @@ export function bests(sessions, dt, dayMinMs) {
   for (const [ymd, e] of Object.entries(dt)) { const w = weekStart(ymd); weeks[w] = (weeks[w] || 0) + e.total; }
   let bestWeek = null;
   for (const [w, ms] of Object.entries(weeks)) if (!bestWeek || ms > bestWeek.ms) bestWeek = { start: w, ms };
-  const best = streakOf(dt, ymdOf(Date.now()), dayMinMs).best;
+  const best = streakOf(dt, today, dayMinMs).best;
   return { longest, bestDay, bestWeek, total, sessions: sessions.length, days: Object.keys(dt).length, longestStreak: best };
 }
 
@@ -228,7 +228,7 @@ export function mergeImport(state, file) {
   if (!file || typeof file !== 'object' || !Array.isArray(file.sessions)) return null;
   const inc = normalizeState({ sedarim: file.sedarim, sessions: file.sessions, settings: {} });
   const haveS = new Set(state.sedarim.map((x) => x.id)), haveX = new Set(state.sessions.map((x) => x.id));
-  const addS = inc.sedarim.filter((x) => !haveS.has(x.id) && file.sedarim);
+  const addS = Array.isArray(file.sedarim) ? inc.sedarim.filter((x) => !haveS.has(x.id)) : [];
   const addX = inc.sessions.filter((x) => !haveX.has(x.id));
   // sessions pointing at a seder we do not have yet need it to exist (file's seder list covers them)
   return { sedarim: [...state.sedarim, ...addS], sessions: [...state.sessions, ...addX].sort((a, b) => a.s - b.s), added: addX.length, skipped: inc.sessions.length - addX.length };
