@@ -116,22 +116,10 @@ function renderConvert() {
   }
 
   /* reverse converter */
-  let rev = '';
-  const cur = c ? c.v : null;
-  const haveN = parseNum(S.have);
-  let resHtml = `<div class="rres dim">Type an amount to see how many ${esc(r.en)}.</div>`;
-  if (!c) resHtml = `<div class="rres dim">Pick an opinion that has a figure for ${esc(r.en)}.</div>`;
-  else if (!isNaN(haveN)) {
-    const n = howMany(toBase(r.kind, S.haveUnit, haveN), cur), f = fraction(n);
-    resHtml = `<button type="button" class="rres" data-copy="${esc((f.approx ? '≈ ' : '') + f.text + ' ' + r.en)}"><span class="rn">${f.approx ? '<i>≈</i> ' : ''}${esc(f.text)}</span><span class="ru">${esc(r.en)}</span>${f.exact || f.decimal ? '' : ''}<small>${esc(fmt(n))} exactly-ish</small></button>`;
-    const same = ROWS.filter((x) => x.kind === r.kind && x.id !== r.id && cell(x.id, o.id) && ['kezayis', 'kebeitza', 'revis', 'log', 'kav', 'etzba', 'tefach', 'amah', 'mil'].includes(x.id));
-    const base = toBase(r.kind, S.haveUnit, haveN);
-    resHtml += `<div class="also"><div class="lab">Same amount in</div><div class="chips" data-fade>${same.map((x) => { const q = fraction(base / cell(x.id, o.id).v); return `<button type="button" class="mchip sm" data-m="${x.id}"><span>${q.approx ? '≈' : ''}${esc(q.text)} ${esc(x.en)}</span></button>`; }).join('')}</div></div>`;
-  }
-  rev = `<div class="card rev"><div class="lab">Reverse</div><h2>I have…</h2>
+  const rev = `<div class="card rev"><div class="lab">Reverse</div><h2>I have\u2026</h2>
     <div class="rin"><input id="have" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="200" value="${esc(S.have)}" aria-label="Amount you have">
     <div class="useg" role="group" aria-label="Unit">${haveUnits().map((u) => `<button type="button" data-hu="${u.id}" aria-pressed="${u.id === S.haveUnit}">${esc(u.label)}</button>`).join('')}</div></div>
-    <div id="rout">${resHtml}</div></div>`;
+    <div id="rout">${revHtml()}</div></div>`;
 
   $('#paneConvert').innerHTML = `
     <button type="button" class="opsel" id="opsel"><span class="lab">Opinion</span><b>${esc(o.name)}</b><i aria-hidden="true">&#9662;</i></button>
@@ -143,16 +131,17 @@ function renderConvert() {
 }
 function scrollSelected() { document.querySelectorAll('#paneConvert .mchip.on').forEach((b) => { const p = b.parentElement; if (p) p.scrollLeft = Math.max(0, b.offsetLeft - p.clientWidth / 2 + b.offsetWidth / 2); }); }
 
-/* update only the reverse result (keeps the input focused while typing) */
-function updateReverse() {
-  const r = row(S.measure), o = op(S.op), c = cell(r.id, o.id), n0 = parseNum(S.have);
-  const out = $('#rout'); if (!out) return;
-  if (!c || isNaN(n0)) { renderConvert(); return; }
-  const was = document.activeElement && document.activeElement.id === 'have';
-  const pos = was ? document.activeElement.selectionStart : 0;
-  renderConvert();
-  if (was) { const i = $('#have'); i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } }
+function revHtml() {
+  const r = row(S.measure), o = op(S.op), c = cell(r.id, o.id), haveN = parseNum(S.have);
+  if (!c) return `<div class="rres dim">Pick an opinion that has a figure for ${esc(r.en)}.</div>`;
+  if (isNaN(haveN)) return `<div class="rres dim">Type an amount to see how many ${esc(r.en)}.</div>`;
+  const base = toBase(r.kind, S.haveUnit, haveN), n = howMany(base, c.v), f = fraction(n);
+  const same = ROWS.filter((x) => x.kind === r.kind && x.id !== r.id && cell(x.id, o.id) && ['kezayis', 'kebeitza', 'revis', 'log', 'kav', 'etzba', 'tefach', 'amah', 'mil'].includes(x.id));
+  const copyTxt = (f.approx ? '\u2248 ' : '') + f.text + ' ' + r.en;
+  return `<button type="button" class="rres" data-copy="${esc(copyTxt)}"><span class="rn">${f.approx ? '<i>\u2248</i>' : ''}${esc(f.text)}</span><span class="ru">${esc(r.en)}</span><small>= ${esc(fmt(n))} \u00b7 tap to copy</small></button>
+    <div class="also"><div class="lab">Same amount in</div><div class="chips" data-fade>${same.map((x) => { const q = fraction(base / cell(x.id, o.id).v); return `<button type="button" class="mchip sm" data-m="${x.id}"><span>${q.approx ? '\u2248' : ''}${esc(q.text)} ${esc(x.en)}</span></button>`; }).join('')}</div></div>`;
 }
+function updateReverse() { const out = $('#rout'); if (out) { out.innerHTML = revHtml(); fades(); } }
 
 /* ---------- chart tab ---------- */
 function renderChart() {
