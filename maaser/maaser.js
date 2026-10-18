@@ -95,7 +95,7 @@ function curPeriod() {
   return U.period;
 }
 function periodLabel(p) {
-  if (U.mode === 'heb' && H) return `${p} ${H.gematriya(p % 1000) ? '(' + H.gematriya(p) + ')' : ''}`.trim();
+  if (U.mode === 'heb' && H) return `${p} (${H.gematriya(p)})`;
   return String(p);
 }
 function monthLabels(p) {
@@ -428,7 +428,7 @@ document.addEventListener('click', (ev) => {
   if ((b = t.closest('[data-cur]'))) { S.settings.cur = b.dataset.cur; save(); render(); settingsSheet(); return; }
   if ((b = t.closest('[data-heb]'))) { S.settings.hebrew = b.dataset.heb === '1'; if (!S.settings.hebrew) U.mode = 'civil'; save(); render(); settingsSheet(); return; }
   if ((b = t.closest('[data-mode]'))) { U.mode = b.dataset.mode; U.period = null; U.sel = -1; renderYear(); return; }
-  if ((b = t.closest('[data-yr]'))) { const l = periods(), i = l.indexOf(curPeriod()) + Number(b.dataset.yr) * -1; if (l[i] != null) { U.period = l[i]; U.sel = -1; renderYear(); } return; }
+  if ((b = t.closest('[data-yr]'))) { const l = periods(), i = l.indexOf(curPeriod()) + Number(b.dataset.yr); if (l[i] != null) { U.period = l[i]; U.sel = -1; renderYear(); } return; }
   if ((b = t.closest('[data-bar]'))) { U.sel = U.sel === +b.dataset.bar ? -1 : +b.dataset.bar; renderYear(); return; }
   if ((b = t.closest('[data-type]'))) { U.type = b.dataset.type; if (U.type !== 'g') U.cat = 'all'; renderLedger(); return; }
   if ((b = t.closest('[data-cat]'))) { U.cat = b.dataset.cat; renderLedger(); return; }
