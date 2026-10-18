@@ -259,7 +259,7 @@ function keyPress(k) {
 }
 function entryUpdate() {
   const c = parseCents(E.amt), ok = !isNaN(c) && c > 0;
-  $('#kd').textContent = E.amt === '' ? '0' : E.amt.replace(/\B(?=(\d{3})+(?!\d))/g, (m, off, str) => (str.indexOf('.') !== -1 && off > str.indexOf('.')) ? '' : ',');
+  $('#kd').textContent = E.amt === '' ? '0' : (() => { const [w, f] = E.amt.split('.'); return w.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (f != null ? '.' + f : ''); })();
   $('#kd').className = ok ? '' : 'ph';
   const others = { ...S, entries: S.entries.filter((x) => x.id !== E.id) };
   const t0 = totals(others), pct = S.settings.pct;

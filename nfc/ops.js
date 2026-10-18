@@ -1,6 +1,7 @@
 // /nfc — the shared sheets: info/confirm sheet, the "tap your tag" sheet, hold-to-confirm, save-preset.
 import { $, esc, icon, makeSheet, buzz, sleep, toast } from '/nfc/ui.js';
-import { errText, isAbort } from '/nfc/nfcio.js';
+import { errText, isAbort, hasNFC, isSecure, isAndroid, isIOS } from '/nfc/nfcio.js';
+import { goTab } from '/nfc/router.js';
 import { lib, labelFor } from '/nfc/data.js';
 
 export const sheet = makeSheet($('#sheet'), $('#sheetBack'));
@@ -115,4 +116,22 @@ export function savePresetSheet(items, suggested) {
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
     setTimeout(() => { try { input.focus(); input.select(); } catch (e) { /* ignore */ } }, 120);
   });
+}
+
+/* "This device can't do that" explanation, shared by Read / Write / Tools */
+export function unsupportedReason() {
+  if (!hasNFC()) {
+    if (isIOS()) return { t: 'iPhone can’t do this part from a website', html: '<p><b>Apple doesn’t let websites read or write NFC tags.</b> But iPhones (XS and newer) already read tags on their own: hold the top of the phone against one. A link on a tag opens straight in Safari, no app needed.</p><p>To <b>write</b> tags you need an Android phone with Chrome. You can still build a card here, show its QR code, or save a contact file.</p>' };
+    if (isAndroid()) return { t: 'Open this in Chrome', html: '<p>This browser can’t talk to NFC. <b>Chrome on Android</b> can. Open this page in Chrome, and make sure NFC is switched on in your phone’s settings.</p>' };
+    return { t: 'Computers can’t scan tags from the web', html: '<p>Reading and writing tags needs an <b>Android phone with Chrome</b>. Open this page there. On this device you can still build a card, make a QR code and prepare tag contents.</p>' };
+  }
+  if (!isSecure()) return { t: 'This page needs https', html: '<p>NFC only works on secure pages. Open this page with <b>https://</b> in the address.</p>' };
+  return null;
+}
+export function showUnsupported() {
+  const r = unsupportedReason(); if (!r) return;
+  showSheet(`<p class="eyebrow">NFC</p><h2>${esc(r.t)}</h2>${r.html}
+    <ol class="steps"><li><b>Android + Chrome:</b> reading, writing and locking all work.</li><li><b>Everyone else:</b> build the card, show the QR, or share the link. Friends on any phone can open it.</li></ol>
+    <div class="btn-row"><button class="btn primary" type="button" data-go="card">Build a card</button><button class="btn" type="button" data-close>Close</button></div>`);
+  $('#sheet').querySelector('[data-go]').addEventListener('click', () => { sheet.close(true); goTab('card'); });
 }

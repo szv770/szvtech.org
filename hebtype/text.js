@@ -33,7 +33,7 @@ export function countText(s) {
  */
 export function fixFinals(s) {
   const t = nfd(s);
-  const out = t.replace(/[א-ת֑-ׇ׳״]+/g, (run) => {
+  const out = t.replace(/[א-ת֑-ֽֿ-ׂׄ-ׇ׳״]+/g, (run) => {
     const ch = Array.from(run);
     let last = -1;
     for (let i = 0; i < ch.length; i++) if (LETTER_RE.test(ch[i])) last = i;

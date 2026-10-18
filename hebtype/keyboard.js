@@ -217,8 +217,14 @@ export function mountKeyboard(host, opts = {}) {
   }) : null;
   if (ro) ro.observe(host);
 
+  // keep the text box above the keyboard (matters on short landscape screens)
+  function reveal() {
+    if (!target || !open) return;
+    const r = target.getBoundingClientRect(), limit = innerHeight - host.offsetHeight - 8;
+    if (r.bottom > limit) window.scrollBy(0, Math.max(0, Math.min(r.bottom - limit, r.top - 56)));
+  }
   const api = {
-    show() { open = true; host.hidden = false; document.body.classList.add('szk-open'); document.documentElement.style.setProperty('--szk-h', host.offsetHeight + 'px'); if (opts.onToggle) opts.onToggle(true); },
+    show() { open = true; host.hidden = false; document.body.classList.add('szk-open'); document.documentElement.style.setProperty('--szk-h', host.offsetHeight + 'px'); if (opts.onToggle) opts.onToggle(true); requestAnimationFrame(reveal); },
     hide() { open = false; closePopup(); host.hidden = true; document.body.classList.remove('szk-open'); document.documentElement.style.setProperty('--szk-h', '0px'); if (opts.onToggle) opts.onToggle(false); },
     toggle() { open ? api.hide() : api.show(); },
     isOpen: () => open,

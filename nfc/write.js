@@ -1,11 +1,11 @@
 // /nfc — Write tab: pick what the tag should do, watch the size, tap to write.
-import { $, $$, esc, icon, store, toast, buzz, uid, reduced, copy } from '/nfc/ui.js';
+import { $, esc, icon, store, toast, buzz, uid, reduced } from '/nfc/ui.js';
 import { hasNFC, canLock, writeRecords, lockTag, errText } from '/nfc/nfcio.js';
-import { TYPES, SOCIALS, draftRecords, draftSize, CAPACITIES, fits, tlvOverhead, summarize } from '/nfc/ndef.js';
+import { SOCIALS, draftRecords, draftSize, CAPACITIES, fits, tlvOverhead } from '/nfc/ndef.js';
 import { cardToVcard } from '/nfc/card.js';
 import { recent, labelFor } from '/nfc/data.js';
 import { goTab, onTab } from '/nfc/router.js';
-import { runOp, confirmSheet, savePresetSheet, showSheet, sheet } from '/nfc/ops.js';
+import { runOp, confirmSheet, savePresetSheet, showUnsupported } from '/nfc/ops.js';
 
 const TYPE_UI = [
   ['url', 'Link', 'link', 'Opens a web page when tapped'],
@@ -42,7 +42,6 @@ const FORMS = {
 };
 const QUICK_APPS = [['WhatsApp', 'com.whatsapp'], ['Maps', 'com.google.android.apps.maps'], ['YouTube', 'com.google.android.youtube'], ['Spotify', 'com.spotify.music'], ['Camera', 'com.android.camera']];
 
-const defaults = (t) => ({ sec: 'WPA', lang: 'en', kind: 'instagram', mime: 'text/plain' }[t === 'wifi' ? 'sec' : 0] !== undefined ? {} : {}) || {};
 function freshFields(type) {
   if (type === 'wifi') return { sec: 'WPA' };
   if (type === 'text') return { lang: 'en' };
@@ -79,8 +78,13 @@ const cur = () => draft.items[draft.sel];
 function renderTypes() {
   const it = cur();
   $('#wTypes').innerHTML = TYPE_UI.map(([id, name, ic]) => `<button class="tchip" type="button" role="tab" data-t="${id}" aria-selected="${it.type === id}">${icon(ic)}${esc(name)}</button>`).join('');
+  centerChip();
 }
 
+function centerChip() {
+  const box = $('#wTypes'); const sel = box.querySelector('[aria-selected="true"]');
+  if (sel && box.scrollWidth > box.clientWidth) box.scrollLeft = sel.offsetLeft - box.clientWidth / 2 + sel.offsetWidth / 2;
+}
 function fieldHtml(f, v) {
   const val = esc(v == null ? '' : v);
   const hint = f.hint ? `<small class="hint">${esc(f.hint)}</small>` : '';
@@ -197,7 +201,7 @@ export function loadIntoWrite(items, { go = false, append = false } = {}) {
 
 /* ---------- writing ---------- */
 export async function writeNow(items, { overwrite = true, lock = false, label = 'Write' } = {}) {
-  if (!hasNFC()) { (await import('/nfc/read.js')).showUnsupported(); return null; }
+  if (!hasNFC()) { showUnsupported(); return null; }
   let recs;
   try { recs = draftRecords(items); } catch (e) { toast(e.message); return null; }
   const bytes = draftSize(items).bytes;
@@ -228,7 +232,7 @@ export const onRecentChange = (fn) => { renderRecentHook = fn; };
 
 async function go() {
   const st = status();
-  if (!hasNFC()) { (await import('/nfc/read.js')).showUnsupported(); return; }
+  if (!hasNFC()) { showUnsupported(); return; }
   if (!st.ready) { toast(st.err || 'Fill in the form first'); return; }
   if (opts.lock) {
     if (!canLock()) { toast('This browser can’t lock tags. Turn off “read-only”.'); return; }
@@ -279,5 +283,5 @@ export function initWrite() {
   });
   $('#wGo').addEventListener('click', go);
   $('#wAlt').addEventListener('click', async (e) => { if (e.target.closest('[data-savepreset]')) { const st = status(); if (st.ready) await savePresetSheet(draft.items); } });
-  onTab((t) => { if (t === 'write') renderMeter(); });
+  onTab((t) => { if (t === 'write') { renderMeter(); centerChip(); } });
 }

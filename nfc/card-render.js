@@ -45,10 +45,10 @@ export function renderCard(card, { live = true } = {}) {
     <div class="vc-top" aria-hidden="true"></div>
     <div class="vc-av" aria-hidden="true">${esc(cardInitials(c))}</div>
     <div class="vc-body">
-      <h2 class="vc-name${c.name ? '' : ' ph'}">${esc(c.name || (empty ? 'Your name' : ''))}</h2>
-      ${c.title || c.org ? `<p class="vc-role">${esc(c.title)}${c.title && c.org ? ' <i>·</i> ' : ''}${c.org ? `<b>${esc(c.org)}</b>` : ''}</p>` : (empty ? '<p class="vc-role ph">Title · Company</p>' : '')}
+      <h2 class="vc-name${c.name ? '' : ' vph'}">${esc(c.name || (empty ? 'Your name' : ''))}</h2>
+      ${c.title || c.org ? `<p class="vc-role">${esc(c.title)}${c.title && c.org ? ' <i>·</i> ' : ''}${c.org ? `<b>${esc(c.org)}</b>` : ''}</p>` : (empty ? '<p class="vc-role vph">Title · Company</p>' : '')}
       ${c.bio ? `<p class="vc-bio">${esc(c.bio)}</p>` : ''}
-      ${rows.length ? `<div class="vc-rows">${rows.join('')}</div>` : (empty ? '<div class="vc-rows"><div class="vc-row ph"><i>' + ci('phone') + '</i><span><b>+1 555 010 0000</b><small>Call</small></span></div><div class="vc-row ph"><i>' + ci('mail') + '</i><span><b>you@example.com</b><small>Email</small></span></div></div>' : '')}
+      ${rows.length ? `<div class="vc-rows">${rows.join('')}</div>` : (empty ? '<div class="vc-rows"><div class="vc-row vph"><i>' + ci('phone') + '</i><span><b>+1 555 010 0000</b><small>Call</small></span></div><div class="vc-row vph"><i>' + ci('mail') + '</i><span><b>you@example.com</b><small>Email</small></span></div></div>' : '')}
       ${soc.length ? `<div class="vc-soc">${soc.join('')}</div>` : ''}
     </div>
   </article>`;

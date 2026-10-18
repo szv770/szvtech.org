@@ -60,7 +60,7 @@ button, a, summary { -webkit-touch-callout: none; }
 @keyframes pin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ---------- shared bits ---------- */
-.ph { font: 700 clamp(26px, 7.4vw, 36px)/1.08 var(--f-d); letter-spacing: -.035em; margin: 10px 0 12px; }
+.ph { font: 700 clamp(24px, 6.6vw, 34px)/1.08 var(--f-d); letter-spacing: -.035em; margin: 10px 0 12px; }
 .ph-s { color: var(--dim); font-size: 14.5px; margin: -4px 0 16px; }
 .lab { font: 600 11px var(--f-m); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); display: inline-flex; align-items: center; gap: 10px; }
 .lab::before { content: ""; width: 22px; height: 1px; background: var(--grad); }
@@ -172,6 +172,11 @@ button, a, summary { -webkit-touch-callout: none; }
   .panel { animation: none; }
 }
 
+/* once there are results, the ring shrinks to make room */
+.stage.has-res { padding-top: 2px; }
+.stage.has-res .ring { --d: 112px; margin-top: 2px; }
+.stage.has-res .stage-t { font-size: 22px; margin-top: 6px; }
+.stage.has-res .stage-s { min-height: 0; font-size: 14px; margin-bottom: 8px; }
 /* ---------- READ: results ---------- */
 .results { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
 .res { border: 1px solid var(--line); background: var(--glass); border-radius: 24px; overflow: hidden; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 20px 50px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .07); animation: pin .5s var(--ease) both; }
@@ -202,8 +207,11 @@ button, a, summary { -webkit-touch-callout: none; }
 .blank b { color: var(--ink); }
 
 /* ---------- WRITE ---------- */
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-.tchip { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px 0 12px; border-radius: 22px; border: 1px solid var(--line); background: var(--glass); color: var(--dim); font: 600 13px Inter, sans-serif; cursor: pointer; user-select: none; transition: transform .25s var(--ease), background .25s, border-color .25s, color .25s; }
+.chips { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; margin: 0 -16px 14px; padding: 2px 16px 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 36px), transparent); }
+.chips::-webkit-scrollbar { display: none; }
+.chips .tchip { flex: none; scroll-snap-align: start; }
+@media (min-width: 820px) { .chips { flex-wrap: wrap; overflow: visible; margin: 0 0 14px; padding: 0; -webkit-mask-image: none; mask-image: none; } }
+.tchip { min-height: 44px; display: inline-flex; align-items: center; gap: 7px; padding: 0 13px 0 11px; border-radius: 22px; border: 1px solid var(--line); background: var(--glass); color: var(--dim); font: 600 13px Inter, sans-serif; cursor: pointer; user-select: none; transition: transform .25s var(--ease), background .25s, border-color .25s, color .25s; }
 .tchip .ic { width: 18px; height: 18px; }
 .tchip:active { transform: scale(.94); }
 .tchip[aria-selected="true"] { color: var(--ink); background: color-mix(in srgb, var(--a1) 26%, transparent); border-color: color-mix(in srgb, var(--a1) 60%, transparent); box-shadow: 0 0 24px color-mix(in srgb, var(--a1) 25%, transparent); }
@@ -339,7 +347,8 @@ button, a, summary { -webkit-touch-callout: none; }
 .opbox { text-align: center; padding: 6px 0 4px; }
 .opbox .ring { --d: 176px; cursor: default; }
 .opbox h2 { margin-top: 6px; }
-.opbox p { max-width: 36ch; margin: 0 auto 10px; }
+.opbox p { max-width: 36ch; margin: 0 auto 10px; text-align: center; }
+.opbox .eyebrow, .opbox .res-line { max-width: none; text-align: center; }
 .opbox .res-line { font: 500 12px var(--f-m); color: var(--faint); margin: 0 0 8px; user-select: text; -webkit-user-select: text; }
 .opbox .btn-row { justify-content: center; }
 .opbox .btn-row .btn { flex: 1 1 120px; max-width: 220px; }

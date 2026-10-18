@@ -1,10 +1,10 @@
 // /nfc — Read tab: scan a tag, decode every record, offer actions, keep history.
 import { $, esc, icon, store, toast, copy, download, buzz, ago, slug, reduced } from '/nfc/ui.js';
-import { hasNFC, isSecure, isAndroid, isIOS, errText, isAbort, fmtSerial } from '/nfc/nfcio.js';
+import { hasNFC, isSecure, errText, isAbort, fmtSerial } from '/nfc/nfcio.js';
 import { decodeRecord, webToRawItem, itemRecords, messageSize, summarize, fromUtf8, bytesOf } from '/nfc/ndef.js';
 import { history, lib } from '/nfc/data.js';
 import { goTab } from '/nfc/router.js';
-import { showSheet, onBeforeOp, savePresetSheet } from '/nfc/ops.js';
+import { onBeforeOp, savePresetSheet, unsupportedReason, showUnsupported } from '/nfc/ops.js';
 import { loadIntoWrite, writeNow } from '/nfc/write.js';
 import { parseVcard } from '/qr/encode.js';
 
@@ -23,25 +23,6 @@ function setState(st, title, sub) {
   btn.setAttribute('aria-label', scanning ? 'Stop scanning' : 'Start scanning for a tag');
   $('#scanStop').hidden = !scanning;
 }
-
-function unsupportedReason() {
-  if (!hasNFC()) {
-    if (isIOS()) return { t: 'iPhone can’t do this part from a website', html: '<p><b>Apple doesn’t let websites read or write NFC tags.</b> But iPhones (XS and newer) already read tags on their own: just hold the top of the phone against one. A link on a tag opens straight in Safari, no app needed.</p><p>To <b>write</b> tags you need an Android phone with Chrome. You can still build a card here, show its QR code, or save a contact file.</p>' };
-    if (isAndroid()) return { t: 'Open this in Chrome', html: '<p>This browser can’t talk to NFC. <b>Chrome on Android</b> can. Open this page in Chrome, and make sure NFC is switched on in your phone’s settings.</p>' };
-    return { t: 'Computers can’t scan tags from the web', html: '<p>Reading and writing tags needs an <b>Android phone with Chrome</b>. Open this page there. On this device you can still build a card, make a QR code and prepare tag contents.</p>' };
-  }
-  if (!isSecure()) return { t: 'This page needs https', html: '<p>NFC only works on secure pages. Open this page with <b>https://</b> in the address.</p>' };
-  return null;
-}
-
-function showUnsupported() {
-  const r = unsupportedReason(); if (!r) return;
-  showSheet(`<p class="eyebrow">NFC</p><h2>${esc(r.t)}</h2>${r.html}
-    <ol class="steps"><li><b>Android + Chrome:</b> works for reading, writing and locking.</li><li><b>Everyone else:</b> build the card, show the QR, or share the link. Friends on any phone can open it.</li></ol>
-    <div class="btn-row"><button class="btn primary" type="button" data-go="card">Build a card</button><button class="btn" type="button" data-close>Close</button></div>`);
-  $('#sheet').querySelector('[data-go]').addEventListener('click', () => { import('/nfc/ops.js').then((m) => m.sheet.close(true)); goTab('card'); });
-}
-export { showUnsupported };
 
 function stopScan(quiet) {
   if (!scanning && !ctl) return;
@@ -149,6 +130,7 @@ function addResult(entry) {
   renderResults();
 }
 function renderResults() {
+  stage().classList.toggle('has-res', shown.length > 0);
   $('#results').innerHTML = shown.map((e, i) => resHtml(e, i)).join('');
 }
 

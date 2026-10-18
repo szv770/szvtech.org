@@ -193,7 +193,7 @@ function plainWord(word) {
 
 /** Hebrew letters -> English letters. With niqqud it is exact; without, a vowel-guessing best effort. */
 export function hebrewToLatin(text) {
-  return String(text == null ? '' : text).replace(/[א-ת֑-ׇ׳״יִ-ﭏ]+/g, (run) => {
+  return String(text == null ? '' : text).replace(/[א-ת֑-ֽֿ-ׂׄ-ׇ׳״יִ-ﭏ]+/g, (run) => {
     const plain = stripNikud(run).replace(/[׳״]/g, (c) => c);
     const key = plain.replace(/[׳״'"]/g, '');
     if (!hasNikud(run)) {

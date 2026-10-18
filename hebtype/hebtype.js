@@ -139,7 +139,7 @@ function drawPreview() {
   const p = $('prev'), v = txt.value.trim();
   p.className = 'prev ' + style;
   p.innerHTML = v ? esc(txt.value) : '<span class="ph">Your text appears here</span>';
-  $('styleNote').textContent = STYLES[style].note + (style === 'rashi' && hasNikud(v) ? ' Nikud may not show in Rashi.' : '');
+  $('styleNote').textContent = STYLES[style].note;
   document.querySelectorAll('#styleSeg [data-style]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.style === style)));
   document.querySelectorAll('#paperSeg [data-paper]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.paper === paper)));
 }
@@ -231,7 +231,6 @@ const kb = mountKeyboard($('kbHost'), { target: txt, autoFinal, onChange: onText
 function syncKb() {
   const t = $('kbToggle');
   t.setAttribute('aria-pressed', String(own));
-  $('kbLabel').textContent = own ? (kb.isOpen() ? 'Hebrew keys: on' : 'Hebrew keys') : 'Hebrew keys';
   txt.setAttribute('inputmode', own ? 'none' : 'text');
 }
 $('kbToggle').addEventListener('click', () => {
