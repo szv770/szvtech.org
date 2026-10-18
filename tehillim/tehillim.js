@@ -529,7 +529,7 @@ function prefetchToday() {
   const us = T.monthlyUnits(today.h.d, today.monthLength);
   const q = us.map((u) => u.ps).filter((p, i, a) => a.indexOf(p) === i);
   const next = async () => { const p = q.shift(); if (!p) return; try { await loadChapter(p); } catch (e) {} setTimeout(next, 150); };
-  (window.requestIdleCallback || setTimeout)(() => { next(); renderOffline(); }, 1200);
+  setTimeout(() => { next(); renderOffline(); }, 1200);
 }
 
 if ('serviceWorker' in navigator) {

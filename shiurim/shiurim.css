@@ -115,7 +115,7 @@ thead th:first-child { position: sticky; left: 0; z-index: 1; background: rgba(1
 tbody th button { display: flex; flex-direction: column; justify-content: center; width: 100%; min-height: 56px; padding: 0 12px 0 16px; background: none; border: 0; text-align: left; box-shadow: 6px 0 12px -8px rgba(0, 0, 0, .8); }
 tbody th b { font: 700 15px Syne, sans-serif; }
 tbody th small { font: 400 11px Inter, sans-serif; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 112px; }
-td button { width: 100%; min-height: 56px; padding: 0 14px; border: 0; background: none; text-align: right; font: 600 16px Inter, sans-serif; position: relative; }
+td button { white-space: nowrap; width: 100%; min-height: 56px; padding: 0 14px; border: 0; background: none; text-align: right; font: 600 16px Inter, sans-serif; position: relative; }
 td button:active { background: color-mix(in srgb, var(--a1) 16%, transparent); }
 td.na { padding: 0 14px; color: var(--faint); }
 .dv { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--a2); margin-left: 5px; vertical-align: middle; opacity: .8; }

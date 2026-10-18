@@ -40,7 +40,8 @@ const FR = [[1, 2, '½'], [1, 3, '⅓'], [2, 3, '⅔'], [1, 4, '¼'], [3, 4, '¾
 export function fraction(x, tol = 0.02) {
   if (!isFinite(x) || x < 0) return { text: '—', exact: false };
   let whole = Math.floor(x + 1e-9), rem = x - whole;
-  if (rem < 1e-9) return { text: String(whole), exact: true };
+  if (rem < 1e-9 || rem <= 0.005) return { text: String(whole), exact: rem < 1e-9 };
+  if (1 - rem <= 0.005) return { text: String(whole + 1), exact: false };
   if (1 - rem < 1e-9) return { text: String(whole + 1), exact: true };
   let best = null;
   for (const [n, d, g] of FR) { const e = Math.abs(rem - n / d); if (e <= tol && (!best || e < best.e)) best = { e, g }; }

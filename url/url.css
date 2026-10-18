@@ -101,7 +101,7 @@ input[type=date] { margin-top: 10px; color-scheme: dark; }
 .pinrow { position: relative; margin-bottom: 14px; }
 .pinrow input { padding-right: 76px; font-size: 20px; letter-spacing: .12em; text-align: center; padding-left: 76px; }
 .pinrow input::placeholder { letter-spacing: .1em; }
-.eye { position: absolute; right: 6px; top: 4px; min-height: 44px; min-width: 64px; border-radius: 14px; color: var(--dim); font-size: 12px; font-weight: 600; letter-spacing: .06em; }
+.eye { position: absolute; right: 6px; top: 4px; border: 0; background: rgba(255,255,255,.07); left: auto; min-height: 44px; min-width: 64px; border-radius: 14px; color: var(--dim); font-size: 12px; font-weight: 600; letter-spacing: .06em; }
 .gate .btn.primary { width: 100%; min-height: 54px; }
 .msg { margin: 12px 0 0; font-size: 14px; text-align: center; }
 .gate.shake { animation: nope .4s var(--ease); }
@@ -113,7 +113,7 @@ input[type=date] { margin-top: 10px; color-scheme: dark; }
 .result { border-color: color-mix(in srgb, var(--a1) 45%, var(--line)); background: linear-gradient(180deg, color-mix(in srgb, var(--a1) 14%, transparent), var(--glass)); animation: rise .5s var(--ease); }
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
 .short { font: 700 clamp(22px, 7.2vw, 34px)/1.15 Syne, Inter, sans-serif; letter-spacing: -.02em; overflow-wrap: anywhere; user-select: all; -webkit-user-select: all; }
-.short span { color: var(--faint); }
+.short span { display: block; color: var(--faint); font-size: .5em; letter-spacing: 0; margin-bottom: 2px; }
 .short b { font-weight: 700; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .acts .btn.primary { flex: 1 1 100%; min-height: 54px; }
@@ -130,7 +130,7 @@ input[type=date] { margin-top: 10px; color-scheme: dark; }
 .lrow.gone { opacity: .5; }
 .lhead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .lcode { font: 600 15px 'JetBrains Mono', monospace; overflow-wrap: anywhere; min-width: 0; }
-.lcode span { color: var(--faint); font-weight: 500; }
+.lcode span { display: block; color: var(--faint); font-weight: 500; font-size: 12px; }
 .hits { flex: none; font: 600 12px 'JetBrains Mono', monospace; color: var(--ink); padding: 3px 9px; border-radius: 99px; background: color-mix(in srgb, var(--a2) 14%, transparent); border: 1px solid color-mix(in srgb, var(--a2) 28%, transparent); }
 .ldest { color: var(--dim); font-size: 14px; margin: 4px 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lmeta { color: var(--faint); font-size: 12.5px; margin: 0 0 10px; }

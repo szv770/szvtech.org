@@ -10,7 +10,7 @@ export const SOURCES = {
   cbz: { name: 'Chabad.org: What is a Kezayit?', url: 'https://www.chabad.org/library/article_cdo/aid/7226278/jewish/What-is-a-Kezayit.htm' },
   cseder: { name: 'Chabad.org: Seder Preparations, Requirements, Measurements and Recommendations', url: 'https://www.chabad.org/library/article_cdo/aid/2833752/jewish/Seder-Preparations-Requirements-Measurements-And-Recommendations.htm' },
   sah: { name: 'Shulchan Aruch HaRav (shulchanaruchharav.com): How much is a Revius?', url: 'https://shulchanaruchharav.com/halacha/2-how-much-is-a-revius/' },
-  ratio: { name: 'Talmudic ratios (log = 4 revi’is, kav = 4 log, seah = 6 kav, ephah = 3 seah = 18 kav, omer = ¹⁄₁₀ ephah, amah = 6 tefach = 24 etzba, mil = 2,000 amos, ris = ²⁄₁₅ mil, parsah = 4 mil)', url: 'https://en.wikipedia.org/wiki/Biblical_and_Talmudic_units_of_measurement' },
+  ratio: { name: 'Standard Talmudic ratios (Wikipedia: Biblical and Talmudic units of measurement)', url: 'https://en.wikipedia.org/wiki/Biblical_and_Talmudic_units_of_measurement' },
 };
 
 export const OPINIONS = [
@@ -74,6 +74,8 @@ export const NOTES = [
   'Chabad customs for the revi’is are recorded in a range of larger figures too (published as roughly 99 to 123 ml). We could not tie each number to a named source, so they are not shown as a column. Ask your Rav which to follow.',
   'Rav Moshe Feinstein: only the length measures were verified here, so volumes show —.',
 ];
+
+NOTES.push('Ratios used for calculated cells: log = 4 revi\u2019is, kav = 4 log, seah = 6 kav, ephah = 3 seah, omer = \u00b9\u2044\u2081\u2080 ephah; amah = 6 tefach = 24 etzba, mil = 2,000 amos, ris = \u00b2\u2044\u2081\u2085 mil, parsah = 4 mil.');
 
 const RM = Object.fromEntries(ROWS.map((r) => [r.id, r]));
 export const row = (id) => RM[id];

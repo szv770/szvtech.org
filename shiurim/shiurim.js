@@ -139,7 +139,7 @@ function revHtml() {
   const same = ROWS.filter((x) => x.kind === r.kind && x.id !== r.id && cell(x.id, o.id) && ['kezayis', 'kebeitza', 'revis', 'log', 'kav', 'etzba', 'tefach', 'amah', 'mil'].includes(x.id));
   const copyTxt = (f.approx ? '\u2248 ' : '') + f.text + ' ' + r.en;
   return `<button type="button" class="rres" data-copy="${esc(copyTxt)}"><span class="rn">${f.approx ? '<i>\u2248</i>' : ''}${esc(f.text)}</span><span class="ru">${esc(r.en)}</span><small>= ${esc(fmt(n))} \u00b7 tap to copy</small></button>
-    <div class="also"><div class="lab">Same amount in</div><div class="chips" data-fade>${same.map((x) => { const q = fraction(base / cell(x.id, o.id).v); return `<button type="button" class="mchip sm" data-m="${x.id}"><span>${q.approx ? '\u2248' : ''}${esc(q.text)} ${esc(x.en)}</span></button>`; }).join('')}</div></div>`;
+    <div class="also"><div class="lab">Same amount in</div><div class="chips" data-fade>${same.filter((x) => base / cell(x.id, o.id).v >= 0.1).map((x) => { const q = fraction(base / cell(x.id, o.id).v); return `<button type="button" class="mchip sm" data-m="${x.id}"><span>${q.approx ? '\u2248' : ''}${esc(q.text)} ${esc(x.en)}</span></button>`; }).join('')}</div></div>`;
 }
 function updateReverse() { const out = $('#rout'); if (out) { out.innerHTML = revHtml(); fades(); } }
 
