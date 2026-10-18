@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Links · SZVTECH</title>
+<meta name="description" content="Your own short links: szvtech.org/url/anything.">
+<meta name="theme-color" content="#05050a">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Cpath d=%27M26 38a7 7 0 0 1 0-10l5-5a7 7 0 0 1 10 10l-2 2M38 26a7 7 0 0 1 0 10l-5 5a7 7 0 0 1-10-10l2-2%27 fill=%27none%27 stroke=%27url(%23g)%27 stroke-width=%274.5%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<script src="/assets/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/url/url.css">
+</head>
+<body>
+<div class="bgfx" aria-hidden="true"></div>
+
+<header class="top">
+  <a class="back" href="/">&larr; SZVTECH</a>
+  <div class="top-r">
+    <button class="chip" id="lockBtn" type="button" hidden>Lock</button>
+    <button class="szv-sharebtn" data-szv-share aria-label="Share"></button>
+  </div>
+</header>
+
+<main id="app">
+  <section class="hero">
+    <span class="lab">Short links</span>
+    <h1>Short links,<br><span class="grad">just yours.</span></h1>
+    <p class="lede">Paste something long. Get <b class="mono">szvtech.org/url/…</b> back.</p>
+  </section>
+
+  <!-- loading -->
+  <section class="card" id="vLoading" aria-live="polite">
+    <div class="sk sk1"></div><div class="sk sk2"></div><div class="sk sk3"></div>
+  </section>
+
+  <!-- not set up -->
+  <section class="card" id="vSetup" hidden>
+    <h2>Not set up yet</h2>
+    <p class="dim">This tool needs a small free database to remember your links. It takes about five minutes, once.</p>
+    <ol class="steps">
+      <li><b>Create a Neon project.</b> Sign in at neon.com (free) and make a new project.</li>
+      <li><b>Copy the connection string.</b> On the project page, press <i>Connect</i> and copy the long <span class="mono">postgresql://…</span> text.</li>
+      <li><b>Add two settings in Vercel.</b> Project, Settings, Environment Variables: <span class="mono">DATABASE_URL</span> (the string you copied) and <span class="mono">SZV_LINK_PIN</span> (a PIN only you know, 8 or more digits).</li>
+      <li><b>Redeploy.</b> Vercel, Deployments, the three dots, Redeploy. Then come back here.</li>
+    </ol>
+    <button class="btn" id="setupRetry" type="button">Check again</button>
+  </section>
+
+  <!-- PIN gate -->
+  <section class="card gate" id="vGate" hidden>
+    <div class="lockic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1.2"/></svg></div>
+    <h2>Only you can make links</h2>
+    <p class="dim">Enter your PIN to unlock. Anyone else can still follow your links.</p>
+    <form id="gateForm" autocomplete="off">
+      <div class="pinrow">
+        <input id="pin" type="password" inputmode="text" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="PIN" aria-label="PIN" enterkeyhint="go">
+        <button class="eye" id="pinEye" type="button" aria-label="Show PIN" aria-pressed="false">Show</button>
+      </div>
+      <button class="btn primary" id="gateGo" type="submit">Unlock</button>
+      <p class="msg" id="gateMsg" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <!-- unlocked -->
+  <div id="vApp" hidden>
+    <div class="offline" id="offline" hidden>You are offline. Links cannot be made or loaded until you are back.</div>
+
+    <form class="card make" id="makeForm" autocomplete="off" novalidate>
+      <label class="lab" for="longUrl">Long link</label>
+      <div class="urlrow">
+        <input id="longUrl" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="https://a-very-long-address.com/…" aria-describedby="urlMsg">
+        <button class="chip" id="pasteBtn" type="button" hidden>Paste</button>
+      </div>
+      <p class="hint err" id="urlMsg" role="alert" hidden></p>
+
+      <label class="lab" for="code">Custom ending <i>optional</i></label>
+      <div class="codewrap">
+        <span class="pre mono" id="codePre">szvtech.org/url/</span>
+        <input id="code" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="pick-a-name" aria-describedby="codeHint">
+      </div>
+      <p class="hint" id="codeHint">Leave empty for a random short one.</p>
+
+      <span class="lab" id="expLab">Expires</span>
+      <div class="chips" role="radiogroup" aria-labelledby="expLab" id="expChips">
+        <button type="button" role="radio" aria-checked="true" data-exp="never">Never</button>
+        <button type="button" role="radio" aria-checked="false" data-exp="1d">1 day</button>
+        <button type="button" role="radio" aria-checked="false" data-exp="7d">7 days</button>
+        <button type="button" role="radio" aria-checked="false" data-exp="30d">30 days</button>
+        <button type="button" role="radio" aria-checked="false" data-exp="date">Pick date</button>
+      </div>
+      <input id="expDate" type="date" aria-label="Expiry date" hidden>
+
+      <label class="lab" for="note">Note <i>optional, only you see it</i></label>
+      <input id="note" type="text" maxlength="200" autocomplete="off" placeholder="What is this for?">
+
+      <button class="btn primary big" id="makeBtn" type="submit"><span id="makeLbl">Make link</span></button>
+      <p class="hint err" id="makeMsg" role="alert" hidden></p>
+    </form>
+
+    <section class="card result" id="result" aria-live="polite" hidden>
+      <span class="lab">Your new link</span>
+      <div class="short" id="shortTxt"></div>
+      <p class="dim small" id="shortSub"></p>
+      <div class="acts">
+        <button class="btn primary" id="rCopy" type="button">Copy</button>
+        <button class="btn" id="rShare" type="button" hidden>Share</button>
+        <a class="btn" id="rOpen" target="_blank" rel="noopener">Open</a>
+        <a class="btn" id="rQr">QR code</a>
+        <a class="btn" id="rNfc">Write to NFC</a>
+      </div>
+      <div class="miniqr" id="miniQr" hidden></div>
+    </section>
+
+    <section class="card list" aria-labelledby="listLab">
+      <div class="listhead"><span class="lab" id="listLab">Your links</span><button class="chip" id="refresh" type="button" aria-label="Refresh list">&#x21bb;</button></div>
+      <div id="listBody"></div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<noscript><p class="ns">Links need JavaScript.</p></noscript>
+<script type="module" src="/url/url.js"></script>
+<script type="module" src="/assets/chrome.js"></script>
+</body>
+</html>
