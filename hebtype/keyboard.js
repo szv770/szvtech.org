@@ -49,7 +49,8 @@ export function mountKeyboard(host, opts = {}) {
   const target = opts.target;
   let layer = store.get('szv-kb-layer', 'abc');
   let layout = store.get('szv-kb-layout', 'std');
-  if (layer === 'abc' === false && !['nik', 'sym'].includes(layer)) layer = 'abc';
+  if (!['abc', 'nik', 'sym'].includes(layer)) layer = 'abc';
+  if (!ROWS[layout]) layout = 'std';
   let autoFinal = opts.autoFinal !== false;
   let open = false, keys = [], popup = null, st = null;
 
