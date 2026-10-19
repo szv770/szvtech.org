@@ -2,7 +2,7 @@
    - same-origin GETs under /ac/ + /assets/theme.js: network first (short timeout), cache fallback
    - Google Fonts CSS + font files: stale-while-revalidate (opaque responses are fine)
    - navigations fall back to the cached /ac/ page */
-const VERSION = 'szv-ac-v1';
+const VERSION = 'szv-ac-v2';
 const SHELL = ['/ac/', '/ac/ac.css', '/ac/ac.js', '/assets/theme.js'];
 const TIMEOUT = 3500;
 

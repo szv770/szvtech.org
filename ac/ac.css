@@ -51,6 +51,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round
 
 /* ===== the front panel = the whole viewport ===== */
 .panel {
+  --liph: clamp(72px, 14cqh, 180px);
   position: fixed; inset: 0; container-type: size; overflow: hidden; isolation: isolate;
   display: grid; grid-template-columns: minmax(0, 1fr);
   grid-template-rows: calc(env(safe-area-inset-top) + clamp(58px, 11cqh, 132px)) minmax(0, 1fr) auto auto auto;
@@ -104,6 +105,9 @@ html[data-ac-theme="dark"] .bezel { box-shadow: inset 0 2px 8px rgba(0,0,0,.7), 
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), inset 0 10px 26px rgba(0,0,0,.85), inset 0 0 14cqw color-mix(in srgb, var(--mode) 7%, transparent);
   color: var(--led); transition: box-shadow .8s var(--ease); -webkit-user-select: none; user-select: none; }
 /* acrylic reflection, sharp-edged like real smoked plastic */
+.window::before { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit; opacity: var(--frosty, 0); transition: opacity 2s var(--ease);
+  box-shadow: inset 0 0 3cqh color-mix(in srgb, #e8f6ff 55%, transparent), inset 0 0 12cqh color-mix(in srgb, var(--frost) 30%, transparent);
+  background: radial-gradient(40% 30% at 0 0, rgba(225,244,255,.22), transparent 70%), radial-gradient(35% 28% at 100% 100%, rgba(225,244,255,.18), transparent 70%), radial-gradient(30% 25% at 100% 0, rgba(225,244,255,.12), transparent 70%); }
 .window::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
   background: linear-gradient(162deg, rgba(255,255,255,.085) 0%, rgba(255,255,255,.03) 34%, transparent 34.3%), linear-gradient(180deg, rgba(255,255,255,.05), transparent 12%); }
 .w-top { display: flex; align-items: center; gap: 2.4cqw; min-width: 0; font: 500 max(9px, 5.2cqh) var(--f-mono); letter-spacing: .14em; text-transform: uppercase; }
@@ -118,7 +122,12 @@ html[data-ac-theme="dark"] .bezel { box-shadow: inset 0 2px 8px rgba(0,0,0,.7), 
 .seg path { fill: rgba(255,255,255,.05); transition: fill .25s; }
 .seg path.on { fill: var(--led); }
 .w-unit { font: 700 max(11px, 9cqh) var(--f-mono); margin: 1cqh 0 0 1.2cqw; text-shadow: 0 0 10px color-mix(in srgb, var(--mode) 60%, transparent); }
-.w-side { display: grid; gap: .6cqh; align-content: center; }
+.w-side { display: grid; gap: .6cqh; align-content: center; justify-items: start; }
+.w-tags { display: grid; gap: 1.4cqh; margin-top: 2.4cqh; justify-items: start; }
+.w-tags:empty { display: none; }
+.w-tag { font: 700 max(8px, 3.9cqh) var(--f-mono); letter-spacing: .14em; padding: .35em .6em .3em; border-radius: 3px; border: 1px solid currentColor; color: var(--led); text-shadow: 0 0 8px color-mix(in srgb, var(--mode) 60%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--mode) 25%, transparent), inset 0 0 8px color-mix(in srgb, var(--mode) 18%, transparent); white-space: nowrap; line-height: 1; }
+.w-tag.boost { animation: tagpulse 2.4s ease-in-out infinite; }
+@keyframes tagpulse { 50% { opacity: .62; } }
 .w-lbl { font: 500 max(8px, 4.2cqh) var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.34); }
 .w-lbl + .w-roomt { margin-bottom: 2.2cqh; }
 .w-roomt { font: 700 max(14px, 11cqh) var(--f-mono); color: var(--led); text-shadow: 0 0 10px color-mix(in srgb, var(--mode) 50%, transparent); line-height: 1; }
@@ -148,7 +157,8 @@ body.off .led.run i { background: rgba(0,0,0,.25); box-shadow: inset 0 1px 1px r
 /* ===== keys (soft-touch buttons set into shallow wells) ===== */
 .keys { --k: clamp(58px, min(8.5cqw, 15cqh), 150px); display: grid; justify-items: center; align-content: center; gap: calc(var(--k) * .34); -webkit-user-select: none; user-select: none; }
 .k-row { display: flex; align-items: center; justify-content: center; gap: calc(var(--k) * .38); }
-.k-row.two { gap: calc(var(--k) * .26); }
+.k-row.two { gap: calc(var(--k) * .2); width: calc(var(--k) * 3.62 + 8px); }
+.k-row.two .pill { flex: 1 1 0; min-width: 0; width: auto; }
 .key { position: relative; display: grid; place-items: center; color: var(--ink-2);
   background: radial-gradient(120% 120% at 50% 15%, var(--key-a), var(--key-b));
   --ring: 0 0 0 calc(var(--k) * .065) var(--well), 0 0 0 calc(var(--k) * .065 + 1px) var(--seam-d), 0 1px 0 calc(var(--k) * .065 + 1px) var(--seam-l);
@@ -163,8 +173,12 @@ body.off .led.run i { background: rgba(0,0,0,.25); box-shadow: inset 0 1px 1px r
 .power svg { width: 40%; height: 40%; stroke-width: 2; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--mode) 55%, transparent)); transition: filter .4s; }
 body.off .power { color: var(--ink-3); }
 body.off .power svg { filter: none; }
-.pill { width: calc(var(--k) * 1.62); height: calc(var(--k) * .66); min-height: 48px; border-radius: calc(var(--k) * .33); gap: 2px; align-content: center; }
-.k-lbl { font: 500 clamp(9px, calc(var(--k) * .13), 13px) var(--f-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); }
+.pill { width: calc(var(--k) * 1.62); height: calc(var(--k) * .7); min-height: 52px; border-radius: calc(var(--k) * .35); gap: 3px; align-content: center; padding: 0 4px; }
+.k-lbl { display: inline-flex; align-items: center; gap: .45em; font: 500 clamp(9px, calc(var(--k) * .12), 13px) var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
+.k-lbl svg { width: 1.35em; height: 1.35em; stroke-width: 1.8; flex: none; }
+.k-val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.pill[aria-pressed="true"] .k-lbl { color: color-mix(in srgb, var(--frost) 75%, var(--ink-2)); }
+.pill[aria-pressed="true"] .k-lbl svg { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--frost) 70%, transparent)); }
 .k-val { font: 600 clamp(13px, calc(var(--k) * .2), 22px) var(--f-body); color: var(--ink); }
 
 /* ===== seam + air outlet with louver flap ===== */
@@ -188,7 +202,7 @@ body:not(.off) .flap.open { rotate: x 56deg; filter: brightness(.94); box-shadow
 .flap.shut { display: none; }
 
 /* underside lip of the unit */
-.lip { grid-row: 5; position: relative; height: calc(env(safe-area-inset-bottom) + clamp(58px, 10cqh, 130px)); margin-top: clamp(8px, 1.6cqh, 22px);
+.lip { grid-row: 5; position: relative; height: calc(env(safe-area-inset-bottom) + var(--liph)); margin-top: clamp(8px, 1.6cqh, 22px);
   background: linear-gradient(180deg, var(--lip-a), var(--lip-b) 55%, var(--lip-c));
   box-shadow: inset 0 1px 0 var(--seam-l), inset 0 2px 0 var(--seam-d), inset 0 10px 18px -12px rgba(0,0,0,.25); }
 .screw { position: absolute; top: 34%; width: 11px; height: 11px; border-radius: 50%;
@@ -212,7 +226,39 @@ html[data-ac-theme="light"] .chill { background: radial-gradient(70% 120% at 50%
 body.off .chill { opacity: 0; }
 .airwrap { grid-row: 4 / 6; grid-column: 1; pointer-events: none; z-index: 3; min-height: 0; will-change: transform; transform: translateZ(0); }  /* own layer: air frames never repaint the panel */
 .airfx { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.panel > .lip { z-index: auto; }   /* lets the pencil (z 5) sit above the air canvas (z 3) */
+.panel > .lip { z-index: auto; }
+.coldfx { position: absolute !important; inset: 0; z-index: 2 !important; pointer-events: none; opacity: calc(var(--cold, 0) * .9); transition: opacity 2.5s var(--ease);
+  background: radial-gradient(120% 95% at 50% 42%, transparent 52%, color-mix(in srgb, var(--frost) 20%, transparent) 100%),
+    linear-gradient(180deg, color-mix(in srgb, var(--frost) 5%, transparent), color-mix(in srgb, var(--frost) 10%, transparent));
+  box-shadow: inset 0 0 calc(30px + 6cqmin) color-mix(in srgb, #dff2ff 30%, transparent); }
+html[data-ac-theme="light"] .coldfx { background: radial-gradient(120% 95% at 50% 42%, transparent 50%, color-mix(in srgb, var(--frost) 16%, transparent) 100%), linear-gradient(180deg, color-mix(in srgb, var(--frost) 3%, transparent), color-mix(in srgb, var(--frost) 7%, transparent)); box-shadow: inset 0 0 calc(30px + 6cqmin) color-mix(in srgb, var(--frost) 22%, transparent); }
+body.off .coldfx { opacity: 0; }
+/* cool shimmer: a second frost layer breathing in and out (opacity only = compositor-cheap) */
+.coldfx::after { content: ""; position: absolute; inset: 0; opacity: 0; background: radial-gradient(90% 60% at 50% 100%, color-mix(in srgb, var(--frost) 22%, transparent), transparent 70%); animation: shimmer 7s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .coldfx::after { animation-duration: 14s; } }
+@keyframes shimmer { to { opacity: 1; } }
+
+/* wipes: hung on a line just under the louver, fluttering in the air */
+.wipes { grid-row: 5; z-index: 4 !important; pointer-events: none; height: 0; margin: 0 calc(env(safe-area-inset-right) + clamp(12px, 3.4cqw, 80px)) 0 calc(env(safe-area-inset-left) + clamp(12px, 3.4cqw, 80px)); align-self: start; }
+.wipes:not(.on) { display: none; }
+.w-line { position: absolute; left: 0; right: 0; top: 0; width: 100%; height: 12px; overflow: visible; }
+.w-line path { stroke: var(--ink-2); stroke-width: 1.3; fill: none; opacity: .75; }
+.wipe { --ww: min(calc(var(--liph) * .5), 10.5cqw); position: absolute; width: var(--ww); margin-left: calc(var(--ww) * -.5); }
+.wipe .pin { position: absolute; z-index: 2; left: 50%; top: -5px; width: 5px; height: 13px; margin-left: -2.5px; border-radius: 1.5px;
+  background: linear-gradient(90deg, #9cc9dd, #cde8f2 45%, #8ab8cc); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.wipe .pin::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; margin-left: -.5px; background: rgba(0,0,0,.18); }
+.wipe .cloth { display: block; height: calc(var(--ww) * 1.28); margin-top: 1px; transform-origin: 50% 0; border-radius: 2px 2px 7px 5px;
+  background:
+    repeating-linear-gradient(45deg, rgba(110,140,170,.11) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(-45deg, rgba(110,140,170,.11) 0 1px, transparent 1px 6px),
+    linear-gradient(180deg, #ffffff, #eef3f6 70%, #e4eaee);
+  box-shadow: 0 3px 8px rgba(0,0,0,.16), inset 0 0 0 1px rgba(255,255,255,.6), inset 0 -6px 8px -6px rgba(90,110,130,.25);
+  animation: flutter var(--wdur, 2s) ease-in-out var(--wd, 0s) infinite alternate; }
+html[data-ac-theme="dark"] .wipe .cloth { filter: brightness(.86); box-shadow: 0 4px 10px rgba(0,0,0,.5), inset 0 -6px 8px -6px rgba(0,0,0,.3); }
+.wipe:nth-child(odd) .cloth { border-radius: 2px 2px 5px 8px; }
+@keyframes flutter {
+  from { transform: rotate(calc(var(--wamp, 0) * -1deg)) skewX(calc(var(--wamp, 0) * .5deg)) scaleY(1); }
+  to { transform: rotate(calc(var(--wamp, 0) * 1deg)) skewX(calc(var(--wamp, 0) * -.7deg)) scaleY(calc(1 - var(--wamp, 0) * .006)); } }   /* lets the pencil (z 5) sit above the air canvas (z 3) */
 
 /* ===== phone / tablet portrait: stacked, keys low for the thumb ===== */
 @media (orientation: portrait) {
@@ -221,7 +267,7 @@ body.off .chill { opacity: 0; }
   .win-col { --ar: 1.22; }
   .keys { --k: clamp(62px, 19cqw, 124px); }
   .outlet { height: clamp(46px, 7.5cqh, 110px); }
-  .lip { height: calc(env(safe-area-inset-bottom) + clamp(64px, 9cqh, 120px)); }
+  .panel { --liph: clamp(84px, 12.5cqh, 160px); }
   .print { display: none; }
 }
 @media (orientation: portrait) and (min-width: 600px) { .win-col { --ar: 1.45; } .print { display: block; } }
@@ -233,7 +279,7 @@ body.off .chill { opacity: 0; }
   .leds { height: 18px; } .bezel { --ledh: 18px; }
   .win-col { gap: 8px; --ar: 2; }
   .outlet { height: clamp(32px, 9cqh, 46px); margin-top: 8px; }
-  .lip { height: calc(env(safe-area-inset-bottom) + 48px); margin-top: 6px; }
+  .panel { --liph: 62px; } .lip { margin-top: 6px; }
   .brand { flex-direction: row; gap: 1.2em; }
 }
 
@@ -259,6 +305,8 @@ body.off .chill { opacity: 0; }
 .step .round { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; border: 1px solid var(--sheet-line); background: var(--field); }
 .step output { min-width: 4.5ch; text-align: center; font: 700 22px var(--f-mono); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.wrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.wrow output { min-width: 2ch; }
 .chip { min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--sheet-line); background: var(--field); font: 500 13px var(--f-mono); letter-spacing: .04em; }
 .chip[aria-pressed=true] { border-color: color-mix(in srgb, var(--a1) 70%, transparent); background: color-mix(in srgb, var(--a1) 20%, transparent); }
 .check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 14px; color: var(--ink-2); }
@@ -269,9 +317,9 @@ body.off .chill { opacity: 0; }
 
 /* ===== motion ===== */
 @media (prefers-reduced-motion: no-preference) {
-  body:not(.off) .flap.open { animation: swing 9s ease-in-out 2s infinite alternate; }
+  body:not(.off) .flap.open { animation: swing var(--swing-dur, 9s) ease-in-out 2s infinite alternate; }
 }
-@keyframes swing { from { transform: rotateX(0deg); } to { transform: rotateX(-9deg); } }
+@keyframes swing { from { transform: rotateX(0deg); } to { transform: rotateX(calc(var(--swing, 9) * -1deg)); } }
 @media (prefers-reduced-motion: reduce) {
   /* louver: crossfade between shut and open instead of swinging */
   .flap.shut { display: block; rotate: none; opacity: 0; transition: opacity .7s ease; }
