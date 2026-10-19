@@ -25,6 +25,8 @@
 export const TOOLS = [
   { id: 'time',    path: '/time/',    name: 'Time',    blurb: 'Exact clock, zmanim, bedside mode', icon: 'clock', live: true, featured: true, related: ['zmanim', 'luach', 'world', 'timer'] },
   { id: 'zmanim',  path: '/zmanim/',  name: 'Zmanim',  blurb: 'Today’s zmanim: timeline, sun arc & week (Chabad.org)', icon: 'sun', live: true, featured: true, related: ['luach', 'tehillim', 'time'] },
+  { id: 'today',    path: '/today/',    name: 'Today',    blurb: 'Your day on one screen: time, zmanim, weather, reminders', icon: 'calendar', live: true, featured: true, related: ['remind', 'zmanim', 'weather'] },
+  { id: 'remind',   path: '/remind/',   name: 'Remind',   blurb: 'Countdowns & reminders, by Hebrew date or zman', icon: 'timer', live: true, related: ['today', 'luach', 'timer'] },
   { id: 'luach',   path: '/luach/',   name: 'Luach',   blurb: 'Hebrew calendar, Shabbos times, daily study, date converter', icon: 'calendar', live: true, related: ['tehillim', 'gematria', 'zmanim'] },
   { id: 'weather', path: '/weather/', name: 'Weather', blurb: 'Now, hourly and 7 days for your saved city', icon: 'cloud', live: true },
   { id: 'timer',   path: '/timer/',   name: 'Timer',   blurb: 'Stopwatch, countdowns, focus', icon: 'timer', live: true, related: ['seder', 'time'] },
@@ -40,7 +42,7 @@ export const TOOLS = [
   { id: 'tehillim', path: '/tehillim/', name: 'Tehillim', blurb: 'Today’s chapters by the Hebrew date, with tracking', icon: 'book', live: true, related: ['luach', 'seder', 'zmanim'] },
   { id: 'seder',    path: '/seder/',    name: 'Seder',    blurb: 'Learning timer & streaks for every seder', icon: 'hourglass', live: true, related: ['timer', 'tehillim', 'luach'] },
   { id: 'shiurim',  path: '/shiurim/',  name: 'Shiurim',  blurb: 'Kzayis, revi’is & other measures in ml, oz, cm', icon: 'measure', live: true, related: ['convert', 'luach'] },
-  { id: 'dev',     path: '/dev/',     name: 'Dev',     blurb: 'Encoders, hashes, little dev helpers', icon: 'code', live: false },
+  { id: 'dev',     path: '/dev/',     name: 'Dev',     blurb: 'Encoders, hashes, little dev helpers', icon: 'code', live: true, related: ['qr', 'url', 'convert'] },
   { id: 'net',     path: '/net/',     name: 'Net Lab', blurb: 'Your IP, live ping, DNS, device info', icon: 'wifi', live: true },
   { id: 'sky',     path: '/sky/',     name: 'Sky',     blurb: 'The ISS live, passes, Moon & planets', icon: 'orbit', live: true },
 ];

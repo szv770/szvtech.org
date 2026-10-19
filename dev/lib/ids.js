@@ -1,5 +1,5 @@
 // UUID v4 / v7, ULID, nanoid generators + an inspector. Pure; randomness and clock are injectable for tests.
-import { bytesToHex } from './encode.js';
+import { bytesToHex } from './encode.js?v=5328626cab';
 
 export const cryptoRandom = (n) => { const b = new Uint8Array(n); globalThis.crypto.getRandomValues(b); return b; };
 

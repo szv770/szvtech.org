@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Remind · SZVTECH</title>
+<meta name="description" content="Countdowns and reminders: one-time, yearly, Hebrew dates, weekly, and relative to zmanim.">
+<meta name="theme-color" content="#05050a">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Cpath d='M32 14a13 13 0 0 0-13 13v8l-4 6h34l-4-6v-8A13 13 0 0 0 32 14zM27 47a5 5 0 0 0 10 0' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/remind/remind.css?v=6c9eb5c06b">
+</head>
+<body>
+<div class="atmos" aria-hidden="true"></div>
+
+<header class="top">
+  <a class="back" href="/">&larr; SZVTECH</a>
+  <div class="top-r">
+    <button class="chip" id="menuBtn" type="button" aria-haspopup="dialog">Alerts &amp; backup</button>
+  </div>
+</header>
+
+<main id="app">
+  <div class="title-row">
+    <h1>Remind</h1>
+    <span class="sync mono" id="syncState" aria-live="polite"></span>
+  </div>
+  <div id="stage" aria-live="off"></div>
+  <p class="honest" id="honest">
+    <b>Alerts only ring while this page is open.</b> A website can&rsquo;t wake your phone when it&rsquo;s closed.
+    For something you can&rsquo;t miss, tap <em>Add to phone calendar</em> on a reminder.
+    <button class="link" id="enableAlerts" type="button" hidden>Turn on alerts</button>
+  </p>
+</main>
+
+<button class="fab" id="addBtn" type="button" aria-label="New reminder"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+
+<div class="sheet-back" id="sheetBack" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Reminder" hidden>
+  <div class="grab" aria-hidden="true"></div>
+  <div class="sheet-body" id="sheetBody"></div>
+</section>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<noscript><p class="ns">Remind needs JavaScript.</p></noscript>
+<script type="module" src="/remind/ui.js?v=23fdb7d06a"></script>
+<script type="module" src="/assets/chrome.js?v=003ccd2461"></script>
+</body>
+</html>
