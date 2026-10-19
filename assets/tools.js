@@ -25,6 +25,9 @@
 export const TOOLS = [
   { id: 'time',    path: '/time/',    name: 'Time',    blurb: 'Exact clock, zmanim, bedside mode', icon: 'clock', live: true, featured: true, related: ['zmanim', 'luach', 'world', 'timer'] },
   { id: 'zmanim',  path: '/zmanim/',  name: 'Zmanim',  blurb: 'Today’s zmanim: timeline, sun arc & week (Chabad.org)', icon: 'sun', live: true, featured: true, related: ['luach', 'tehillim', 'time'] },
+  { id: 'today',    path: '/today/',    name: 'Today',    blurb: 'Your day on one screen: time, zmanim, weather, reminders', icon: 'calendar', live: true, featured: true, related: ['remind', 'zmanim', 'weather'] },
+  { id: 'notes',    path: '/notes/',    name: 'Notes',    blurb: 'Private notes & code pastes, with share-by-link editing', icon: 'note', live: true, featured: true, related: ['dev', 'url', 'qr'] },
+  { id: 'remind',   path: '/remind/',   name: 'Remind',   blurb: 'Countdowns & reminders, by Hebrew date or zman', icon: 'timer', live: true, related: ['today', 'luach', 'timer'] },
   { id: 'luach',   path: '/luach/',   name: 'Luach',   blurb: 'Hebrew calendar, Shabbos times, daily study, date converter', icon: 'calendar', live: true, related: ['tehillim', 'gematria', 'zmanim'] },
   { id: 'weather', path: '/weather/', name: 'Weather', blurb: 'Now, hourly and 7 days for your saved city', icon: 'cloud', live: true },
   { id: 'timer',   path: '/timer/',   name: 'Timer',   blurb: 'Stopwatch, countdowns, focus', icon: 'timer', live: true, related: ['seder', 'time'] },
@@ -40,7 +43,7 @@ export const TOOLS = [
   { id: 'tehillim', path: '/tehillim/', name: 'Tehillim', blurb: 'Today’s chapters by the Hebrew date, with tracking', icon: 'book', live: true, related: ['luach', 'seder', 'zmanim'] },
   { id: 'seder',    path: '/seder/',    name: 'Seder',    blurb: 'Learning timer & streaks for every seder', icon: 'hourglass', live: true, related: ['timer', 'tehillim', 'luach'] },
   { id: 'shiurim',  path: '/shiurim/',  name: 'Shiurim',  blurb: 'Kzayis, revi’is & other measures in ml, oz, cm', icon: 'measure', live: true, related: ['convert', 'luach'] },
-  { id: 'dev',     path: '/dev/',     name: 'Dev',     blurb: 'Encoders, hashes, little dev helpers', icon: 'code', live: false },
+  { id: 'dev',     path: '/dev/',     name: 'Dev',     blurb: 'Encoders, hashes, little dev helpers', icon: 'code', live: true, related: ['qr', 'url', 'convert'] },
   { id: 'net',     path: '/net/',     name: 'Net Lab', blurb: 'Your IP, live ping, DNS, device info', icon: 'wifi', live: true },
   { id: 'sky',     path: '/sky/',     name: 'Sky',     blurb: 'The ISS live, passes, Moon & planets', icon: 'orbit', live: true },
 ];
@@ -71,6 +74,7 @@ export const ICONS = {
   book: `<svg ${A}><path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5v13"/></svg>`,
   hourglass: `<svg ${A}><path d="M7 3.5h10M7 20.5h10M8 3.5c0 4 4 5 4 8.5s-4 4.5-4 8.5M16 3.5c0 4-4 5-4 8.5s4 4.5 4 8.5"/></svg>`,
   measure: `<svg ${A}><path d="M5 6h14l-1.6 12.2a2 2 0 0 1-2 1.8H8.6a2 2 0 0 1-2-1.8zM5.8 11h12.4"/></svg>`,
+  note: `<svg ${A}><path d="M6 3.5h8.5L19 8v12.5H6zM14 3.5V8h5M9 12.5h7M9 16h5"/></svg>`,
   tool: `<svg ${A}><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L3.5 17.5l3 3 5.7-5.7a4 4 0 0 0 5.3-5.3l-2.5 2.5-2.5-.5-.5-2.5z"/></svg>`,
 };
 export const icon = (t) => ICONS[t.icon] || ICONS.tool;

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" data-theme-keys="off" data-ac-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Climate · SZVTECH</title>
+<meta name="theme-color" content="#232529">
+<meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='.55' stop-color='%23e879f9'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305050a'/%3E%3Cpath d='M32 12v40M15 22l34 20M15 42l34-20' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<script src="/assets/theme.js?v=8c7e276563"></script>
+<script>
+/* light / dark panel, before first paint: saved choice, else the device preference */
+(function () {
+  var t = null;
+  try { t = localStorage.getItem('szv-ac-theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') t = (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-ac-theme', t);
+  var m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', t === 'light' ? '#f4f4f3' : '#232529');
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ac/ac.css?v=f5901c48a7">
+</head>
+<body>
+<div class="panel" id="unit">
+  <a class="home" href="/">&larr; SZVTECH</a>
+  <button class="theme-tog" id="themeBtn" type="button" aria-label="Switch to light panel">
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+  </button>
+
+  <header class="brand" aria-hidden="true">
+    <span class="mark">SZV<span>CLIMATE</span></span>
+    <span class="model">Inverter &middot; SZ-24K</span>
+  </header>
+
+  <main class="face">
+    <div class="win-col">
+      <div class="bezel">
+        <div class="window" id="screen">
+          <div class="w-top">
+            <span class="w-modes" id="modeRow" aria-hidden="true"></span>
+            <span class="w-mode" id="modeName">COOL</span>
+            <span class="w-room" id="roomName">Living Room</span>
+          </div>
+          <div class="w-main">
+            <div class="w-temp" role="status" aria-live="polite" aria-label="Target temperature">
+              <svg class="seg" id="seg" viewBox="-3 -1 140 102" aria-hidden="true"></svg>
+              <span class="vh" id="target">72</span>
+              <span class="w-unit" id="unitLabel">°F</span>
+            </div>
+            <div class="w-side">
+              <span class="w-lbl">Room</span>
+              <span class="w-roomt" id="roomT">78°</span>
+              <span class="w-lbl">Fan</span>
+              <span class="w-fan"><span class="fan" id="fanBars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="fanName">AUTO</span></span>
+            </div>
+          </div>
+          <div class="w-status" id="status">Cooling to 72°</div>
+          <div class="w-foot"><span>Filter: Imaginary</span><span class="w-dot"></span><span>Swing: On</span></div>
+          <div class="w-off" id="offMsg">Standby</div>
+        </div>
+      </div>
+      <div class="leds" aria-hidden="true">
+        <span class="led pwr"><i></i>Power</span>
+        <span class="led run"><i></i>Run</span>
+        <span class="led tmr"><i></i>Timer</span>
+      </div>
+    </div>
+
+    <div class="keys">
+      <div class="k-row">
+        <button class="key round" id="down" type="button" aria-label="Lower temperature"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+        <button class="key power" id="power" type="button" aria-label="Power" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M12 3.5v7.5"/><path d="M6.7 6.7a7.6 7.6 0 1 0 10.6 0"/></svg></button>
+        <button class="key round" id="up" type="button" aria-label="Raise temperature"><svg viewBox="0 0 24 24"><path d="M6 12h12M12 6v12"/></svg></button>
+      </div>
+      <div class="k-row two">
+        <button class="key pill" id="modeBtn" type="button"><span class="k-lbl">Mode</span><span class="k-val" id="modeBtnV">Cool</span></button>
+        <button class="key pill" id="fanBtn" type="button"><span class="k-lbl">Fan</span><span class="k-val" id="fanBtnV">Auto</span></button>
+      </div>
+    </div>
+  </main>
+
+  <div class="seam" aria-hidden="true"></div>
+  <div class="outlet" id="outlet" aria-hidden="true">
+    <div class="cavity"><div class="vanes"></div></div>
+    <div class="flap shut"></div>
+    <div class="flap open"></div>
+  </div>
+  <div class="lip">
+    <i class="screw l" aria-hidden="true"></i><i class="screw r" aria-hidden="true"></i>
+    <span class="print l" aria-hidden="true">R-32 &middot; 24,000 BTU/h (nominal)</span>
+    <span class="print r" aria-hidden="true">Remote: this</span>
+    <button class="pencil" id="pencil" type="button" aria-label="Edit settings"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/></svg></button>
+  </div>
+  <div class="chill" aria-hidden="true"></div>
+  <div class="airwrap" aria-hidden="true"><canvas class="airfx" id="airfx"></canvas></div>
+</div>
+
+<div class="sheet-back" id="back" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="grab" aria-hidden="true"></div>
+  <h2 id="sheetTitle">Edit</h2>
+  <div class="rows">
+    <label class="row"><span class="lbl">Room name</span><input id="eRoom" maxlength="24" autocomplete="off" spellcheck="false"></label>
+    <div class="row"><span class="lbl">Target</span>
+      <div class="step"><button class="btn round" id="eTDown" type="button" aria-label="Lower target">&minus;</button><output id="eTVal">72°</output><button class="btn round" id="eTUp" type="button" aria-label="Raise target">+</button></div></div>
+    <div class="row"><span class="lbl">Room temperature</span>
+      <div class="step"><button class="btn round" id="eRDown" type="button" aria-label="Lower room temperature">&minus;</button><output id="eRVal">78°</output><button class="btn round" id="eRUp" type="button" aria-label="Raise room temperature">+</button></div></div>
+    <div class="row"><span class="lbl">Unit</span><div class="chips" id="eUnit" role="group"></div></div>
+    <div class="row"><span class="lbl">Mode</span><div class="chips" id="eMode" role="group"></div></div>
+    <div class="row"><span class="lbl">Fan</span><div class="chips" id="eFan" role="group"></div></div>
+    <label class="row"><span class="lbl">Status line <em>(blank = automatic)</em></span><input id="eStatus" maxlength="40" autocomplete="off" spellcheck="false" placeholder="Cooling to 72°"></label>
+    <label class="row check"><input type="checkbox" id="eDrift"><span>Room temp slowly drifts toward target</span></label>
+  </div>
+  <div class="actions">
+    <button class="btn pill ghost" id="eReset" type="button">Reset</button>
+    <button class="btn pill solid" id="eDone" type="button">Done</button>
+  </div>
+</section>
+
+<script src="/ac/ac.js?v=b3f0a2ff1a"></script>
+</body>
+</html>

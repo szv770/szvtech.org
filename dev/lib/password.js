@@ -1,5 +1,5 @@
 // Password + passphrase generation (unbiased, crypto randomness) and a strength estimate. Pure; rng injectable.
-import { WORDS } from './words.js';
+import { WORDS } from './words.js?v=c8bb717127';
 
 export const cryptoRandomU32 = (n) => { const a = new Uint32Array(n); globalThis.crypto.getRandomValues(a); return a; };
 

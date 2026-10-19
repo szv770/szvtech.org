@@ -1,6 +1,6 @@
 // JWT decode (no verification) + optional HMAC (HS256/384/512) verification. Pure.
-import { base64ToBytes, utf8Decode, bytesToBase64, utf8Encode } from './encode.js';
-import { hmac } from './hash.js';
+import { base64ToBytes, utf8Decode, bytesToBase64, utf8Encode } from './encode.js?v=5328626cab';
+import { hmac } from './hash.js?v=b88e45031b';
 
 export const JWT_RE = /^[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]{2,}\.[A-Za-z0-9_-]*$/;
 

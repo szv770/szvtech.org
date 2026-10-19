@@ -1,11 +1,11 @@
 // Smart paste: guess what a pasted string is and which tool should open it. Pure.
-import { looksLikeJwt } from './jwt.js';
-import { looksLikeBase64 } from './encode.js';
-import { looksLikeTimestamp } from './time.js';
-import { validate } from './json.js';
-import { inspectId } from './ids.js';
-import { looksLikeCron } from './cron.js';
-import { looksLikeColor } from './color.js';
+import { looksLikeJwt } from './jwt.js?v=df4c61d9fa';
+import { looksLikeBase64 } from './encode.js?v=5328626cab';
+import { looksLikeTimestamp } from './time.js?v=f950873b81';
+import { validate } from './json.js?v=fe024d3717';
+import { inspectId } from './ids.js?v=abe9a27f12';
+import { looksLikeCron } from './cron.js?v=b3d7894f4a';
+import { looksLikeColor } from './color.js?v=a4e78c5a3d';
 
 /** detect(text) -> [{ tool, label, why }] best first */
 export function detect(input) {

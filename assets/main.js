@@ -3,7 +3,7 @@
    One rAF loop (GSAP ticker) drives Lenis, WebGL, cursor, marquee & FX.
    ========================================================================== */
 
-import { TOOLS, liveTools, soonTools, icon as toolIcon } from '/assets/tools.js?v=90e8a874a2';
+import { TOOLS, liveTools, soonTools, icon as toolIcon } from '/assets/tools.js?v=aa1eac7a80';
 
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;

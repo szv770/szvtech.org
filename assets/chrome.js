@@ -13,7 +13,7 @@
    Pages may set <html data-szv-title="Name"> to override the shared title.
    Everything is feature-detected; nothing leaves the browser.
    ========================================================================== */
-import { TOOLS, icon } from '/assets/tools.js?v=90e8a874a2';
+import { TOOLS, icon } from '/assets/tools.js?v=aa1eac7a80';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ORIGIN = location.origin;

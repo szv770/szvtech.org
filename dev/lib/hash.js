@@ -1,5 +1,5 @@
 // Hashes: MD5 (pure JS, RFC 1321) + SHA-1/256/384/512 via WebCrypto, and HMAC for all of them.
-import { utf8Encode, bytesToHex } from './encode.js';
+import { utf8Encode, bytesToHex } from './encode.js?v=5328626cab';
 
 const toBytes = (d) => typeof d === 'string' ? utf8Encode(d) : d instanceof Uint8Array ? d : new Uint8Array(d);
 
