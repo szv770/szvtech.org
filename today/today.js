@@ -7,7 +7,7 @@ import * as TL from '/tehillim/logic.js?v=5e5c47449c';
 import * as Q from '/seder/logic.js?v=ff56013e90';
 import { upcoming, load as loadRemind, splitMs, KEY as REMIND_KEY } from '/remind/remind.js?v=a8a7c39c62';
 import { loadZmanSource } from '/remind/zsource.js?v=ae99534ce1';
-import { TOOLS, ICONS } from '/assets/tools.js?v=161081831f';
+import { TOOLS, ICONS } from '/assets/tools.js?v=aa1eac7a80';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
