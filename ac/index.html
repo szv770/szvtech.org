@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/ac/ac.css?v=f5901c48a7">
+<link rel="stylesheet" href="/ac/ac.css?v=31bd7f00b7">
 </head>
 <body>
 <div class="panel" id="unit">
@@ -60,6 +60,7 @@
               <span class="w-roomt" id="roomT">78°</span>
               <span class="w-lbl">Fan</span>
               <span class="w-fan"><span class="fan" id="fanBars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="fanName">AUTO</span></span>
+              <span class="w-tags" id="tags"></span>
             </div>
           </div>
           <div class="w-status" id="status">Cooling to 72°</div>
@@ -81,8 +82,9 @@
         <button class="key round" id="up" type="button" aria-label="Raise temperature"><svg viewBox="0 0 24 24"><path d="M6 12h12M12 6v12"/></svg></button>
       </div>
       <div class="k-row two">
-        <button class="key pill" id="modeBtn" type="button"><span class="k-lbl">Mode</span><span class="k-val" id="modeBtnV">Cool</span></button>
-        <button class="key pill" id="fanBtn" type="button"><span class="k-lbl">Fan</span><span class="k-val" id="fanBtnV">Auto</span></button>
+        <button class="key pill" id="modeBtn" type="button"><span class="k-lbl"><svg id="modeBtnI" viewBox="0 0 24 24" aria-hidden="true"></svg>Mode</span><span class="k-val" id="modeBtnV">Cool</span></button>
+        <button class="key pill" id="fanBtn" type="button"><span class="k-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1.6"/><path d="M12 10.4C12 6 14.5 4 17 5s2 4-1.6 6M13.6 12c4.4 0 6.4 2.5 5.4 5s-4 2-7.4-1.6M12 13.6C12 18 9.5 20 7 19s-2-4 1.6-6M10.4 12C6 12 4 9.5 5 7s4-2 7.4 1.6"/></svg>Fan</span><span class="k-val" id="fanBtnV">Auto</span></button>
+        <button class="key pill" id="wipesBtn" type="button" aria-pressed="false"><span class="k-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5Q12 8 21 5.5"/><path d="M7.5 6.6h9l.6 11.2c-1.6 1-3.2-.6-5.1.4-1.9 1-3.4-.6-5.1.3z"/><path d="M11 6.5v-2h2v2"/></svg>Wipes</span><span class="k-val" id="wipesBtnV">Off</span></button>
       </div>
     </div>
   </main>
@@ -99,7 +101,9 @@
     <span class="print r" aria-hidden="true">Remote: this</span>
     <button class="pencil" id="pencil" type="button" aria-label="Edit settings"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/></svg></button>
   </div>
+  <div class="wipes" id="wipes" aria-hidden="true"><svg class="w-line" viewBox="0 0 100 12" preserveAspectRatio="none"><path d="M0 2Q50 10 100 2" vector-effect="non-scaling-stroke"/></svg></div>
   <div class="chill" aria-hidden="true"></div>
+  <div class="coldfx" aria-hidden="true"></div>
   <div class="airwrap" aria-hidden="true"><canvas class="airfx" id="airfx"></canvas></div>
 </div>
 
@@ -116,6 +120,9 @@
     <div class="row"><span class="lbl">Unit</span><div class="chips" id="eUnit" role="group"></div></div>
     <div class="row"><span class="lbl">Mode</span><div class="chips" id="eMode" role="group"></div></div>
     <div class="row"><span class="lbl">Fan</span><div class="chips" id="eFan" role="group"></div></div>
+    <div class="row"><span class="lbl">Wipes <em>(hung in the airflow)</em></span>
+      <div class="wrow"><div class="chips" id="eWipes" role="group"></div>
+      <div class="step"><button class="btn round" id="eWDown" type="button" aria-label="Fewer wipes">&minus;</button><output id="eWVal">3</output><button class="btn round" id="eWUp" type="button" aria-label="More wipes">+</button></div></div></div>
     <label class="row"><span class="lbl">Status line <em>(blank = automatic)</em></span><input id="eStatus" maxlength="40" autocomplete="off" spellcheck="false" placeholder="Cooling to 72°"></label>
     <label class="row check"><input type="checkbox" id="eDrift"><span>Room temp slowly drifts toward target</span></label>
   </div>
@@ -125,6 +132,6 @@
   </div>
 </section>
 
-<script src="/ac/ac.js?v=b3f0a2ff1a"></script>
+<script src="/ac/ac.js?v=fa1189e6b4"></script>
 </body>
 </html>
